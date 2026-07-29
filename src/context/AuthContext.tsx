@@ -205,10 +205,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem(AUTH_USER_KEY);
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    localStorage.removeItem('pimi_access_token');
-    localStorage.removeItem('pimi_refresh_token');
+    localStorage.clear();
+    sessionStorage.clear();
   };
 
   return (
