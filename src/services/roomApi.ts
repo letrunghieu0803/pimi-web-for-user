@@ -1,5 +1,6 @@
 import { Room, ViewingRequest } from '@/types';
 import { MOCK_ROOMS } from '@/data/mockData';
+import { axiosClient } from './axiosClient';
 
 const VIEWING_REQUESTS_KEY = 'pimi_tenant_viewing_requests';
 
@@ -33,8 +34,124 @@ const INITIAL_MOCK_BOOKINGS: ViewingRequest[] = [
   },
 ];
 
+// Helper to map backend RentRoom model to user app Room interface
+const mapBackendRoomToRoom = (item: any): Room => {
+  const house = item.rentHouse || {};
+  const owner = house.houseOwner || {};
+  
+  const ownerName = [owner.firstName, owner.lastName].filter(Boolean).join(' ') || 'Chủ nhà';
+  
+  const images = (item.images || [])
+    .map((img: any) => img.image?.link || img.link)
+    .filter(Boolean);
+
+  const amenities = (item.roomFurniture || [])
+    .map((f: any) => f.name || f.furniture?.name)
+    .filter(Boolean);
+
+  const priceNum = Number(item.price || house.defaultPrice || 0);
+  const areaNum = Number(item.roomArea || 0);
+
+  return {
+    id: item.id,
+    name: item.name || house.name || 'Phòng trọ',
+    houseName: house.name || 'Nhà trọ',
+    houseId: item.rentHouseId || house.id,
+    price: priceNum,
+    depositPrice: priceNum, // Default deposit to 1 month price if unspecified
+    area: areaNum,
+    roomFloor: item.roomFloor || 1,
+    maxPeople: house.maxPeoplePerRoom || 2,
+    status: item.status || 'EMPTY',
+    roomType: item.type || 'APARTMENT',
+    address: house.address || 'Hà Nội',
+    district: house.district || 'Cầu Giấy',
+    city: house.city || 'Hà Nội',
+    images: images.length > 0 ? images : [
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+    ],
+    amenities: amenities.length > 0 ? amenities : ['Điều hòa', 'Wifi', 'Nóng lạnh', 'Giờ giấc tự do'],
+    description: `Phòng thuộc ${house.name || 'nhà trọ'}, địa chỉ ${house.address || 'Hà Nội'}. Diện tích ${areaNum}m², vị trí thoáng mát, an ninh tốt.`,
+    landlordName: ownerName,
+    landlordPhone: owner.phoneNumber || '0988776655',
+    landlordAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+    latitude: house.lat !== undefined && house.lat !== null ? Number(house.lat) : undefined,
+    longitude: house.long !== undefined && house.long !== null ? Number(house.long) : undefined,
+    hasMezzanine: !!item.hasMezzanine,
+    isFeatured: true,
+    createdAt: item.createdAt || new Date().toISOString(),
+    updatedAt: item.updatedAt,
+  };
+};
+
+// In-flight deduplication promise maps
+const inFlightFeedPromises = new Map<string, Promise<Room[]>>();
+const inFlightDetailPromises = new Map<string, Promise<Room | null>>();
+
+const fetchPublicFeed = (district?: string, search?: string): Promise<Room[]> => {
+  const cacheKey = `${district || ''}:${search || ''}`;
+  if (inFlightFeedPromises.has(cacheKey)) {
+    return inFlightFeedPromises.get(cacheKey)!;
+  }
+
+  const promise = axiosClient
+    .get('/v1/rent-rooms/public/feed', {
+      params: {
+        district: district !== 'Tất cả quận/huyện' ? district : undefined,
+        search: search || undefined,
+      },
+    })
+    .then((response: any) => {
+      const items = response?.data || (Array.isArray(response) ? response : []);
+      if (Array.isArray(items) && items.length > 0) {
+        return items.map(mapBackendRoomToRoom);
+      }
+      return [];
+    })
+    .catch((error) => {
+      console.warn('Failed to fetch rooms from backend API, falling back to mock data:', error);
+      return [];
+    })
+    .finally(() => {
+      setTimeout(() => {
+        inFlightFeedPromises.delete(cacheKey);
+      }, 500);
+    });
+
+  inFlightFeedPromises.set(cacheKey, promise);
+  return promise;
+};
+
+const fetchRoomDetail = (id: string): Promise<Room | null> => {
+  if (inFlightDetailPromises.has(id)) {
+    return inFlightDetailPromises.get(id)!;
+  }
+
+  const promise = axiosClient
+    .get(`/v1/rent-rooms/public/detail/${id}`)
+    .then((response: any) => {
+      const raw = response?.data || response;
+      if (raw && raw.id) {
+        return mapBackendRoomToRoom(raw);
+      }
+      return null;
+    })
+    .catch((error) => {
+      console.warn(`Failed to fetch room detail from backend for id ${id}, attempting fallback:`, error);
+      return null;
+    })
+    .finally(() => {
+      setTimeout(() => {
+        inFlightDetailPromises.delete(id);
+      }, 500);
+    });
+
+  inFlightDetailPromises.set(id, promise);
+  return promise;
+};
+
 export const roomApi = {
-  // Fetch list of rooms with optional filters
+  // Fetch list of rooms with real backend integration, in-flight request deduplication & mock fallback
   getRooms: async (params?: {
     district?: string;
     priceRange?: string;
@@ -43,51 +160,59 @@ export const roomApi = {
     amenities?: string[];
     hasMezzanine?: boolean | null;
   }): Promise<Room[]> => {
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    let rawList = await fetchPublicFeed(
+      params?.district !== 'Tất cả quận/huyện' ? params?.district : undefined,
+      params?.keyword
+    );
 
-    let results = [...MOCK_ROOMS];
-
-    if (!params) return results;
-
-    if (params.district && params.district !== 'Tất cả quận/huyện') {
-      results = results.filter((r) => r.district === params.district);
+    // Fallback to initial mock rooms if backend returns empty list (e.g., initial DB seed state)
+    if (rawList.length === 0) {
+      rawList = [...MOCK_ROOMS];
     }
 
-    if (params.keyword && params.keyword.trim() !== '') {
-      const kw = params.keyword.toLowerCase().trim();
-      results = results.filter(
-        (r) =>
-          r.name.toLowerCase().includes(kw) ||
-          r.address.toLowerCase().includes(kw) ||
-          r.houseName.toLowerCase().includes(kw) ||
-          r.district.toLowerCase().includes(kw)
-      );
-    }
+    let results = rawList;
 
-    if (params.priceRange && params.priceRange !== 'ALL') {
-      if (params.priceRange === '0-3m') {
-        results = results.filter((r) => r.price <= 3000000);
-      } else if (params.priceRange === '3m-5m') {
-        results = results.filter((r) => r.price > 3000000 && r.price <= 5000000);
-      } else if (params.priceRange === '5m-8m') {
-        results = results.filter((r) => r.price > 5000000 && r.price <= 8000000);
-      } else if (params.priceRange === '8m+') {
-        results = results.filter((r) => r.price > 8000000);
+    if (params) {
+      if (params.district && params.district !== 'Tất cả quận/huyện') {
+        results = results.filter((r) => r.district.toLowerCase().includes(params.district!.toLowerCase()));
       }
-    }
 
-    if (params.roomType && params.roomType !== 'ALL') {
-      results = results.filter((r) => r.roomType === params.roomType);
-    }
+      if (params.keyword && params.keyword.trim() !== '') {
+        const kw = params.keyword.toLowerCase().trim();
+        results = results.filter(
+          (r) =>
+            r.name.toLowerCase().includes(kw) ||
+            r.address.toLowerCase().includes(kw) ||
+            r.houseName.toLowerCase().includes(kw) ||
+            r.district.toLowerCase().includes(kw)
+        );
+      }
 
-    if (params.hasMezzanine !== null && params.hasMezzanine !== undefined) {
-      results = results.filter((r) => r.hasMezzanine === params.hasMezzanine);
-    }
+      if (params.priceRange && params.priceRange !== 'ALL') {
+        if (params.priceRange === '0-3m') {
+          results = results.filter((r) => r.price <= 3000000);
+        } else if (params.priceRange === '3m-5m') {
+          results = results.filter((r) => r.price > 3000000 && r.price <= 5000000);
+        } else if (params.priceRange === '5m-8m') {
+          results = results.filter((r) => r.price > 5000000 && r.price <= 8000000);
+        } else if (params.priceRange === '8m+') {
+          results = results.filter((r) => r.price > 8000000);
+        }
+      }
 
-    if (params.amenities && params.amenities.length > 0) {
-      results = results.filter((r) =>
-        params.amenities!.every((amt) => r.amenities.includes(amt))
-      );
+      if (params.roomType && params.roomType !== 'ALL') {
+        results = results.filter((r) => r.roomType === params.roomType);
+      }
+
+      if (params.hasMezzanine !== null && params.hasMezzanine !== undefined) {
+        results = results.filter((r) => r.hasMezzanine === params.hasMezzanine);
+      }
+
+      if (params.amenities && params.amenities.length > 0) {
+        results = results.filter((r) =>
+          params.amenities!.every((amt) => r.amenities.includes(amt))
+        );
+      }
     }
 
     return results;
@@ -95,9 +220,14 @@ export const roomApi = {
 
   // Get Room detail by ID
   getRoomById: async (id: string): Promise<Room | null> => {
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    const room = MOCK_ROOMS.find((r) => r.id === id);
-    return room || null;
+    const detail = await fetchRoomDetail(id);
+    if (detail) return detail;
+
+    const allRooms = await roomApi.getRooms();
+    const room = allRooms.find((r) => r.id === id);
+    if (room) return room;
+
+    return MOCK_ROOMS.find((r) => r.id === id) || null;
   },
 
   // Submit viewing request
@@ -175,3 +305,5 @@ export const roomApi = {
     };
   },
 };
+
+export { axiosClient } from './axiosClient';

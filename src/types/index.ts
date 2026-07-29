@@ -23,6 +23,8 @@ export interface Room {
   landlordName: string;
   landlordPhone: string;
   landlordAvatar?: string;
+  latitude?: number;
+  longitude?: number;
   hasMezzanine: boolean;
   isFeatured?: boolean;
   createdAt: string;

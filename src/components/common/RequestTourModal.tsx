@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Room, ViewingRequest } from '@/types';
 import { roomApi } from '@/services/roomApi';
+import { appointmentApi } from '@/services/appointmentApi';
 import { useToast } from '@/context/ToastContext';
 import { X, Calendar, Clock, User, Phone, Mail, FileText, Send, Building2, ShieldCheck } from 'lucide-react';
 
@@ -45,25 +46,17 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
 
     setLoading(true);
     try {
-      const payload: ViewingRequest = {
-        roomId: room.id,
-        roomName: room.name,
-        tenantName: tenantName.trim(),
-        tenantPhone: tenantPhone.trim(),
-        tenantEmail: tenantEmail.trim() || undefined,
-        preferredDate,
-        preferredTime,
-        notes: notes.trim() || undefined,
-      };
+      const fullNote = `Ngày mong muốn: ${preferredDate} lúc ${preferredTime}${notes.trim() ? `. Ghi chú: ${notes.trim()}` : ''}`;
+      await appointmentApi.createAppointment({
+        rentRoomId: room.id,
+        note: fullNote,
+      });
 
-      const res = await roomApi.submitViewingRequest(payload);
-      if (res.success) {
-        toast.success(res.message);
-        onSuccess?.();
-        onClose();
-      }
+      toast.success('Đã gửi yêu cầu xem phòng thành công! Chủ nhà sẽ phản hồi các khung giờ phù hợp cho bạn.');
+      onSuccess?.();
+      onClose();
     } catch (err: any) {
-      toast.error(err?.message || 'Có lỗi xảy ra khi gửi yêu cầu xem phòng!');
+      toast.error(err?.response?.data?.message || err?.message || 'Có lỗi xảy ra khi gửi yêu cầu xem phòng!');
     } finally {
       setLoading(false);
     }

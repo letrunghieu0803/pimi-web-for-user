@@ -1,22 +1,41 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Room } from '@/types';
 import { roomApi } from '@/services/roomApi';
-import { RequestTourModal } from '@/components/common/RequestTourModal';
+import { appointmentApi, Appointment } from '@/services/appointmentApi';
+import { useAuth } from '@/context/AuthContext';
 import { RoomCard } from '@/components/common/RoomCard';
-import { MapPin, Maximize2, Users, Layers, ShieldCheck, PhoneCall, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, Info, ArrowRight } from 'lucide-react';
+import { MapPin, Maximize2, Users, ShieldCheck, PhoneCall, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle } from 'lucide-react';
 import { VietMapViewer } from '@/components/common/VietMapViewer';
 import { useToast } from '@/context/ToastContext';
 
 export const RoomDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const toast = useToast();
+  const { user, isAuthenticated } = useAuth();
 
   const [room, setRoom] = useState<Room | null>(null);
   const [similarRooms, setSimilarRooms] = useState<Room[]>([]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [showTourModal, setShowTourModal] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const fetchActiveAppointment = async () => {
+    if (!isAuthenticated || !id) return;
+    try {
+      const res: any = await appointmentApi.getTenantAppointments();
+      const list: Appointment[] = res.data?.data || res.data || (Array.isArray(res) ? res : []);
+      const found = list.find(
+        (app) => app.rentRoomId === id && ['PENDING_OWNER', 'OWNER_OFFERED_TIMES', 'USER_ACCEPTED'].includes(app.status)
+      );
+      setActiveAppointment(found || null);
+    } catch (err) {
+      console.warn('Failed to fetch tenant appointment:', err);
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -31,6 +50,10 @@ export const RoomDetail: React.FC = () => {
       });
     }
   }, [id]);
+
+  useEffect(() => {
+    fetchActiveAppointment();
+  }, [id, isAuthenticated]);
 
   if (!room) {
     return (
@@ -50,6 +73,37 @@ export const RoomDetail: React.FC = () => {
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.info('Đã sao chép liên kết trang phòng vào bộ nhớ tạm!');
+  };
+
+  const handleRequestViewing = async () => {
+    if (!isAuthenticated) {
+      toast.warning('Vui lòng đăng nhập để gửi yêu cầu xem phòng!');
+      navigate(`/login?redirect=/rooms/${room.id}`);
+      return;
+    }
+
+    if (activeAppointment) {
+      if (activeAppointment.status === 'OWNER_OFFERED_TIMES' || activeAppointment.status === 'USER_ACCEPTED') {
+        navigate('/appointments');
+      }
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const fullNote = `Yêu cầu xem phòng từ người thuê ${user?.fullName || ''} (${user?.phoneNumber || ''})`;
+      await appointmentApi.createAppointment({
+        rentRoomId: room.id,
+        note: fullNote,
+      });
+
+      toast.success('Đã gửi yêu cầu xem phòng thành công! Chủ nhà sẽ nhận được thông tin cá nhân và đề xuất các khung giờ cho bạn.');
+      fetchActiveAppointment();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Có lỗi xảy ra khi gửi yêu cầu!');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -207,8 +261,8 @@ export const RoomDetail: React.FC = () => {
           {/* VietMap Map Section */}
           <div className="space-y-3 pt-4 border-t border-slate-200">
             <VietMapViewer
-              lat={21.0285}
-              lng={105.8542}
+              lat={room.latitude}
+              lng={room.longitude}
               roomName={room.name}
               address={`${room.address}, ${room.district}, ${room.city}`}
               height="320px"
@@ -252,13 +306,39 @@ export const RoomDetail: React.FC = () => {
 
             {/* Direct Primary Actions */}
             <div className="space-y-3">
-              <button
-                onClick={() => setShowTourModal(true)}
-                className="w-full py-4 rounded-2xl gradient-bg text-white font-bold text-sm shadow-xl shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                <CalendarCheck className="w-5 h-5" />
-                <span>Yêu Cầu Xem Phòng Trực Tiếp</span>
-              </button>
+              {activeAppointment ? (
+                activeAppointment.status === 'PENDING_OWNER' ? (
+                  <div className="w-full py-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed text-center px-3">
+                    <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>Đã Yêu Cầu Xem Phòng (Chờ Chủ Nhà)</span>
+                  </div>
+                ) : activeAppointment.status === 'OWNER_OFFERED_TIMES' ? (
+                  <button
+                    onClick={() => navigate('/appointments')}
+                    className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xl shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 text-center px-3"
+                  >
+                    <AlertCircle className="w-4 h-4 text-amber-300 shrink-0" />
+                    <span>Chủ Nhà Đã Đề Xuất Khung Giờ - Chọn Lịch Ngay</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate('/appointments')}
+                    className="w-full py-4 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-xl shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 text-center px-3"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+                    <span>Đã Chốt Lịch Xem Phòng</span>
+                  </button>
+                )
+              ) : (
+                <button
+                  onClick={handleRequestViewing}
+                  disabled={submitting}
+                  className="w-full py-4 rounded-2xl gradient-bg text-white font-bold text-sm shadow-xl shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  <CalendarCheck className="w-5 h-5" />
+                  <span>{submitting ? 'Đang gửi...' : 'Yêu Cầu Xem Phòng Trực Tiếp'}</span>
+                </button>
+              )}
 
               <a
                 href={`tel:${room.landlordPhone}`}
@@ -303,21 +383,10 @@ export const RoomDetail: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {similarRooms.map((r) => (
-              <RoomCard key={r.id} room={r} onRequestTour={(rm) => {
-                setRoom(rm);
-                setShowTourModal(true);
-              }} />
+              <RoomCard key={r.id} room={r} />
             ))}
           </div>
         </section>
-      )}
-
-      {/* Viewing Tour Modal */}
-      {showTourModal && (
-        <RequestTourModal
-          room={room}
-          onClose={() => setShowTourModal(false)}
-        />
       )}
     </div>
   );

@@ -41,6 +41,8 @@ export const MOCK_ROOMS: Room[] = [
     landlordName: 'Nguyễn Văn Minh (Chủ nhà)',
     landlordPhone: '0987654321',
     landlordAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    latitude: 21.0341,
+    longitude: 105.7876,
     hasMezzanine: false,
     isFeatured: true,
     createdAt: '2026-07-20T10:00:00Z',

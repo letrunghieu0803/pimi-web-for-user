@@ -112,13 +112,13 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
             Xem chi tiết
           </Link>
           
-          <button
-            onClick={() => onRequestTour?.(room)}
-            className="flex-1 py-2.5 rounded-xl gradient-bg text-white font-bold text-xs shadow-md shadow-indigo-500/20 hover:scale-[1.02] transition-transform flex items-center justify-center gap-1.5"
+          <Link
+            to={`/rooms/${room.id}`}
+            className="flex-1 py-2.5 rounded-xl gradient-bg text-white font-bold text-xs shadow-md shadow-indigo-500/20 hover:scale-[1.02] transition-transform flex items-center justify-center gap-1.5 text-center"
           >
             <CalendarCheck className="w-3.5 h-3.5" />
             <span>Hẹn xem phòng</span>
-          </button>
+          </Link>
         </div>
       </div>
     </div>

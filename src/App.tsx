@@ -18,8 +18,12 @@ import { Contact } from '@/pages/Contact';
 // Auth & Tenant Profile Pages
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
+import { ForgotPassword } from '@/pages/ForgotPassword';
+import { VerifyEmail } from '@/pages/VerifyEmail';
 import { Profile } from '@/pages/Profile';
 import { BookingHistory } from '@/pages/BookingHistory';
+import { TenantAppointments } from '@/pages/TenantAppointments';
+import { NotificationsPage } from '@/pages/Notifications';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,8 +55,12 @@ export const App: React.FC = () => {
                   {/* Auth Routes */}
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/bookings" element={<BookingHistory />} />
+                  <Route path="/appointments" element={<TenantAppointments />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
                 </Routes>
               </main>
               <Footer />

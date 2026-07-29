@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { Building2, Phone, Lock, LogIn, UserPlus, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Building2, Phone, Lock, LogIn, ShieldCheck } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const { login } = useAuth();
@@ -10,16 +10,18 @@ export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [phoneNumber, setPhoneNumber] = useState('0988776655');
-  const [password, setPassword] = useState('123456');
+  const [usernameOrPhone, setUsernameOrPhone] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const from = (location.state as any)?.from?.pathname || '/';
+  // Check if redirect query param or location state exists
+  const searchParams = new URLSearchParams(location.search);
+  const redirectUrl = searchParams.get('redirect') || (location.state as any)?.from?.pathname || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneNumber.trim()) {
-      toast.warning('Vui lòng nhập số điện thoại!');
+    if (!usernameOrPhone.trim()) {
+      toast.warning('Vui lòng nhập số điện thoại hoặc email!');
       return;
     }
     if (!password) {
@@ -29,10 +31,16 @@ export const Login: React.FC = () => {
 
     setLoading(true);
     try {
-      const res = await login(phoneNumber.trim(), password);
+      const res = await login(usernameOrPhone.trim(), password);
       if (res.success) {
-        toast.success(res.message);
-        navigate(from, { replace: true });
+        if (res.needsVerification) {
+          toast.info(res.message);
+          const targetEmail = res.email || usernameOrPhone.trim();
+          navigate(`/verify-email?email=${encodeURIComponent(targetEmail)}`, { replace: true });
+        } else {
+          toast.success(res.message);
+          navigate(redirectUrl, { replace: true });
+        }
       }
     } catch (err: any) {
       toast.error(err?.message || 'Đăng nhập không thành công!');
@@ -54,7 +62,7 @@ export const Login: React.FC = () => {
             Đăng Nhập Tài Khoản
           </h1>
           <p className="text-xs text-slate-500">
-            Quản lý lịch hẹn xem phòng và thông tin cá nhân của bạn.
+            Dành cho người thuê nhà để quản lý lịch hẹn xem phòng và cá nhân.
           </p>
         </div>
 
@@ -63,15 +71,15 @@ export const Login: React.FC = () => {
           
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Số điện thoại *
+              Số điện thoại / Email / Tên đăng nhập *
             </label>
             <div className="relative">
               <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <input
-                type="tel"
-                placeholder="Ví dụ: 0988776655"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                type="text"
+                placeholder="0988776655 hoặc email@gmail.com"
+                value={usernameOrPhone}
+                onChange={(e) => setUsernameOrPhone(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500"
                 required
               />
@@ -79,9 +87,14 @@ export const Login: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Mật khẩu *
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Mật khẩu *
+              </label>
+              <Link to="/forgot-password" className="text-xs text-indigo-600 hover:underline font-semibold">
+                Quên mật khẩu?
+              </Link>
+            </div>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <input
@@ -100,7 +113,7 @@ export const Login: React.FC = () => {
             <button
               type="button"
               onClick={() => {
-                setPhoneNumber('0988776655');
+                setUsernameOrPhone('0988776655');
                 setPassword('123456');
               }}
               className="text-indigo-600 font-bold hover:underline"
