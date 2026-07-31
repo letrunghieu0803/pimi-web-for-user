@@ -16,6 +16,8 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
     return `${price.toLocaleString('vi-VN')}đ`;
   };
 
+  const detailLink = room.roomGroupId ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`;
+
   return (
     <div className="glass-card rounded-3xl overflow-hidden flex flex-col justify-between group border border-slate-200/80 hover:border-indigo-200">
       
@@ -32,7 +34,11 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
           <span className="badge-tag bg-emerald-500/90 text-white backdrop-blur-md shadow-sm">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Phòng trống</span>
+            <span>
+              {room.roomGroupId && room.availableCount !== undefined
+                ? `${room.availableCount} phòng trống`
+                : 'Phòng trống'}
+            </span>
           </span>
 
           {room.hasMezzanine && (
@@ -64,7 +70,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
           </div>
 
           {/* Title */}
-          <Link to={`/rooms/${room.id}`} className="block group-hover:text-indigo-600 transition-colors">
+          <Link to={detailLink} className="block group-hover:text-indigo-600 transition-colors">
             <h3 className="text-base font-bold text-slate-900 line-clamp-2 leading-snug font-heading">
               {room.name}
             </h3>
@@ -106,14 +112,14 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
         {/* Card Footer Actions */}
         <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
           <Link
-            to={`/rooms/${room.id}`}
+            to={detailLink}
             className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors text-center"
           >
             Xem chi tiết
           </Link>
           
           <Link
-            to={`/rooms/${room.id}`}
+            to={detailLink}
             className="flex-1 py-2.5 rounded-xl gradient-bg text-white font-bold text-xs shadow-md shadow-indigo-500/20 hover:scale-[1.02] transition-transform flex items-center justify-center gap-1.5 text-center"
           >
             <CalendarCheck className="w-3.5 h-3.5" />

@@ -30,6 +30,8 @@ export interface Room {
   createdAt: string;
   updatedAt?: string;
   services?: RoomService[];
+  roomGroupId?: string | null;
+  availableCount?: number;
 }
 
 export interface RoomService {

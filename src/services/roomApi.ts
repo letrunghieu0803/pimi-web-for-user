@@ -89,12 +89,15 @@ const mapBackendRoomToRoom = (item: any): Room => {
     createdAt: item.createdAt || new Date().toISOString(),
     updatedAt: item.updatedAt,
     services,
+    roomGroupId: item.roomGroupId || null,
+    availableCount: item.availableCount,
   };
 };
 
 // In-flight deduplication promise maps
 const inFlightFeedPromises = new Map<string, Promise<Room[]>>();
 const inFlightDetailPromises = new Map<string, Promise<Room | null>>();
+const inFlightGroupDetailPromises = new Map<string, Promise<Room | null>>();
 
 const fetchPublicFeed = (district?: string, search?: string): Promise<Room[]> => {
   const cacheKey = `${district || ''}:${search || ''}`;
@@ -155,6 +158,34 @@ const fetchRoomDetail = (id: string): Promise<Room | null> => {
     });
 
   inFlightDetailPromises.set(id, promise);
+  return promise;
+};
+
+const fetchRoomGroupDetail = (groupId: string): Promise<Room | null> => {
+  if (inFlightGroupDetailPromises.has(groupId)) {
+    return inFlightGroupDetailPromises.get(groupId)!;
+  }
+
+  const promise = axiosClient
+    .get(`/v1/rent-rooms/public/group-detail/${groupId}`)
+    .then((response: any) => {
+      const raw = response?.data || response;
+      if (raw && raw.id) {
+        return mapBackendRoomToRoom(raw);
+      }
+      return null;
+    })
+    .catch((error) => {
+      console.warn(`Failed to fetch room group detail for id ${groupId}:`, error);
+      return null;
+    })
+    .finally(() => {
+      setTimeout(() => {
+        inFlightGroupDetailPromises.delete(groupId);
+      }, 500);
+    });
+
+  inFlightGroupDetailPromises.set(groupId, promise);
   return promise;
 };
 
@@ -236,6 +267,12 @@ export const roomApi = {
     if (room) return room;
 
     return MOCK_ROOMS.find((r) => r.id === id) || null;
+  },
+
+  // Get an aggregated Room-group detail by group ID (shows shared info +
+  // availableCount + a representative room's photos/amenities)
+  getRoomGroupById: async (groupId: string): Promise<Room | null> => {
+    return fetchRoomGroupDetail(groupId);
   },
 
   // Submit viewing request

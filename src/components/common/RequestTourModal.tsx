@@ -47,10 +47,11 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
     setLoading(true);
     try {
       const fullNote = `Ngày mong muốn: ${preferredDate} lúc ${preferredTime}${notes.trim() ? `. Ghi chú: ${notes.trim()}` : ''}`;
-      await appointmentApi.createAppointment({
-        rentRoomId: room.id,
-        note: fullNote,
-      });
+      await appointmentApi.createAppointment(
+        room.roomGroupId
+          ? { roomGroupId: room.roomGroupId, note: fullNote }
+          : { rentRoomId: room.id, note: fullNote }
+      );
 
       toast.success('Đã gửi yêu cầu xem phòng thành công! Chủ nhà sẽ phản hồi các khung giờ phù hợp cho bạn.');
       onSuccess?.();

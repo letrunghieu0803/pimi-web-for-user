@@ -10,7 +10,9 @@ import { VietMapViewer } from '@/components/common/VietMapViewer';
 import { useToast } from '@/context/ToastContext';
 
 export const RoomDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, groupId } = useParams<{ id?: string; groupId?: string }>();
+  const isGroupView = !!groupId;
+  const targetId = groupId || id;
   const navigate = useNavigate();
   const toast = useToast();
   const { user, isAuthenticated } = useAuth();
@@ -23,14 +25,17 @@ export const RoomDetail: React.FC = () => {
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchActiveAppointment = async () => {
-    if (!isAuthenticated || !id) return;
+  const fetchActiveAppointment = async (currentRoom: Room | null) => {
+    if (!isAuthenticated || !targetId || !currentRoom) return;
     try {
       const res: any = await appointmentApi.getTenantAppointments();
       const list: Appointment[] = res.data?.data || res.data || (Array.isArray(res) ? res : []);
-      const found = list.find(
-        (app) => app.rentRoomId === id && ['PENDING_OWNER', 'OWNER_OFFERED_TIMES', 'USER_ACCEPTED'].includes(app.status)
-      );
+      const found = list.find((app) => {
+        const matchesRoom = currentRoom.roomGroupId
+          ? app.rentRoom?.roomGroupId === currentRoom.roomGroupId
+          : app.rentRoomId === targetId;
+        return matchesRoom && ['PENDING_OWNER', 'OWNER_OFFERED_TIMES', 'USER_ACCEPTED'].includes(app.status);
+      });
       setActiveAppointment(found || null);
     } catch (err) {
       console.warn('Failed to fetch tenant appointment:', err);
@@ -38,22 +43,26 @@ export const RoomDetail: React.FC = () => {
   };
 
   useEffect(() => {
-    if (id) {
+    if (targetId) {
       window.scrollTo(0, 0);
-      roomApi.getRoomById(id).then((data) => {
+      const fetchDetail = isGroupView ? roomApi.getRoomGroupById(targetId) : roomApi.getRoomById(targetId);
+      fetchDetail.then((data) => {
         setRoom(data);
         setActiveImageIndex(0);
+        fetchActiveAppointment(data);
       });
 
       roomApi.getRooms().then((all) => {
-        setSimilarRooms(all.filter((r) => r.id !== id).slice(0, 3));
+        // Grouped listings are keyed by roomGroupId (the representative room's
+        // own id != the group's id), so exclude by group id when applicable —
+        // otherwise the current group could show up in its own recommendations.
+        setSimilarRooms(
+          all.filter((r) => (r.roomGroupId ? r.roomGroupId !== targetId : r.id !== targetId)).slice(0, 3)
+        );
       });
     }
-  }, [id]);
-
-  useEffect(() => {
-    fetchActiveAppointment();
-  }, [id, isAuthenticated]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetId, isGroupView, isAuthenticated]);
 
   if (!room) {
     return (
@@ -78,7 +87,7 @@ export const RoomDetail: React.FC = () => {
   const handleRequestViewing = async () => {
     if (!isAuthenticated) {
       toast.warning('Vui lòng đăng nhập để gửi yêu cầu xem phòng!');
-      navigate(`/login?redirect=/rooms/${room.id}`);
+      navigate(`/login?redirect=${isGroupView ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`}`);
       return;
     }
 
@@ -92,13 +101,14 @@ export const RoomDetail: React.FC = () => {
     setSubmitting(true);
     try {
       const fullNote = `Yêu cầu xem phòng từ người thuê ${user?.fullName || ''} (${user?.phoneNumber || ''})`;
-      await appointmentApi.createAppointment({
-        rentRoomId: room.id,
-        note: fullNote,
-      });
+      await appointmentApi.createAppointment(
+        room.roomGroupId
+          ? { roomGroupId: room.roomGroupId, note: fullNote }
+          : { rentRoomId: room.id, note: fullNote }
+      );
 
       toast.success('Đã gửi yêu cầu xem phòng thành công! Chủ nhà sẽ nhận được thông tin cá nhân và đề xuất các khung giờ cho bạn.');
-      fetchActiveAppointment();
+      fetchActiveAppointment(room);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || 'Có lỗi xảy ra khi gửi yêu cầu!');
     } finally {
@@ -158,7 +168,11 @@ export const RoomDetail: React.FC = () => {
               />
               <div className="absolute top-4 left-4 bg-emerald-500/90 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md flex items-center gap-1 shadow-md">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Phòng trống khả dụng</span>
+                <span>
+                  {isGroupView && room.availableCount !== undefined
+                    ? `${room.availableCount} phòng đang trống`
+                    : 'Phòng trống khả dụng'}
+                </span>
               </div>
             </div>
 
@@ -191,6 +205,11 @@ export const RoomDetail: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
               {room.name}
             </h1>
+            {isGroupView && (
+              <p className="text-xs text-slate-500">
+                Tin đăng đại diện cho {room.availableCount ?? 'nhiều'} phòng giống hệt nhau (cùng diện tích, giá, loại phòng) trong {room.houseName}.
+              </p>
+            )}
             <p className="flex items-center gap-1.5 text-sm text-slate-600">
               <MapPin className="w-4 h-4 text-indigo-600 shrink-0" />
               <span>{room.address}, {room.district}, {room.city}</span>

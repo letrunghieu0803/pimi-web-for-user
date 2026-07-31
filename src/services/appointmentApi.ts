@@ -24,6 +24,7 @@ export interface Appointment {
   rentRoom?: {
     id: string;
     name: string;
+    roomGroupId?: string | null;
     images?: Array<{ image?: { link?: string } }>;
   };
   rentHouse?: {
@@ -41,7 +42,7 @@ export interface Appointment {
 }
 
 export const appointmentApi = {
-  createAppointment: (payload: { rentRoomId: string; note?: string }) => {
+  createAppointment: (payload: { rentRoomId?: string; roomGroupId?: string; note?: string }) => {
     return axiosClient.post('/v1/appointments', payload);
   },
 
