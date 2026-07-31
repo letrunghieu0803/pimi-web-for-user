@@ -3,8 +3,10 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@/context/ToastContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { SocketProvider } from '@/context/SocketContext';
 import { Navbar } from '@/components/common/Navbar';
 import { Footer } from '@/components/common/Footer';
+import { RouteTracker } from '@/components/common/RouteTracker';
 
 // Pages
 import { Home } from '@/pages/Home';
@@ -39,33 +41,36 @@ export const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <AuthProvider>
-          <Router>
-            <div className="min-h-screen flex flex-col justify-between bg-slate-50 font-sans text-slate-900 selection:bg-indigo-500 selection:text-white">
-              <Navbar />
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/rooms" element={<RoomList />} />
-                  <Route path="/rooms/:id" element={<RoomDetail />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/faq" element={<FAQ />} />
-                  <Route path="/privacy" element={<Privacy />} />
-                  <Route path="/contact" element={<Contact />} />
+          <SocketProvider>
+            <Router>
+              <RouteTracker />
+              <div className="min-h-screen flex flex-col justify-between bg-slate-50 font-sans text-slate-900 selection:bg-indigo-500 selection:text-white">
+                <Navbar />
+                <main className="flex-1">
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/rooms" element={<RoomList />} />
+                    <Route path="/rooms/:id" element={<RoomDetail />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/faq" element={<FAQ />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/contact" element={<Contact />} />
 
-                  {/* Auth Routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/verify-email" element={<VerifyEmail />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/bookings" element={<BookingHistory />} />
-                  <Route path="/appointments" element={<TenantAppointments />} />
-                  <Route path="/notifications" element={<NotificationsPage />} />
-                </Routes>
-              </main>
-              <Footer />
-            </div>
-          </Router>
+                    {/* Auth Routes */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/bookings" element={<BookingHistory />} />
+                    <Route path="/appointments" element={<TenantAppointments />} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
+                  </Routes>
+                </main>
+                <Footer />
+              </div>
+            </Router>
+          </SocketProvider>
         </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>

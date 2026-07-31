@@ -41,4 +41,12 @@ export const notificationApi = {
   deleteNotification: (id: string): Promise<any> => {
     return axiosClient.delete(`/v1/notifications/${id}`);
   },
+
+  registerDeviceToken: (token: string, platform: 'WEB' | 'ANDROID' | 'IOS' = 'WEB'): Promise<any> => {
+    return axiosClient.post('/v1/notifications/device-tokens', { token, platform });
+  },
+
+  unregisterDeviceToken: (token: string): Promise<any> => {
+    return axiosClient.delete(`/v1/notifications/device-tokens/${token}`);
+  },
 };

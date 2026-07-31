@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Bell, CheckCheck, Calendar, FileText, Info, Trash2, CheckCircle2, Clock } from 'lucide-react';
 import { notificationApi, NotificationItem } from '@/services/notificationApi';
+import { FilterTabs } from '@/components/common/FilterTabs';
 
 export const NotificationsPage: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'UNREAD'>('ALL');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -15,9 +17,10 @@ export const NotificationsPage: React.FC = () => {
       if (activeTab === 'UNREAD') {
         params.isRead = false;
       }
-      const [resList, resCount] = await Promise.all([
+      const [resList, resCount, resTotal] = await Promise.all([
         notificationApi.getNotifications(params),
-        notificationApi.getUnreadCount()
+        notificationApi.getUnreadCount(),
+        notificationApi.getNotifications({ pageSize: 1 }),
       ]);
 
       const list = resList?.data || resList || [];
@@ -25,6 +28,9 @@ export const NotificationsPage: React.FC = () => {
 
       const count = resCount?.data?.count ?? resCount?.count ?? 0;
       setUnreadCount(count);
+
+      const total = resTotal?.data?.metadata?.totalItems ?? resTotal?.metadata?.totalItems ?? 0;
+      setTotalCount(total);
     } catch (err) {
       console.error('Error fetching notifications:', err);
     } finally {
@@ -127,33 +133,14 @@ export const NotificationsPage: React.FC = () => {
         </div>
 
         {/* Filter tabs */}
-        <div className="flex items-center gap-2 bg-slate-200/60 p-1.5 rounded-2xl w-fit">
-          <button
-            onClick={() => setActiveTab('ALL')}
-            className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'ALL'
-                ? 'bg-white text-indigo-600 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            Tất cả
-          </button>
-          <button
-            onClick={() => setActiveTab('UNREAD')}
-            className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-              activeTab === 'UNREAD'
-                ? 'bg-white text-indigo-600 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <span>Chưa đọc</span>
-            {unreadCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center font-bold">
-                {unreadCount}
-              </span>
-            )}
-          </button>
-        </div>
+        <FilterTabs
+          tabs={[
+            { key: 'ALL', label: 'Tất cả', count: totalCount },
+            { key: 'UNREAD', label: 'Chưa đọc', count: unreadCount },
+          ]}
+          active={activeTab}
+          onChange={setActiveTab}
+        />
 
         {/* List */}
         {loading ? (

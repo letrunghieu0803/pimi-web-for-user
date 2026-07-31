@@ -5,7 +5,7 @@ import { roomApi } from '@/services/roomApi';
 import { appointmentApi, Appointment } from '@/services/appointmentApi';
 import { useAuth } from '@/context/AuthContext';
 import { RoomCard } from '@/components/common/RoomCard';
-import { MapPin, Maximize2, Users, ShieldCheck, PhoneCall, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle } from 'lucide-react';
+import { MapPin, Maximize2, Users, ShieldCheck, PhoneCall, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt } from 'lucide-react';
 import { VietMapViewer } from '@/components/common/VietMapViewer';
 import { useToast } from '@/context/ToastContext';
 
@@ -247,6 +247,32 @@ export const RoomDetail: React.FC = () => {
               ))}
             </div>
           </div>
+
+          {/* Services Section */}
+          {room.services && room.services.length > 0 && (
+            <div className="space-y-4 pt-4 border-t border-slate-200">
+              <h3 className="text-lg font-bold text-slate-900 font-heading">
+                Dịch Vụ & Phí Đi Kèm
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {room.services.map((svc) => (
+                  <div
+                    key={svc.id}
+                    className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/60"
+                  >
+                    <Receipt className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">{svc.name}</p>
+                      <p className="text-xs text-emerald-600 font-semibold">
+                        {svc.price !== undefined ? `${svc.price.toLocaleString('vi-VN')} đ` : 'Liên hệ chủ nhà'}
+                      </p>
+                      {svc.note && <p className="text-[11px] text-slate-400 mt-0.5">{svc.note}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Description Section */}
           <div className="space-y-3 pt-4 border-t border-slate-200">

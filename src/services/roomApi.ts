@@ -49,6 +49,13 @@ const mapBackendRoomToRoom = (item: any): Room => {
     .map((f: any) => f.name || f.furniture?.name)
     .filter(Boolean);
 
+  const services = (item.usedServices || []).map((s: any) => ({
+    id: s.id,
+    name: s.name,
+    price: s.price !== undefined && s.price !== null ? Number(s.price) : undefined,
+    note: s.note || undefined,
+  }));
+
   const priceNum = Number(item.price || house.defaultPrice || 0);
   const areaNum = Number(item.roomArea || 0);
 
@@ -81,6 +88,7 @@ const mapBackendRoomToRoom = (item: any): Room => {
     isFeatured: true,
     createdAt: item.createdAt || new Date().toISOString(),
     updatedAt: item.updatedAt,
+    services,
   };
 };
 

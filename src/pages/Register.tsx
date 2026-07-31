@@ -17,6 +17,7 @@ export const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [agreedToPolicy, setAgreedToPolicy] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +45,11 @@ export const Register: React.FC = () => {
 
     if (password !== confirmPassword) {
       toast.warning('Mật khẩu nhập lại không trùng khớp!');
+      return;
+    }
+
+    if (!agreedToPolicy) {
+      toast.warning('Vui lòng đồng ý với Chính sách Bảo mật để tiếp tục!');
       return;
     }
 
@@ -188,6 +194,22 @@ export const Register: React.FC = () => {
             <CheckCircle2 className="w-4 h-4 shrink-0 text-indigo-600" />
             <span>Tài khoản sẽ được tạo với Vai trò Người Thuê Nhà (RENT_USER).</span>
           </div>
+
+          <label className="flex items-start gap-2 text-xs text-slate-600 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={agreedToPolicy}
+              onChange={(e) => setAgreedToPolicy(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span>
+              Tôi đã đọc và đồng ý với{' '}
+              <Link to="/privacy" target="_blank" className="text-indigo-600 font-bold hover:underline">
+                Chính sách Bảo mật
+              </Link>{' '}
+              của Pimi.
+            </span>
+          </label>
 
           <button
             type="submit"

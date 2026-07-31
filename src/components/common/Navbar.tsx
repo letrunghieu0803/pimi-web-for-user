@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useSocket } from '@/context/SocketContext';
 import { Home, Search, Menu, X, Building2, HelpCircle, Info, LogIn, UserPlus, User, CalendarCheck, LogOut, ChevronDown, Bell, CheckCheck } from 'lucide-react';
 import { notificationApi, NotificationItem } from '@/services/notificationApi';
 
 const NotificationBell: React.FC = () => {
   const navigate = useNavigate();
+  const socket = useSocket();
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [recentNotifications, setRecentNotifications] = useState<NotificationItem[]>([]);
@@ -28,9 +30,21 @@ const NotificationBell: React.FC = () => {
 
   useEffect(() => {
     fetchUnread();
-    const interval = setInterval(fetchUnread, 15000);
-    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewNotification = (notification: NotificationItem) => {
+      setUnreadCount(prev => prev + 1);
+      setRecentNotifications(prev => [notification, ...prev].slice(0, 5));
+    };
+
+    socket.on('notification:new', handleNewNotification);
+    return () => {
+      socket.off('notification:new', handleNewNotification);
+    };
+  }, [socket]);
 
   const handleMarkAsRead = async (item: NotificationItem) => {
     if (!item.isRead) {

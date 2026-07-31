@@ -13,10 +13,11 @@ import {
 } from 'lucide-react';
 import { appointmentApi, Appointment, TimeSlot } from '@/services/appointmentApi';
 import { useToast } from '@/context/ToastContext';
+import { FilterTabs } from '@/components/common/FilterTabs';
 
 export const TenantAppointments: React.FC = () => {
   const toast = useToast();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
@@ -27,13 +28,9 @@ export const TenantAppointments: React.FC = () => {
   const fetchAppointments = async () => {
     setLoading(true);
     try {
-      const params: any = {};
-      if (statusFilter !== 'ALL') {
-        params.status = statusFilter;
-      }
-      const res: any = await appointmentApi.getTenantAppointments(params);
+      const res: any = await appointmentApi.getTenantAppointments({});
       const list = res.data?.data || res.data || [];
-      setAppointments(list);
+      setAllAppointments(list);
     } catch (err: any) {
       toast.error('Tải danh sách lịch hẹn thất bại!');
     } finally {
@@ -43,7 +40,18 @@ export const TenantAppointments: React.FC = () => {
 
   useEffect(() => {
     fetchAppointments();
-  }, [statusFilter]);
+  }, []);
+
+  const appointments =
+    statusFilter === 'ALL' ? allAppointments : allAppointments.filter((app) => app.status === statusFilter);
+
+  const filterTabs = [
+    { key: 'ALL', label: 'Tất cả', count: allAppointments.length },
+    { key: 'OWNER_OFFERED_TIMES', label: 'Yêu cầu xác nhận', count: allAppointments.filter((a) => a.status === 'OWNER_OFFERED_TIMES').length },
+    { key: 'PENDING_OWNER', label: 'Đang chờ đối phương', count: allAppointments.filter((a) => a.status === 'PENDING_OWNER').length },
+    { key: 'USER_ACCEPTED', label: 'Đã chốt lịch', count: allAppointments.filter((a) => a.status === 'USER_ACCEPTED').length },
+    { key: 'COMPLETED', label: 'Đã hoàn thành', count: allAppointments.filter((a) => a.status === 'COMPLETED').length },
+  ];
 
   const handleSelectSlotRadio = (appId: string, slotId: string) => {
     setSelectedSlots({ ...selectedSlots, [appId]: slotId });
@@ -159,27 +167,7 @@ export const TenantAppointments: React.FC = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-200">
-        {[
-          { key: 'ALL', label: 'Tất cả' },
-          { key: 'OWNER_OFFERED_TIMES', label: 'Yêu cầu xác nhận' },
-          { key: 'PENDING_OWNER', label: 'Đang chờ đối phương' },
-          { key: 'USER_ACCEPTED', label: 'Đã chốt lịch' },
-          { key: 'COMPLETED', label: 'Đã hoàn thành' },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setStatusFilter(tab.key)}
-            className={`px-4 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${
-              statusFilter === tab.key
-                ? 'bg-indigo-600 text-white shadow-sm font-semibold'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <FilterTabs tabs={filterTabs} active={statusFilter} onChange={setStatusFilter} />
 
       {/* Appointment Cards */}
       {loading ? (

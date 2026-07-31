@@ -29,6 +29,14 @@ export interface Room {
   isFeatured?: boolean;
   createdAt: string;
   updatedAt?: string;
+  services?: RoomService[];
+}
+
+export interface RoomService {
+  id: string;
+  name: string;
+  price?: number;
+  note?: string;
 }
 
 export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';

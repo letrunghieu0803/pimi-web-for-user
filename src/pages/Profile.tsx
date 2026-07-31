@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { roomApi } from '@/services/roomApi';
-import { User, Phone, Mail, MapPin, Save, ShieldCheck, CalendarCheck, CheckCircle2, Clock } from 'lucide-react';
+import { useNotificationPermission } from '@/hooks/useNotificationPermission';
+import { User, Phone, Mail, MapPin, Save, ShieldCheck, CalendarCheck, CheckCircle2, Clock, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Profile: React.FC = () => {
   const { user, updateProfile } = useAuth();
   const toast = useToast();
+  const { state: notifState, enableNotifications, isSupported: notifSupported } = useNotificationPermission();
 
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
@@ -106,6 +108,36 @@ export const Profile: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Push Notification Toggle */}
+      {notifSupported && (
+        <div className="glass-panel p-6 rounded-3xl border border-slate-200 shadow-xl flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <Bell className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900">Thông báo đẩy (Push Notification)</p>
+              <p className="text-xs text-slate-500">
+                {notifState === 'granted'
+                  ? 'Đã bật thông báo trên thiết bị này.'
+                  : notifState === 'denied'
+                    ? 'Trình duyệt đã chặn thông báo. Vui lòng bật lại trong cài đặt trình duyệt.'
+                    : 'Nhận thông báo ngay cả khi không mở trình duyệt.'}
+              </p>
+            </div>
+          </div>
+          {notifState !== 'granted' && (
+            <button
+              onClick={enableNotifications}
+              disabled={notifState === 'requesting' || notifState === 'denied'}
+              className="px-4 py-2.5 rounded-2xl gradient-bg text-white font-bold text-xs shadow-md disabled:opacity-50 shrink-0"
+            >
+              {notifState === 'requesting' ? 'Đang bật...' : 'Bật thông báo'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Edit Form */}
       <div className="glass-panel p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
