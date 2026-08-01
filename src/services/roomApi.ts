@@ -1,6 +1,6 @@
 import { Room, ViewingRequest } from '@/types';
-import { MOCK_ROOMS } from '@/data/mockData';
 import { axiosClient } from './axiosClient';
+
 
 const VIEWING_REQUESTS_KEY = 'pimi_tenant_viewing_requests';
 
@@ -94,13 +94,47 @@ const mapBackendRoomToRoom = (item: any): Room => {
   };
 };
 
+interface PublicFeedParams {
+  district?: string;
+  search?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  roomType?: string;
+  hasMezzanine?: boolean | null;
+  amenities?: string[];
+  pageNumber?: number;
+  pageSize?: number;
+  sortBy?: 'newest' | 'price_asc' | 'price_desc';
+}
+
+interface PublicFeedResult {
+  rooms: Room[];
+  totalItems: number;
+  totalPages: number;
+}
+
+const priceRangeToMinMax = (priceRange?: string): { minPrice?: number; maxPrice?: number } => {
+  switch (priceRange) {
+    case '0-3m':
+      return { maxPrice: 3000000 };
+    case '3m-5m':
+      return { minPrice: 3000000, maxPrice: 5000000 };
+    case '5m-8m':
+      return { minPrice: 5000000, maxPrice: 8000000 };
+    case '8m+':
+      return { minPrice: 8000000 };
+    default:
+      return {};
+  }
+};
+
 // In-flight deduplication promise maps
-const inFlightFeedPromises = new Map<string, Promise<Room[]>>();
+const inFlightFeedPromises = new Map<string, Promise<PublicFeedResult>>();
 const inFlightDetailPromises = new Map<string, Promise<Room | null>>();
 const inFlightGroupDetailPromises = new Map<string, Promise<Room | null>>();
 
-const fetchPublicFeed = (district?: string, search?: string): Promise<Room[]> => {
-  const cacheKey = `${district || ''}:${search || ''}`;
+const fetchPublicFeed = (params: PublicFeedParams): Promise<PublicFeedResult> => {
+  const cacheKey = JSON.stringify(params);
   if (inFlightFeedPromises.has(cacheKey)) {
     return inFlightFeedPromises.get(cacheKey)!;
   }
@@ -108,20 +142,33 @@ const fetchPublicFeed = (district?: string, search?: string): Promise<Room[]> =>
   const promise = axiosClient
     .get('/v1/rent-rooms/public/feed', {
       params: {
-        district: district !== 'Tất cả quận/huyện' ? district : undefined,
-        search: search || undefined,
+        district: params.district && params.district !== 'Tất cả quận/huyện' ? params.district : undefined,
+        search: params.search || undefined,
+        minPrice: params.minPrice,
+        maxPrice: params.maxPrice,
+        roomType: params.roomType && params.roomType !== 'ALL' ? params.roomType : undefined,
+        hasMezzanine:
+          params.hasMezzanine !== null && params.hasMezzanine !== undefined
+            ? params.hasMezzanine
+            : undefined,
+        amenities: params.amenities && params.amenities.length > 0 ? params.amenities.join(',') : undefined,
+        pageNumber: params.pageNumber,
+        pageSize: params.pageSize,
+        sortBy: params.sortBy,
       },
     })
     .then((response: any) => {
-      const items = response?.data || (Array.isArray(response) ? response : []);
-      if (Array.isArray(items) && items.length > 0) {
-        return items.map(mapBackendRoomToRoom);
-      }
-      return [];
+      const items = response?.data || [];
+      const metadata = response?.metadata || {};
+      return {
+        rooms: Array.isArray(items) ? items.map(mapBackendRoomToRoom) : [],
+        totalItems: metadata.totalItems ?? 0,
+        totalPages: metadata.totalPages ?? 0,
+      };
     })
     .catch((error) => {
-      console.warn('Failed to fetch rooms from backend API, falling back to mock data:', error);
-      return [];
+      console.warn('Failed to fetch rooms from backend API:', error);
+      return { rooms: [], totalItems: 0, totalPages: 0 };
     })
     .finally(() => {
       setTimeout(() => {
@@ -148,7 +195,7 @@ const fetchRoomDetail = (id: string): Promise<Room | null> => {
       return null;
     })
     .catch((error) => {
-      console.warn(`Failed to fetch room detail from backend for id ${id}, attempting fallback:`, error);
+      console.warn(`Failed to fetch room detail from backend for id ${id}:`, error);
       return null;
     })
     .finally(() => {
@@ -190,7 +237,37 @@ const fetchRoomGroupDetail = (groupId: string): Promise<Room | null> => {
 };
 
 export const roomApi = {
-  // Fetch list of rooms with real backend integration, in-flight request deduplication & mock fallback
+  // Fetch a page of rooms from backend public feed (no authentication required).
+  // All filters (price/type/mezzanine/amenities/search/district) and sorting are
+  // applied server-side, and the result comes back already paginated.
+  getRoomsPaginated: async (params?: {
+    district?: string;
+    priceRange?: string;
+    roomType?: string;
+    keyword?: string;
+    amenities?: string[];
+    hasMezzanine?: boolean | null;
+    pageNumber?: number;
+    pageSize?: number;
+    sortBy?: 'newest' | 'price_asc' | 'price_desc';
+  }): Promise<PublicFeedResult> => {
+    const { minPrice, maxPrice } = priceRangeToMinMax(params?.priceRange);
+    return fetchPublicFeed({
+      district: params?.district,
+      search: params?.keyword,
+      minPrice,
+      maxPrice,
+      roomType: params?.roomType,
+      hasMezzanine: params?.hasMezzanine,
+      amenities: params?.amenities,
+      pageNumber: params?.pageNumber,
+      pageSize: params?.pageSize,
+      sortBy: params?.sortBy,
+    });
+  },
+
+  // Back-compat helper for callers that just want a flat list (Home.tsx preview,
+  // the getRoomById fallback below) — fetches a single reasonably-sized page.
   getRooms: async (params?: {
     district?: string;
     priceRange?: string;
@@ -199,62 +276,8 @@ export const roomApi = {
     amenities?: string[];
     hasMezzanine?: boolean | null;
   }): Promise<Room[]> => {
-    let rawList = await fetchPublicFeed(
-      params?.district !== 'Tất cả quận/huyện' ? params?.district : undefined,
-      params?.keyword
-    );
-
-    // Fallback to initial mock rooms if backend returns empty list (e.g., initial DB seed state)
-    if (rawList.length === 0) {
-      rawList = [...MOCK_ROOMS];
-    }
-
-    let results = rawList;
-
-    if (params) {
-      if (params.district && params.district !== 'Tất cả quận/huyện') {
-        results = results.filter((r) => r.district.toLowerCase().includes(params.district!.toLowerCase()));
-      }
-
-      if (params.keyword && params.keyword.trim() !== '') {
-        const kw = params.keyword.toLowerCase().trim();
-        results = results.filter(
-          (r) =>
-            r.name.toLowerCase().includes(kw) ||
-            r.address.toLowerCase().includes(kw) ||
-            r.houseName.toLowerCase().includes(kw) ||
-            r.district.toLowerCase().includes(kw)
-        );
-      }
-
-      if (params.priceRange && params.priceRange !== 'ALL') {
-        if (params.priceRange === '0-3m') {
-          results = results.filter((r) => r.price <= 3000000);
-        } else if (params.priceRange === '3m-5m') {
-          results = results.filter((r) => r.price > 3000000 && r.price <= 5000000);
-        } else if (params.priceRange === '5m-8m') {
-          results = results.filter((r) => r.price > 5000000 && r.price <= 8000000);
-        } else if (params.priceRange === '8m+') {
-          results = results.filter((r) => r.price > 8000000);
-        }
-      }
-
-      if (params.roomType && params.roomType !== 'ALL') {
-        results = results.filter((r) => r.roomType === params.roomType);
-      }
-
-      if (params.hasMezzanine !== null && params.hasMezzanine !== undefined) {
-        results = results.filter((r) => r.hasMezzanine === params.hasMezzanine);
-      }
-
-      if (params.amenities && params.amenities.length > 0) {
-        results = results.filter((r) =>
-          params.amenities!.every((amt) => r.amenities.includes(amt))
-        );
-      }
-    }
-
-    return results;
+    const result = await roomApi.getRoomsPaginated({ ...params, pageNumber: 1, pageSize: 100 });
+    return result.rooms;
   },
 
   // Get Room detail by ID
@@ -266,7 +289,7 @@ export const roomApi = {
     const room = allRooms.find((r) => r.id === id);
     if (room) return room;
 
-    return MOCK_ROOMS.find((r) => r.id === id) || null;
+    return null;
   },
 
   // Get an aggregated Room-group detail by group ID (shows shared info +

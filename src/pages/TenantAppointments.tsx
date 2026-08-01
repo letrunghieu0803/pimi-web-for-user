@@ -14,12 +14,20 @@ import {
 import { appointmentApi, Appointment, TimeSlot } from '@/services/appointmentApi';
 import { useToast } from '@/context/ToastContext';
 import { FilterTabs } from '@/components/common/FilterTabs';
+import { Pagination } from '@/components/common/Pagination';
+
+const PAGE_SIZE = 10;
+const STATUS_KEYS = ['ALL', 'OWNER_OFFERED_TIMES', 'PENDING_OWNER', 'USER_ACCEPTED', 'COMPLETED'];
 
 export const TenantAppointments: React.FC = () => {
   const toast = useToast();
-  const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [pageNumber, setPageNumber] = useState(1);
 
   // Selected time slot per appointment id
   const [selectedSlots, setSelectedSlots] = useState<{ [appId: string]: string }>({});
@@ -28,9 +36,15 @@ export const TenantAppointments: React.FC = () => {
   const fetchAppointments = async () => {
     setLoading(true);
     try {
-      const res: any = await appointmentApi.getTenantAppointments({});
+      const res: any = await appointmentApi.getTenantAppointments({
+        status: statusFilter !== 'ALL' ? statusFilter : undefined,
+        pageNumber,
+        pageSize: PAGE_SIZE,
+      });
       const list = res.data?.data || res.data || [];
-      setAllAppointments(list);
+      setAppointments(list);
+      setTotalItems(res.data?.metadata?.total ?? res.metadata?.total ?? 0);
+      setTotalPages(res.data?.metadata?.totalPages ?? res.metadata?.totalPages ?? 0);
     } catch (err: any) {
       toast.error('Tải danh sách lịch hẹn thất bại!');
     } finally {
@@ -38,19 +52,41 @@ export const TenantAppointments: React.FC = () => {
     }
   };
 
+  const fetchStatusCounts = async () => {
+    const entries = await Promise.all(
+      STATUS_KEYS.map(async (key) => {
+        const res: any = await appointmentApi.getTenantAppointments({
+          status: key !== 'ALL' ? key : undefined,
+          pageNumber: 1,
+          pageSize: 1,
+        });
+        const total = res.data?.metadata?.total ?? res.metadata?.total ?? 0;
+        return [key, total] as const;
+      }),
+    );
+    setStatusCounts(Object.fromEntries(entries));
+  };
+
   useEffect(() => {
     fetchAppointments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, pageNumber]);
+
+  useEffect(() => {
+    fetchStatusCounts();
   }, []);
 
-  const appointments =
-    statusFilter === 'ALL' ? allAppointments : allAppointments.filter((app) => app.status === statusFilter);
+  const handleStatusFilterChange = (key: string) => {
+    setStatusFilter(key);
+    setPageNumber(1);
+  };
 
   const filterTabs = [
-    { key: 'ALL', label: 'Tất cả', count: allAppointments.length },
-    { key: 'OWNER_OFFERED_TIMES', label: 'Yêu cầu xác nhận', count: allAppointments.filter((a) => a.status === 'OWNER_OFFERED_TIMES').length },
-    { key: 'PENDING_OWNER', label: 'Đang chờ đối phương', count: allAppointments.filter((a) => a.status === 'PENDING_OWNER').length },
-    { key: 'USER_ACCEPTED', label: 'Đã chốt lịch', count: allAppointments.filter((a) => a.status === 'USER_ACCEPTED').length },
-    { key: 'COMPLETED', label: 'Đã hoàn thành', count: allAppointments.filter((a) => a.status === 'COMPLETED').length },
+    { key: 'ALL', label: 'Tất cả', count: statusCounts.ALL ?? 0 },
+    { key: 'OWNER_OFFERED_TIMES', label: 'Yêu cầu xác nhận', count: statusCounts.OWNER_OFFERED_TIMES ?? 0 },
+    { key: 'PENDING_OWNER', label: 'Đang chờ đối phương', count: statusCounts.PENDING_OWNER ?? 0 },
+    { key: 'USER_ACCEPTED', label: 'Đã chốt lịch', count: statusCounts.USER_ACCEPTED ?? 0 },
+    { key: 'COMPLETED', label: 'Đã hoàn thành', count: statusCounts.COMPLETED ?? 0 },
   ];
 
   const handleSelectSlotRadio = (appId: string, slotId: string) => {
@@ -72,6 +108,7 @@ export const TenantAppointments: React.FC = () => {
       });
       toast.success('Đã xác nhận chốt lịch xem phòng thành công!');
       fetchAppointments();
+      fetchStatusCounts();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || 'Có lỗi xảy ra!');
     } finally {
@@ -89,6 +126,7 @@ export const TenantAppointments: React.FC = () => {
       });
       toast.info('Đã từ chối các khung giờ đề xuất.');
       fetchAppointments();
+      fetchStatusCounts();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || 'Có lỗi xảy ra!');
     } finally {
@@ -167,7 +205,7 @@ export const TenantAppointments: React.FC = () => {
       </div>
 
       {/* Filter Tabs */}
-      <FilterTabs tabs={filterTabs} active={statusFilter} onChange={setStatusFilter} />
+      <FilterTabs tabs={filterTabs} active={statusFilter} onChange={handleStatusFilterChange} />
 
       {/* Appointment Cards */}
       {loading ? (
@@ -308,6 +346,16 @@ export const TenantAppointments: React.FC = () => {
             );
           })}
         </div>
+      )}
+
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={pageNumber}
+          totalPages={totalPages}
+          onPageChange={setPageNumber}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+        />
       )}
     </div>
   );

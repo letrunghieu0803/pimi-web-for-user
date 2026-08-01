@@ -2,18 +2,29 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Bell, CheckCheck, Calendar, FileText, Info, Trash2, CheckCircle2, Clock, RotateCcw } from 'lucide-react';
 import { notificationApi, NotificationItem } from '@/services/notificationApi';
 import { FilterTabs } from '@/components/common/FilterTabs';
+import { Pagination } from '@/components/common/Pagination';
+
+const PAGE_SIZE = 10;
 
 export const NotificationsPage: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'UNREAD' | 'READ'>('ALL');
+  const [pageNumber, setPageNumber] = useState(1);
+  const [currentTabTotal, setCurrentTabTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+
+  const handleTabChange = (tab: 'ALL' | 'UNREAD' | 'READ') => {
+    setActiveTab(tab);
+    setPageNumber(1);
+  };
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { pageSize: 50 };
+      const params: any = { pageNumber, pageSize: PAGE_SIZE };
       if (activeTab === 'UNREAD') {
         params.isRead = false;
       } else if (activeTab === 'READ') {
@@ -27,6 +38,8 @@ export const NotificationsPage: React.FC = () => {
 
       const list = resList?.data || resList || [];
       setNotifications(Array.isArray(list) ? list : []);
+      setCurrentTabTotal(resList?.metadata?.totalItems ?? resList?.data?.metadata?.totalItems ?? 0);
+      setTotalPages(resList?.metadata?.totalPages ?? resList?.data?.metadata?.totalPages ?? 0);
 
       const count = resCount?.data?.count ?? resCount?.count ?? 0;
       setUnreadCount(count);
@@ -38,7 +51,7 @@ export const NotificationsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, [activeTab, pageNumber]);
 
   useEffect(() => {
     fetchNotifications();
@@ -155,7 +168,7 @@ export const NotificationsPage: React.FC = () => {
             { key: 'READ', label: 'Đã đọc', count: Math.max(0, totalCount - unreadCount) },
           ]}
           active={activeTab}
-          onChange={setActiveTab}
+          onChange={handleTabChange}
         />
 
         {/* List */}
@@ -231,6 +244,16 @@ export const NotificationsPage: React.FC = () => {
               );
             })}
           </div>
+        )}
+
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={pageNumber}
+            totalPages={totalPages}
+            onPageChange={setPageNumber}
+            totalItems={currentTabTotal}
+            pageSize={PAGE_SIZE}
+          />
         )}
       </div>
     </div>

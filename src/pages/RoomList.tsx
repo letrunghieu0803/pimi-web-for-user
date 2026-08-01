@@ -5,7 +5,16 @@ import { roomApi } from '@/services/roomApi';
 import { RoomCard } from '@/components/common/RoomCard';
 import { RoomFilterBar } from '@/components/filter/RoomFilterBar';
 import { RequestTourModal } from '@/components/common/RequestTourModal';
+import { Pagination } from '@/components/common/Pagination';
 import { Building2, ArrowUpDown, Loader2, Info } from 'lucide-react';
+
+const PAGE_SIZE = 10;
+
+const SORT_TO_BACKEND: Record<'NEWEST' | 'PRICE_ASC' | 'PRICE_DESC', 'newest' | 'price_asc' | 'price_desc'> = {
+  NEWEST: 'newest',
+  PRICE_ASC: 'price_asc',
+  PRICE_DESC: 'price_desc',
+};
 
 export const RoomList: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -20,25 +29,33 @@ export const RoomList: React.FC = () => {
   });
 
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'NEWEST' | 'PRICE_ASC' | 'PRICE_DESC'>('NEWEST');
   const [selectedRoomForTour, setSelectedRoomForTour] = useState<Room | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    roomApi.getRooms(filters).then((data) => {
-      let sorted = [...data];
-      if (sortBy === 'PRICE_ASC') {
-        sorted.sort((a, b) => a.price - b.price);
-      } else if (sortBy === 'PRICE_DESC') {
-        sorted.sort((a, b) => b.price - a.price);
-      } else {
-        sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      }
-      setRooms(sorted);
-      setLoading(false);
-    });
+    setPageNumber(1);
   }, [filters, sortBy]);
+
+  useEffect(() => {
+    setLoading(true);
+    roomApi
+      .getRoomsPaginated({
+        ...filters,
+        pageNumber,
+        pageSize: PAGE_SIZE,
+        sortBy: SORT_TO_BACKEND[sortBy],
+      })
+      .then((result) => {
+        setRooms(result.rooms);
+        setTotalItems(result.totalItems);
+        setTotalPages(result.totalPages);
+        setLoading(false);
+      });
+  }, [filters, sortBy, pageNumber]);
 
   const handleResetFilters = () => {
     setFilters({
@@ -64,7 +81,7 @@ export const RoomList: React.FC = () => {
           Khám Phá & Đặt Lịch Xem Phòng
         </h1>
         <p className="text-sm text-slate-500 mt-1">
-          Tìm thấy <strong className="text-indigo-600 font-bold">{rooms.length}</strong> phòng trọ phù hợp với tiêu chí tìm kiếm của bạn.
+          Tìm thấy <strong className="text-indigo-600 font-bold">{totalItems}</strong> phòng trọ phù hợp với tiêu chí tìm kiếm của bạn.
         </p>
       </div>
 
@@ -78,7 +95,7 @@ export const RoomList: React.FC = () => {
       {/* Control Bar: Sort & Summary */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-200">
         <div className="text-sm text-slate-600 font-medium">
-          Hiển thị <strong>{rooms.length}</strong> phòng khả dụng
+          Hiển thị <strong>{rooms.length}</strong> / <strong>{totalItems}</strong> phòng khả dụng
         </div>
 
         {/* Sort selector */}
@@ -129,6 +146,16 @@ export const RoomList: React.FC = () => {
             />
           ))}
         </div>
+      )}
+
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={pageNumber}
+          totalPages={totalPages}
+          onPageChange={setPageNumber}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+        />
       )}
 
       {/* Viewing Tour Modal */}
