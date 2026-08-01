@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Bell, CheckCheck, Calendar, FileText, Info, Trash2, CheckCircle2, Clock } from 'lucide-react';
+import { Bell, CheckCheck, Calendar, FileText, Info, Trash2, CheckCircle2, Clock, RotateCcw } from 'lucide-react';
 import { notificationApi, NotificationItem } from '@/services/notificationApi';
 import { FilterTabs } from '@/components/common/FilterTabs';
 
 export const NotificationsPage: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'ALL' | 'UNREAD'>('ALL');
+  const [activeTab, setActiveTab] = useState<'ALL' | 'UNREAD' | 'READ'>('ALL');
   const [unreadCount, setUnreadCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -16,6 +16,8 @@ export const NotificationsPage: React.FC = () => {
       const params: any = { pageSize: 50 };
       if (activeTab === 'UNREAD') {
         params.isRead = false;
+      } else if (activeTab === 'READ') {
+        params.isRead = true;
       }
       const [resList, resCount, resTotal] = await Promise.all([
         notificationApi.getNotifications(params),
@@ -52,6 +54,19 @@ export const NotificationsPage: React.FC = () => {
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
       console.error('Error marking notification as read:', err);
+    }
+  };
+
+  const handleMarkAsUnread = async (e: React.MouseEvent, item: NotificationItem) => {
+    e.stopPropagation();
+    try {
+      await notificationApi.markAsUnread(item.id);
+      setNotifications(prev =>
+        prev.map(n => (n.id === item.id ? { ...n, isRead: false } : n))
+      );
+      setUnreadCount(prev => prev + 1);
+    } catch (err) {
+      console.error('Error marking notification as unread:', err);
     }
   };
 
@@ -137,6 +152,7 @@ export const NotificationsPage: React.FC = () => {
           tabs={[
             { key: 'ALL', label: 'Tất cả', count: totalCount },
             { key: 'UNREAD', label: 'Chưa đọc', count: unreadCount },
+            { key: 'READ', label: 'Đã đọc', count: Math.max(0, totalCount - unreadCount) },
           ]}
           active={activeTab}
           onChange={setActiveTab}
@@ -193,13 +209,24 @@ export const NotificationsPage: React.FC = () => {
                     </p>
                   </div>
 
-                  <button
-                    onClick={(e) => handleDelete(e, item.id)}
-                    title="Xóa thông báo"
-                    className="p-2 rounded-xl text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                    {!isUnread && (
+                      <button
+                        onClick={(e) => handleMarkAsUnread(e, item)}
+                        title="Đánh dấu chưa đọc"
+                        className="p-2 rounded-xl text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => handleDelete(e, item.id)}
+                      title="Xóa thông báo"
+                      className="p-2 rounded-xl text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               );
             })}

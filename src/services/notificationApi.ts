@@ -34,6 +34,10 @@ export const notificationApi = {
     return axiosClient.patch(`/v1/notifications/${id}/read`);
   },
 
+  markAsUnread: (id: string): Promise<any> => {
+    return axiosClient.patch(`/v1/notifications/${id}/unread`);
+  },
+
   markAllAsRead: (): Promise<any> => {
     return axiosClient.patch('/v1/notifications/read-all');
   },
