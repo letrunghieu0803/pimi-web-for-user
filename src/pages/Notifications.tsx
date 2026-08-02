@@ -3,6 +3,7 @@ import { Bell, CheckCheck, Calendar, FileText, Info, Trash2, CheckCircle2, Clock
 import { notificationApi, NotificationItem } from '@/services/notificationApi';
 import { FilterTabs } from '@/components/common/FilterTabs';
 import { Pagination } from '@/components/common/Pagination';
+import { NotificationListSkeleton } from '@/components/ui/Skeleton';
 
 const PAGE_SIZE = 10;
 
@@ -173,10 +174,7 @@ export const NotificationsPage: React.FC = () => {
 
         {/* List */}
         {loading ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80">
-            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-sm font-semibold text-slate-500">Đang tải thông báo...</p>
-          </div>
+          <NotificationListSkeleton count={PAGE_SIZE} />
         ) : notifications.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80">
             <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mx-auto mb-4">

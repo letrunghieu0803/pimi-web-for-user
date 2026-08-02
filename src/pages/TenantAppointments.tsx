@@ -15,6 +15,7 @@ import { appointmentApi, Appointment, TimeSlot } from '@/services/appointmentApi
 import { useToast } from '@/context/ToastContext';
 import { FilterTabs } from '@/components/common/FilterTabs';
 import { Pagination } from '@/components/common/Pagination';
+import { AppointmentListSkeleton } from '@/components/ui/Skeleton';
 
 const PAGE_SIZE = 10;
 const STATUS_KEYS = ['ALL', 'OWNER_OFFERED_TIMES', 'PENDING_OWNER', 'USER_ACCEPTED', 'COMPLETED'];
@@ -209,7 +210,7 @@ export const TenantAppointments: React.FC = () => {
 
       {/* Appointment Cards */}
       {loading ? (
-        <div className="text-center py-12 text-slate-400 text-xs">Đang tải lịch hẹn của bạn...</div>
+        <AppointmentListSkeleton count={PAGE_SIZE} />
       ) : appointments.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
           <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />

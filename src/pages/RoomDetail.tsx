@@ -8,6 +8,7 @@ import { RoomCard } from '@/components/common/RoomCard';
 import { MapPin, Maximize2, Users, ShieldCheck, PhoneCall, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt } from 'lucide-react';
 import { VietMapViewer } from '@/components/common/VietMapViewer';
 import { useToast } from '@/context/ToastContext';
+import { RoomDetailSkeleton } from '@/components/ui/Skeleton';
 
 export const RoomDetail: React.FC = () => {
   const { id, groupId } = useParams<{ id?: string; groupId?: string }>();
@@ -21,6 +22,7 @@ export const RoomDetail: React.FC = () => {
   const [similarRooms, setSimilarRooms] = useState<Room[]>([]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -45,12 +47,15 @@ export const RoomDetail: React.FC = () => {
   useEffect(() => {
     if (targetId) {
       window.scrollTo(0, 0);
+      setLoading(true);
       const fetchDetail = isGroupView ? roomApi.getRoomGroupById(targetId) : roomApi.getRoomById(targetId);
-      fetchDetail.then((data) => {
-        setRoom(data);
-        setActiveImageIndex(0);
-        fetchActiveAppointment(data);
-      });
+      fetchDetail
+        .then((data) => {
+          setRoom(data);
+          setActiveImageIndex(0);
+          fetchActiveAppointment(data);
+        })
+        .finally(() => setLoading(false));
 
       roomApi.getRooms().then((all) => {
         // Grouped listings are keyed by roomGroupId (the representative room's
@@ -64,10 +69,19 @@ export const RoomDetail: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetId, isGroupView, isAuthenticated]);
 
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <RoomDetailSkeleton />
+      </div>
+    );
+  }
+
   if (!room) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center space-y-4">
-        <h2 className="text-2xl font-bold text-slate-900 font-heading">Đang tải thông tin phòng...</h2>
+        <h2 className="text-2xl font-bold text-slate-900 font-heading">Không tìm thấy thông tin phòng</h2>
+        <p className="text-sm text-slate-500">Phòng trọ này có thể đã bị gỡ bỏ hoặc không còn tồn tại.</p>
         <Link to="/rooms" className="text-indigo-600 font-bold text-sm hover:underline">
           Quay lại danh sách phòng
         </Link>

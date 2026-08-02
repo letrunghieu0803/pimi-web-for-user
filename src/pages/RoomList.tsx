@@ -6,7 +6,8 @@ import { RoomCard } from '@/components/common/RoomCard';
 import { RoomFilterBar } from '@/components/filter/RoomFilterBar';
 import { RequestTourModal } from '@/components/common/RequestTourModal';
 import { Pagination } from '@/components/common/Pagination';
-import { Building2, ArrowUpDown, Loader2, Info } from 'lucide-react';
+import { Building2, ArrowUpDown, Info } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/ui/Skeleton';
 
 const PAGE_SIZE = 10;
 
@@ -116,10 +117,7 @@ export const RoomList: React.FC = () => {
 
       {/* Room Grid / Empty State */}
       {loading ? (
-        <div className="py-20 flex flex-col items-center justify-center space-y-3 text-slate-400">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-          <p className="text-sm font-medium">Đang tải danh sách phòng trọ...</p>
-        </div>
+        <CardGridSkeleton count={PAGE_SIZE} />
       ) : rooms.length === 0 ? (
         <div className="py-16 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-4 max-w-lg mx-auto">
           <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">

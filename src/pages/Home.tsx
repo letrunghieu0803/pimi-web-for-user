@@ -6,18 +6,24 @@ import { RoomCard } from '@/components/common/RoomCard';
 import { RequestTourModal } from '@/components/common/RequestTourModal';
 import { Search, ShieldCheck, Zap, PhoneCall, Sparkles, Building2, ChevronRight, HeartHandshake, CheckCircle } from 'lucide-react';
 import { DISTRICTS } from '@/data/mockData';
+import { CardGridSkeleton } from '@/components/ui/Skeleton';
 
 export const Home: React.FC = () => {
   const [featuredRooms, setFeaturedRooms] = useState<Room[]>([]);
   const [selectedRoomForTour, setSelectedRoomForTour] = useState<Room | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const [searchDistrict, setSearchDistrict] = useState('Tất cả quận/huyện');
   const [searchPrice, setSearchPrice] = useState('ALL');
 
   useEffect(() => {
-    roomApi.getRooms().then((rooms) => {
-      setFeaturedRooms(rooms.slice(0, 6));
-    });
+    setLoading(true);
+    roomApi
+      .getRooms()
+      .then((rooms) => {
+        setFeaturedRooms(rooms.slice(0, 6));
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -128,15 +134,19 @@ export const Home: React.FC = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredRooms.map((room) => (
-            <RoomCard
-              key={room.id}
-              room={room}
-              onRequestTour={(r) => setSelectedRoomForTour(r)}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <CardGridSkeleton count={6} />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredRooms.map((room) => (
+              <RoomCard
+                key={room.id}
+                room={room}
+                onRequestTour={(r) => setSelectedRoomForTour(r)}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Why Choose Pimi Feature Grid */}
