@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Room, FilterState } from '@/types';
 import { roomApi } from '@/services/roomApi';
@@ -18,6 +19,7 @@ const SORT_TO_BACKEND: Record<'NEWEST' | 'PRICE_ASC' | 'PRICE_DESC', 'newest' | 
 };
 
 export const RoomList: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
 
   const [filters, setFilters] = useState<FilterState>({
@@ -76,13 +78,13 @@ export const RoomList: React.FC = () => {
       <div>
         <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">
           <Building2 className="w-4 h-4" />
-          <span>Danh Sách Phòng Trọ Sẵn Có</span>
+          <span>{t('roomList.badge')}</span>
         </div>
         <h1 className="text-3xl font-black text-slate-900 font-heading">
-          Khám Phá & Đặt Lịch Xem Phòng
+          {t('roomList.title')}
         </h1>
         <p className="text-sm text-slate-500 mt-1">
-          Tìm thấy <strong className="text-indigo-600 font-bold">{totalItems}</strong> phòng trọ phù hợp với tiêu chí tìm kiếm của bạn.
+          {t('roomList.foundPrefix')} <strong className="text-indigo-600 font-bold">{totalItems}</strong> {t('roomList.foundSuffix')}
         </p>
       </div>
 
@@ -96,21 +98,21 @@ export const RoomList: React.FC = () => {
       {/* Control Bar: Sort & Summary */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-200">
         <div className="text-sm text-slate-600 font-medium">
-          Hiển thị <strong>{rooms.length}</strong> / <strong>{totalItems}</strong> phòng khả dụng
+          {t('roomList.showing')} <strong>{rooms.length}</strong> / <strong>{totalItems}</strong> {t('roomList.roomsAvailableSuffix')}
         </div>
 
         {/* Sort selector */}
         <div className="flex items-center gap-2">
           <ArrowUpDown className="w-4 h-4 text-slate-500" />
-          <span className="text-xs font-bold text-slate-600 uppercase">Sắp xếp:</span>
+          <span className="text-xs font-bold text-slate-600 uppercase">{t('roomList.sortBy')}</span>
           <select
             value={sortBy}
             onChange={(e: any) => setSortBy(e.target.value)}
             className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
           >
-            <option value="NEWEST">Mới nhất</option>
-            <option value="PRICE_ASC">Giá: Thấp đến Cao</option>
-            <option value="PRICE_DESC">Giá: Cao đến Thấp</option>
+            <option value="NEWEST">{t('roomList.sortNewest')}</option>
+            <option value="PRICE_ASC">{t('roomList.sortPriceAsc')}</option>
+            <option value="PRICE_DESC">{t('roomList.sortPriceDesc')}</option>
           </select>
         </div>
       </div>
@@ -123,15 +125,15 @@ export const RoomList: React.FC = () => {
           <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
             <Info className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900 font-heading">Không tìm thấy phòng phù hợp</h3>
+          <h3 className="text-lg font-bold text-slate-900 font-heading">{t('roomList.emptyTitle')}</h3>
           <p className="text-xs text-slate-500 max-w-xs mx-auto">
-            Thử thay đổi khu vực, khoảng giá hoặc đặt lại tất cả bộ lọc để tìm được nhiều kết quả hơn.
+            {t('roomList.emptyDesc')}
           </p>
           <button
             onClick={handleResetFilters}
             className="gradient-bg text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-md"
           >
-            Đặt lại bộ lọc
+            {t('roomList.resetFilters')}
           </button>
         </div>
       ) : (

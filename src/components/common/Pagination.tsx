@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PaginationProps {
@@ -18,6 +19,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   pageSize,
   className = '',
 }) => {
+  const { t } = useTranslation();
   if (totalPages <= 1) return null;
 
   const getPageNumbers = (): (number | 'ellipsis')[] => {
@@ -51,7 +53,7 @@ export const Pagination: React.FC<PaginationProps> = ({
     <div className={`flex flex-col sm:flex-row items-center justify-between gap-3 ${className}`}>
       {rangeStart !== undefined && rangeEnd !== undefined && (
         <p className="text-xs font-medium text-slate-500">
-          Hiển thị {rangeStart}–{rangeEnd} trong {totalItems}
+          {t('pagination.showingRange', { start: rangeStart, end: rangeEnd, total: totalItems })}
         </p>
       )}
       <div className="flex items-center gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl w-fit ml-auto">

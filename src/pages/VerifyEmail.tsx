@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { axiosClient } from '@/services/axiosClient';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { MailCheck, KeyRound, RefreshCw, ArrowLeft, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 export const VerifyEmail: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const toast = useToast();
@@ -37,12 +40,12 @@ export const VerifyEmail: React.FC = () => {
     e.preventDefault();
 
     if (!email.trim() || !email.includes('@')) {
-      toast.warning('Vui lòng nhập địa chỉ email hợp lệ!');
+      toast.warning(t('forgotPassword.toastInvalidEmail'));
       return;
     }
 
     if (!otp.trim() || otp.length < 6) {
-      toast.warning('Vui lòng nhập mã OTP xác thực gồm 6 chữ số!');
+      toast.warning(t('verifyEmail.toastInvalidOtp'));
       return;
     }
 
@@ -54,12 +57,11 @@ export const VerifyEmail: React.FC = () => {
       });
 
       markEmailVerified();
-      toast.success('Xác thực Email thành công! Bạn đã có thể sử dụng đầy đủ các tính năng của Pimi.');
+      toast.success(t('verifyEmail.toastVerifySuccess'));
       navigate('/', { replace: true });
     } catch (err: any) {
       console.warn('Verify email error:', err);
-      const msg = err?.response?.data?.message || err?.message || 'Mã OTP xác thực không đúng hoặc đã hết hạn!';
-      toast.error(Array.isArray(msg) ? msg.join(', ') : msg);
+      toast.error(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -67,7 +69,7 @@ export const VerifyEmail: React.FC = () => {
 
   const handleResendOtp = async () => {
     if (!email.trim()) {
-      toast.warning('Vui lòng nhập địa chỉ email!');
+      toast.warning(t('verifyEmail.toastNeedEmail'));
       return;
     }
     if (cooldown > 0) return;
@@ -77,11 +79,10 @@ export const VerifyEmail: React.FC = () => {
       await axiosClient.post('/v1/auth/send-verify-email-otp', {
         email: email.trim().toLowerCase(),
       });
-      toast.success('Mã OTP xác thực mới đã được gửi tới email của bạn!');
+      toast.success(t('verifyEmail.toastResendSuccess'));
       setCooldown(60); // 60 seconds cooldown
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || 'Không thể gửi lại mã OTP!';
-      toast.error(Array.isArray(msg) ? msg.join(', ') : msg);
+      toast.error(getApiErrorMessage(err));
     } finally {
       setResending(false);
     }
@@ -97,22 +98,22 @@ export const VerifyEmail: React.FC = () => {
             <MailCheck className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-black text-slate-900 font-heading">
-            Xác Thực Địa Chỉ Email
+            {t('verifyEmail.title')}
           </h1>
           <p className="text-xs text-slate-500">
-            Vui lòng nhập mã OTP 6 chữ số được gửi tới email <br />
-            <strong className="text-indigo-600 font-semibold">{email || 'của bạn'}</strong>
+            {t('verifyEmail.subtitle')} <br />
+            <strong className="text-indigo-600 font-semibold">{email || t('verifyEmail.yourEmail')}</strong>
           </p>
         </div>
 
         {/* Verification Form */}
         <form onSubmit={handleVerifyOtp} className="space-y-4">
-          
+
           {/* Email field if empty */}
           {!emailParam && (
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Địa chỉ Email *
+                {t('verifyEmail.emailLabel')}
               </label>
               <input
                 type="email"
@@ -128,7 +129,7 @@ export const VerifyEmail: React.FC = () => {
           {/* OTP Code Input */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Mã OTP xác thực (6 chữ số) *
+              {t('verifyEmail.otpLabel')}
             </label>
             <div className="relative">
               <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -152,14 +153,14 @@ export const VerifyEmail: React.FC = () => {
             className="w-full py-3.5 rounded-2xl gradient-bg text-white font-bold text-sm shadow-lg shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <CheckCircle2 className="w-4 h-4" />
-            <span>{loading ? 'Đang xác thực...' : 'Xác Thực Email'}</span>
+            <span>{loading ? t('verifyEmail.verifying') : t('verifyEmail.verifyButton')}</span>
           </button>
         </form>
 
         {/* Resend OTP Section */}
         <div className="pt-4 border-t border-slate-200/80 space-y-3 text-center">
           <p className="text-xs text-slate-500">
-            Mã OTP chưa tới hoặc đã hết hạn?
+            {t('verifyEmail.notReceived')}
           </p>
 
           <button
@@ -171,10 +172,10 @@ export const VerifyEmail: React.FC = () => {
             <RefreshCw className={`w-3.5 h-3.5 ${resending ? 'animate-spin' : ''}`} />
             <span>
               {cooldown > 0
-                ? `Gửi lại mã xác thực (${cooldown}s)`
+                ? t('verifyEmail.resendCooldown', { seconds: cooldown })
                 : resending
-                ? 'Đang gửi...'
-                : 'Gửi Lại Mã Xác Thực'}
+                ? t('forgotPassword.sending')
+                : t('verifyEmail.resendButton')}
             </span>
           </button>
 
@@ -184,7 +185,7 @@ export const VerifyEmail: React.FC = () => {
               className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-indigo-600 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Quay lại trang Đăng nhập</span>
+              <span>{t('forgotPassword.backToLogin')}</span>
             </Link>
           </div>
         </div>

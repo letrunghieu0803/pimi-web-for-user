@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
 import {
   FileText,
@@ -79,6 +80,7 @@ const INITIAL_RENTAL_HISTORY: RentalHistoryItem[] = [
 ];
 
 export const BookingHistory: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [filterType, setFilterType] = useState<'ALL' | 'WITH_CONTRACT' | 'DIRECT_RENTAL'>('ALL');
   const [selectedContract, setSelectedContract] = useState<RentalHistoryItem | null>(null);
@@ -92,7 +94,7 @@ export const BookingHistory: React.FC = () => {
   });
 
   const formatPrice = (price: number) => {
-    return `${(price / 1000000).toLocaleString('vi-VN')} triệu`;
+    return `${(price / 1000000).toLocaleString('vi-VN')} ${t('roomCard.million')}`;
   };
 
   return (
@@ -102,13 +104,13 @@ export const BookingHistory: React.FC = () => {
       <div>
         <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">
           <Award className="w-4 h-4" />
-          <span>Lịch Sử Thuê Nhà Thành Công</span>
+          <span>{t('bookingHistory.badge')}</span>
         </div>
         <h1 className="text-3xl font-black text-slate-900 font-heading">
-          Danh Sách Căn Hộ & Phòng Trọ Đã Thuê
+          {t('bookingHistory.title')}
         </h1>
         <p className="text-sm text-slate-500 mt-1">
-          Theo dõi thông tin chi tiết các phòng trọ bạn đã thuê thành công (Bao gồm hợp đồng điện tử chính thức hoặc xác nhận thuê trực tiếp với chủ nhà).
+          {t('bookingHistory.subtitle')}
         </p>
       </div>
 
@@ -119,8 +121,8 @@ export const BookingHistory: React.FC = () => {
             <CheckCircle2 className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-xs text-slate-500 font-semibold block">Tổng số phòng đã thuê</span>
-            <span className="text-2xl font-black text-slate-900 font-heading">{rentalList.length} phòng</span>
+            <span className="text-xs text-slate-500 font-semibold block">{t('bookingHistory.totalRented')}</span>
+            <span className="text-2xl font-black text-slate-900 font-heading">{t('bookingHistory.roomCount', { count: rentalList.length })}</span>
           </div>
         </div>
 
@@ -129,9 +131,9 @@ export const BookingHistory: React.FC = () => {
             <FileText className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-xs text-slate-500 font-semibold block">Có hợp đồng điện tử</span>
+            <span className="text-xs text-slate-500 font-semibold block">{t('bookingHistory.withContract')}</span>
             <span className="text-2xl font-black text-slate-900 font-heading">
-              {rentalList.filter((r) => r.hasContract).length} phòng
+              {t('bookingHistory.roomCount', { count: rentalList.filter((r) => r.hasContract).length })}
             </span>
           </div>
         </div>
@@ -141,9 +143,9 @@ export const BookingHistory: React.FC = () => {
             <UserCheck className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-xs text-slate-500 font-semibold block">Xác nhận trực tiếp</span>
+            <span className="text-xs text-slate-500 font-semibold block">{t('bookingHistory.directConfirm')}</span>
             <span className="text-2xl font-black text-slate-900 font-heading">
-              {rentalList.filter((r) => !r.hasContract).length} phòng
+              {t('bookingHistory.roomCount', { count: rentalList.filter((r) => !r.hasContract).length })}
             </span>
           </div>
         </div>
@@ -152,9 +154,9 @@ export const BookingHistory: React.FC = () => {
       {/* Filter Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto">
         {[
-          { id: 'ALL', label: 'Tất cả thuê thành công' },
-          { id: 'WITH_CONTRACT', label: 'Có Hợp đồng điện tử' },
-          { id: 'DIRECT_RENTAL', label: 'Xác nhận thuê trực tiếp' },
+          { id: 'ALL', label: t('bookingHistory.filterAll') },
+          { id: 'WITH_CONTRACT', label: t('bookingHistory.filterWithContract') },
+          { id: 'DIRECT_RENTAL', label: t('bookingHistory.filterDirect') },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -174,15 +176,15 @@ export const BookingHistory: React.FC = () => {
       {filtered.length === 0 ? (
         <div className="py-16 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-4 max-w-md mx-auto">
           <Building2 className="w-10 h-10 text-slate-400 mx-auto" />
-          <h3 className="text-lg font-bold text-slate-900 font-heading">Chưa có lịch sử thuê</h3>
+          <h3 className="text-lg font-bold text-slate-900 font-heading">{t('bookingHistory.emptyTitle')}</h3>
           <p className="text-xs text-slate-500">
-            Bạn chưa có dữ liệu thuê nhà thành công thuộc danh mục này.
+            {t('bookingHistory.emptyDesc')}
           </p>
           <Link
             to="/rooms"
             className="gradient-bg text-white px-6 py-2.5 rounded-2xl text-xs font-bold shadow-md inline-block"
           >
-            Khám phá phòng trọ khả dụng
+            {t('bookingHistory.exploreRooms')}
           </Link>
         </div>
       ) : (
@@ -214,12 +216,12 @@ export const BookingHistory: React.FC = () => {
                   {item.hasContract ? (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-xs">
                       <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      <span>Hợp đồng điện tử chính thức ({item.contractCode})</span>
+                      <span>{t('bookingHistory.officialContract', { code: item.contractCode })}</span>
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 text-xs font-bold">
                       <UserCheck className="w-4 h-4 text-sky-600" />
-                      <span>Xác nhận thuê trực tiếp</span>
+                      <span>{t('bookingHistory.directConfirm')}</span>
                     </span>
                   )}
                 </div>
@@ -228,21 +230,21 @@ export const BookingHistory: React.FC = () => {
               {/* Specification Info Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-medium text-slate-700 bg-slate-50/80 p-4 rounded-2xl border border-slate-200/60">
                 <div>
-                  <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">Giá thuê hàng tháng</span>
+                  <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">{t('bookingHistory.monthlyRent')}</span>
                   <strong className="text-slate-900 text-sm font-black text-emerald-600">
-                    {formatPrice(item.price)}/tháng
+                    {formatPrice(item.price)}{t('roomCard.perMonth')}
                   </strong>
                 </div>
 
                 <div>
-                  <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">Tiền cọc</span>
+                  <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">{t('roomDetail.deposit')}</span>
                   <strong className="text-slate-900 text-xs font-bold">
                     {formatPrice(item.depositPrice)}
                   </strong>
                 </div>
 
                 <div>
-                  <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">Thời hạn hợp đồng / Thuê</span>
+                  <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">{t('bookingHistory.contractDuration')}</span>
                   <strong className="text-slate-900 text-xs font-bold flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5 text-indigo-500" />
                     {item.startDate} → {item.endDate}
@@ -250,7 +252,7 @@ export const BookingHistory: React.FC = () => {
                 </div>
 
                 <div>
-                  <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">Chủ nhà liên hệ</span>
+                  <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">{t('bookingHistory.ownerContact')}</span>
                   <strong className="text-slate-900 text-xs font-bold block truncate">
                     {item.landlordName} ({item.landlordPhone})
                   </strong>
@@ -263,7 +265,7 @@ export const BookingHistory: React.FC = () => {
                   to={`/rooms/${item.roomId}`}
                   className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
                 >
-                  <span>Xem chi tiết thông tin phòng trọ</span>
+                  <span>{t('bookingHistory.viewRoomDetails')}</span>
                   <ChevronRight className="w-4 h-4" />
                 </Link>
 
@@ -273,7 +275,7 @@ export const BookingHistory: React.FC = () => {
                     className="px-3.5 py-2 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs border border-indigo-200 transition-colors flex items-center gap-1.5"
                   >
                     <PhoneCall className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Gọi Chủ Nhà</span>
+                    <span>{t('bookingHistory.callOwner')}</span>
                   </a>
 
                   {item.hasContract && (
@@ -282,7 +284,7 @@ export const BookingHistory: React.FC = () => {
                       className="px-4 py-2 rounded-xl gradient-bg text-white font-bold text-xs shadow-md hover:scale-105 transition-all flex items-center gap-1.5"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      <span>Xem Hợp Đồng</span>
+                      <span>{t('bookingHistory.viewContract')}</span>
                     </button>
                   )}
                 </div>
@@ -303,7 +305,7 @@ export const BookingHistory: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
-                    Chi Tiết Hợp Đồng Thuê Nhà
+                    {t('bookingHistory.contractModalTitle')}
                   </h3>
                   <span className="text-xs font-bold text-emerald-600">{selectedContract.contractCode}</span>
                 </div>
@@ -319,52 +321,52 @@ export const BookingHistory: React.FC = () => {
             <div className="space-y-4 text-xs text-slate-700">
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Phòng trọ:</span>
+                  <span className="text-slate-500">{t('bookingHistory.modalRoom')}</span>
                   <strong className="text-slate-900 font-bold">{selectedContract.roomName}</strong>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Địa chỉ:</span>
+                  <span className="text-slate-500">{t('bookingHistory.modalAddress')}</span>
                   <span className="text-slate-900 font-semibold">{selectedContract.address}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Chủ nhà cho thuê:</span>
+                  <span className="text-slate-500">{t('bookingHistory.modalOwner')}</span>
                   <strong className="text-slate-900 font-bold">{selectedContract.landlordName} ({selectedContract.landlordPhone})</strong>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
                 <div>
-                  <span className="text-slate-500 block text-[11px]">Giá thuê thỏa thuận:</span>
+                  <span className="text-slate-500 block text-[11px]">{t('bookingHistory.modalAgreedPrice')}</span>
                   <strong className="text-emerald-600 font-black text-sm">
-                    {formatPrice(selectedContract.price)}/tháng
+                    {formatPrice(selectedContract.price)}{t('roomCard.perMonth')}
                   </strong>
                 </div>
 
                 <div>
-                  <span className="text-slate-500 block text-[11px]">Tiền đặt cọc:</span>
+                  <span className="text-slate-500 block text-[11px]">{t('bookingHistory.modalDeposit')}</span>
                   <strong className="text-slate-900 font-bold text-xs">
                     {formatPrice(selectedContract.depositPrice)}
                   </strong>
                 </div>
 
                 <div>
-                  <span className="text-slate-500 block text-[11px]">Ngày thanh toán hàng tháng:</span>
+                  <span className="text-slate-500 block text-[11px]">{t('bookingHistory.modalPaymentDay')}</span>
                   <strong className="text-indigo-600 font-bold text-xs">
-                    Ngày {selectedContract.paymentDay || 5} hàng tháng
+                    {t('bookingHistory.modalPaymentDayValue', { day: selectedContract.paymentDay || 5 })}
                   </strong>
                 </div>
 
                 <div>
-                  <span className="text-slate-500 block text-[11px]">Hiệu lực hợp đồng:</span>
+                  <span className="text-slate-500 block text-[11px]">{t('bookingHistory.modalValidity')}</span>
                   <strong className="text-slate-900 font-bold text-xs">
-                    12 tháng
+                    {t('bookingHistory.modalValidityValue')}
                   </strong>
                 </div>
               </div>
 
               <div className="p-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200 text-[11px] flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Hợp đồng được ký kết điện tử và bảo hộ tính pháp lý 100% trên hệ thống Pimi.</span>
+                <span>{t('bookingHistory.modalLegalNote')}</span>
               </div>
             </div>
 
@@ -373,7 +375,7 @@ export const BookingHistory: React.FC = () => {
                 onClick={() => setSelectedContract(null)}
                 className="px-5 py-2.5 rounded-xl gradient-bg text-white font-bold text-xs shadow-md"
               >
-                Đóng thông tin
+                {t('bookingHistory.modalClose')}
               </button>
             </div>
           </div>

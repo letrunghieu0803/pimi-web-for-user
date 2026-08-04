@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Calendar,
   Clock,
@@ -16,11 +17,13 @@ import { useToast } from '@/context/ToastContext';
 import { FilterTabs } from '@/components/common/FilterTabs';
 import { Pagination } from '@/components/common/Pagination';
 import { AppointmentListSkeleton } from '@/components/ui/Skeleton';
+import { getApiErrorMessage } from '@/utils/apiError';
 
 const PAGE_SIZE = 10;
 const STATUS_KEYS = ['ALL', 'OWNER_OFFERED_TIMES', 'PENDING_OWNER', 'USER_ACCEPTED', 'COMPLETED'];
 
 export const TenantAppointments: React.FC = () => {
+  const { t } = useTranslation();
   const toast = useToast();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [totalItems, setTotalItems] = useState(0);
@@ -47,7 +50,7 @@ export const TenantAppointments: React.FC = () => {
       setTotalItems(res.data?.metadata?.total ?? res.metadata?.total ?? 0);
       setTotalPages(res.data?.metadata?.totalPages ?? res.metadata?.totalPages ?? 0);
     } catch (err: any) {
-      toast.error('Tải danh sách lịch hẹn thất bại!');
+      toast.error(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -83,11 +86,11 @@ export const TenantAppointments: React.FC = () => {
   };
 
   const filterTabs = [
-    { key: 'ALL', label: 'Tất cả', count: statusCounts.ALL ?? 0 },
-    { key: 'OWNER_OFFERED_TIMES', label: 'Yêu cầu xác nhận', count: statusCounts.OWNER_OFFERED_TIMES ?? 0 },
-    { key: 'PENDING_OWNER', label: 'Đang chờ đối phương', count: statusCounts.PENDING_OWNER ?? 0 },
-    { key: 'USER_ACCEPTED', label: 'Đã chốt lịch', count: statusCounts.USER_ACCEPTED ?? 0 },
-    { key: 'COMPLETED', label: 'Đã hoàn thành', count: statusCounts.COMPLETED ?? 0 },
+    { key: 'ALL', label: t('tenantAppointments.filterAll'), count: statusCounts.ALL ?? 0 },
+    { key: 'OWNER_OFFERED_TIMES', label: t('tenantAppointments.filterOffered'), count: statusCounts.OWNER_OFFERED_TIMES ?? 0 },
+    { key: 'PENDING_OWNER', label: t('tenantAppointments.filterPending'), count: statusCounts.PENDING_OWNER ?? 0 },
+    { key: 'USER_ACCEPTED', label: t('tenantAppointments.filterAccepted'), count: statusCounts.USER_ACCEPTED ?? 0 },
+    { key: 'COMPLETED', label: t('tenantAppointments.filterCompleted'), count: statusCounts.COMPLETED ?? 0 },
   ];
 
   const handleSelectSlotRadio = (appId: string, slotId: string) => {
@@ -97,7 +100,7 @@ export const TenantAppointments: React.FC = () => {
   const handleConfirmSlot = async (appId: string) => {
     const slotId = selectedSlots[appId];
     if (!slotId) {
-      toast.warning('Vui lòng chọn 1 khung giờ xem phòng!');
+      toast.warning(t('tenantAppointments.toastNeedSlot'));
       return;
     }
 
@@ -107,29 +110,29 @@ export const TenantAppointments: React.FC = () => {
         action: 'ACCEPT',
         selectedTimeSlotId: slotId,
       });
-      toast.success('Đã xác nhận chốt lịch xem phòng thành công!');
+      toast.success(t('tenantAppointments.toastConfirmSuccess'));
       fetchAppointments();
       fetchStatusCounts();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || 'Có lỗi xảy ra!');
+      toast.error(getApiErrorMessage(err));
     } finally {
       setSubmittingAppId(null);
     }
   };
 
   const handleRejectSlots = async (appId: string) => {
-    const reason = window.prompt('Nhập lý do không thể tham gia các khung giờ này (không bắt buộc):');
+    const reason = window.prompt(t('tenantAppointments.promptRejectReason'));
     setSubmittingAppId(appId);
     try {
       await appointmentApi.userConfirm(appId, {
         action: 'REJECT',
         rejectReason: reason || undefined,
       });
-      toast.info('Đã từ chối các khung giờ đề xuất.');
+      toast.info(t('tenantAppointments.toastRejectSuccess'));
       fetchAppointments();
       fetchStatusCounts();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || 'Có lỗi xảy ra!');
+      toast.error(getApiErrorMessage(err));
     } finally {
       setSubmittingAppId(null);
     }
@@ -138,10 +141,10 @@ export const TenantAppointments: React.FC = () => {
   const handleConfirmAttendance = async (appId: string) => {
     try {
       await appointmentApi.confirmAttendance(appId, true);
-      toast.success('Đã xác nhận tham gia buổi hẹn!');
+      toast.success(t('tenantAppointments.toastAttendanceSuccess'));
       fetchAppointments();
     } catch (err: any) {
-      toast.error('Có lỗi xảy ra khi xác nhận!');
+      toast.error(getApiErrorMessage(err));
     }
   };
 
@@ -150,38 +153,38 @@ export const TenantAppointments: React.FC = () => {
       case 'PENDING_OWNER':
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1.5 w-fit">
-            <Clock className="w-3.5 h-3.5" /> Đang chờ đối phương xác nhận
+            <Clock className="w-3.5 h-3.5" /> {t('tenantAppointments.badgePending')}
           </span>
         );
       case 'OWNER_OFFERED_TIMES':
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 flex items-center gap-1.5 w-fit">
-            <AlertCircle className="w-3.5 h-3.5" /> Yêu cầu xác nhận (Chọn khung giờ)
+            <AlertCircle className="w-3.5 h-3.5" /> {t('tenantAppointments.badgeOffered')}
           </span>
         );
       case 'USER_ACCEPTED':
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 flex items-center gap-1.5 w-fit">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Đã chốt lịch thành công
+            <CheckCircle2 className="w-3.5 h-3.5" /> {t('tenantAppointments.badgeAccepted')}
           </span>
         );
       case 'COMPLETED':
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 flex items-center gap-1.5 w-fit">
-            <CheckSquare className="w-3.5 h-3.5" /> Đã hoàn thành
+            <CheckSquare className="w-3.5 h-3.5" /> {t('tenantAppointments.badgeCompleted')}
           </span>
         );
       case 'OWNER_REJECTED':
       case 'USER_REJECTED':
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 flex items-center gap-1.5 w-fit">
-            <XCircle className="w-3.5 h-3.5" /> Đã từ chối
+            <XCircle className="w-3.5 h-3.5" /> {t('tenantAppointments.badgeRejected')}
           </span>
         );
       case 'EXPIRED_CANCELLED':
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 flex items-center gap-1.5 w-fit">
-            <XCircle className="w-3.5 h-3.5" /> Đã hủy (Quá 48h)
+            <XCircle className="w-3.5 h-3.5" /> {t('tenantAppointments.badgeExpired')}
           </span>
         );
       default:
@@ -198,10 +201,10 @@ export const TenantAppointments: React.FC = () => {
       {/* Title */}
       <div>
         <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-          <Calendar className="w-7 h-7 text-indigo-600" /> Lịch sử Đặt lịch xem phòng
+          <Calendar className="w-7 h-7 text-indigo-600" /> {t('tenantAppointments.title')}
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Quản lý các yêu cầu xem phòng, chọn khung giờ đề xuất từ chủ nhà và xác nhận chốt lịch.
+          {t('tenantAppointments.subtitle')}
         </p>
       </div>
 
@@ -214,9 +217,9 @@ export const TenantAppointments: React.FC = () => {
       ) : appointments.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
           <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-sm font-bold text-slate-700">Bạn chưa có lịch hẹn xem phòng nào</h3>
+          <h3 className="text-sm font-bold text-slate-700">{t('tenantAppointments.emptyTitle')}</h3>
           <p className="text-xs text-slate-400 mt-1">
-            Hãy tìm kiếm phòng trọ và bấm "Đặt lịch xem phòng" để bắt đầu.
+            {t('tenantAppointments.emptyDesc')}
           </p>
         </div>
       ) : (
@@ -232,7 +235,7 @@ export const TenantAppointments: React.FC = () => {
                   <div className="flex items-center justify-between gap-2">
                     {getStatusBadge(app)}
                     <span className="text-[11px] text-slate-400">
-                      Gửi lúc: {new Date(app.createdAt).toLocaleDateString('vi-VN')}
+                      {t('tenantAppointments.sentAt', { date: new Date(app.createdAt).toLocaleDateString('vi-VN') })}
                     </span>
                   </div>
 
@@ -254,7 +257,7 @@ export const TenantAppointments: React.FC = () => {
                     {app.rentHouse?.houseOwner && (
                       <p className="text-xs text-slate-600 flex items-center gap-1.5">
                         <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        Chủ nhà: {app.rentHouse.houseOwner.lastName} {app.rentHouse.houseOwner.firstName} - {app.rentHouse.houseOwner.phoneNumber}
+                        {t('tenantAppointments.ownerLabel')}: {app.rentHouse.houseOwner.lastName} {app.rentHouse.houseOwner.firstName} - {app.rentHouse.houseOwner.phoneNumber}
                       </p>
                     )}
                   </div>
@@ -262,7 +265,7 @@ export const TenantAppointments: React.FC = () => {
                   {/* Confirmed Slot */}
                   {selectedSlot && (
                     <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-xs text-emerald-900">
-                      <span className="font-bold block mb-1">Thời gian xem phòng đã chốt:</span>
+                      <span className="font-bold block mb-1">{t('tenantAppointments.confirmedSlotLabel')}</span>
                       <p className="text-sm font-semibold">
                         {new Date(selectedSlot.startTime).toLocaleString('vi-VN')} -{' '}
                         {new Date(selectedSlot.endTime).toLocaleTimeString('vi-VN')}
@@ -274,7 +277,7 @@ export const TenantAppointments: React.FC = () => {
                   {app.status === 'OWNER_OFFERED_TIMES' && app.timeSlots && app.timeSlots.length > 0 && (
                     <div className="bg-indigo-50/60 border border-indigo-200 p-4 rounded-xl space-y-3">
                       <p className="text-xs font-bold text-indigo-900">
-                        Chủ nhà đã đề xuất các khung giờ dưới đây. Vui lòng chọn 1 khung giờ phù hợp:
+                        {t('tenantAppointments.offeredSlotsIntro')}
                       </p>
                       <div className="space-y-2">
                         {app.timeSlots.map((slot) => {
@@ -312,14 +315,14 @@ export const TenantAppointments: React.FC = () => {
                           disabled={submittingAppId === app.id}
                           className="px-4 py-2 rounded-xl text-xs font-semibold border border-slate-300 text-slate-600 hover:bg-white"
                         >
-                          Từ chối tất cả
+                          {t('tenantAppointments.rejectAll')}
                         </button>
                         <button
                           onClick={() => handleConfirmSlot(app.id)}
                           disabled={submittingAppId === app.id}
                           className="px-5 py-2 rounded-xl text-xs font-semibold text-white gradient-bg shadow-md hover:opacity-90 disabled:opacity-50"
                         >
-                          {submittingAppId === app.id ? 'Đang chốt...' : 'Xác nhận chốt lịch'}
+                          {submittingAppId === app.id ? t('tenantAppointments.confirming') : t('tenantAppointments.confirmSlot')}
                         </button>
                       </div>
                     </div>
@@ -327,7 +330,7 @@ export const TenantAppointments: React.FC = () => {
 
                   {app.rejectReason && (
                     <div className="bg-rose-50 p-2.5 rounded-xl text-xs text-rose-800">
-                      <span className="font-semibold">Lý do từ chối:</span> {app.rejectReason}
+                      <span className="font-semibold">{t('tenantAppointments.rejectReasonLabel')}</span> {app.rejectReason}
                     </div>
                   )}
                 </div>
@@ -339,7 +342,7 @@ export const TenantAppointments: React.FC = () => {
                       onClick={() => handleConfirmAttendance(app.id)}
                       className="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
                     >
-                      Xác nhận đã tham gia xem phòng
+                      {t('tenantAppointments.confirmAttendance')}
                     </button>
                   </div>
                 )}

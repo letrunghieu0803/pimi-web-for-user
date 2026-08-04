@@ -1,7 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ShieldCheck, Lock, Database, Target, ServerCog, Share2, UserCheck, Phone } from 'lucide-react';
 
 export const Privacy: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-8">
 
@@ -9,12 +11,12 @@ export const Privacy: React.FC = () => {
       <div className="space-y-3 border-b border-slate-200 pb-6">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider">
           <ShieldCheck className="w-4 h-4" />
-          <span>Bảo Vệ Thông Tin Người Dùng</span>
+          <span>{t('privacy.badge')}</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-black text-slate-900 font-heading">
-          Chính Sách Bảo Vệ Dữ Liệu Và Thông Tin Cá Nhân
+          {t('privacy.title')}
         </h1>
-        <p className="text-xs text-slate-500">Ngày hiệu lực: 29/07/2026 · Công ty TNHH Pimi Nest</p>
+        <p className="text-xs text-slate-500">{t('privacy.effectiveDate')}</p>
         <p className="text-sm text-slate-600 leading-relaxed">
           Chào mừng Bạn đến với hệ sinh thái Pimi (bao gồm ứng dụng Pimi App, phần mềm quản lý Biz Pimi, nền tảng Pimi Hub và website chính thức pimi.vn). Chính sách Bảo mật này giải thích cách Công ty TNHH Pimi Nest (sau đây gọi tắt là "Pimi", "Chúng tôi") thu thập, xử lý, lưu trữ, chia sẻ và bảo vệ thông tin cá nhân của Bạn (Người thuê nhà, Chủ nhà/Nhà vận hành, Chuyên viên Môi giới/CTV và Khách truy cập).
         </p>

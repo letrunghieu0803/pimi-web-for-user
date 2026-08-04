@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Room } from '@/types';
 import { roomApi } from '@/services/roomApi';
@@ -9,8 +10,10 @@ import { MapPin, Maximize2, Users, ShieldCheck, PhoneCall, CalendarCheck, CheckC
 import { VietMapViewer } from '@/components/common/VietMapViewer';
 import { useToast } from '@/context/ToastContext';
 import { RoomDetailSkeleton } from '@/components/ui/Skeleton';
+import { getApiErrorMessage } from '@/utils/apiError';
 
 export const RoomDetail: React.FC = () => {
+  const { t } = useTranslation();
   const { id, groupId } = useParams<{ id?: string; groupId?: string }>();
   const isGroupView = !!groupId;
   const targetId = groupId || id;
@@ -80,27 +83,27 @@ export const RoomDetail: React.FC = () => {
   if (!room) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center space-y-4">
-        <h2 className="text-2xl font-bold text-slate-900 font-heading">Không tìm thấy thông tin phòng</h2>
-        <p className="text-sm text-slate-500">Phòng trọ này có thể đã bị gỡ bỏ hoặc không còn tồn tại.</p>
+        <h2 className="text-2xl font-bold text-slate-900 font-heading">{t('roomDetail.notFoundTitle')}</h2>
+        <p className="text-sm text-slate-500">{t('roomDetail.notFoundDesc')}</p>
         <Link to="/rooms" className="text-indigo-600 font-bold text-sm hover:underline">
-          Quay lại danh sách phòng
+          {t('roomDetail.backToList')}
         </Link>
       </div>
     );
   }
 
   const formatPrice = (price: number) => {
-    return `${(price / 1000000).toLocaleString('vi-VN')} triệu`;
+    return `${(price / 1000000).toLocaleString('vi-VN')} ${t('roomCard.million')}`;
   };
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
-    toast.info('Đã sao chép liên kết trang phòng vào bộ nhớ tạm!');
+    toast.info(t('roomDetail.toastLinkCopied'));
   };
 
   const handleRequestViewing = async () => {
     if (!isAuthenticated) {
-      toast.warning('Vui lòng đăng nhập để gửi yêu cầu xem phòng!');
+      toast.warning(t('roomDetail.toastNeedLogin'));
       navigate(`/login?redirect=${isGroupView ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`}`);
       return;
     }
@@ -114,17 +117,17 @@ export const RoomDetail: React.FC = () => {
 
     setSubmitting(true);
     try {
-      const fullNote = `Yêu cầu xem phòng từ người thuê ${user?.fullName || ''} (${user?.phoneNumber || ''})`;
+      const fullNote = t('roomDetail.viewingNote', { name: user?.fullName || '', phone: user?.phoneNumber || '' });
       await appointmentApi.createAppointment(
         room.roomGroupId
           ? { roomGroupId: room.roomGroupId, note: fullNote }
           : { rentRoomId: room.id, note: fullNote }
       );
 
-      toast.success('Đã gửi yêu cầu xem phòng thành công! Chủ nhà sẽ nhận được thông tin cá nhân và đề xuất các khung giờ cho bạn.');
+      toast.success(t('roomDetail.toastRequestSuccess'));
       fetchActiveAppointment(room);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || 'Có lỗi xảy ra khi gửi yêu cầu!');
+      toast.error(getApiErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -140,7 +143,7 @@ export const RoomDetail: React.FC = () => {
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span>Quay lại danh sách phòng trọ</span>
+          <span>{t('roomDetail.backLink')}</span>
         </Link>
 
         <div className="flex items-center gap-2">
@@ -149,19 +152,19 @@ export const RoomDetail: React.FC = () => {
             className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
             <Share2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Chia sẻ</span>
+            <span className="hidden sm:inline">{t('roomDetail.share')}</span>
           </button>
           <button
             onClick={() => {
               setSaved(!saved);
-              toast.success(saved ? 'Đã bỏ lưu phòng' : 'Đã lưu phòng vào danh sách yêu thích!');
+              toast.success(saved ? t('roomDetail.toastUnsaved') : t('roomDetail.toastSaved'));
             }}
             className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${
               saved ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
             <Heart className={`w-4 h-4 ${saved ? 'fill-rose-600' : ''}`} />
-            <span className="hidden sm:inline">{saved ? 'Đã lưu' : 'Lưu phòng'}</span>
+            <span className="hidden sm:inline">{saved ? t('roomDetail.savedLabel') : t('roomDetail.saveRoom')}</span>
           </button>
         </div>
       </div>
@@ -184,8 +187,8 @@ export const RoomDetail: React.FC = () => {
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>
                   {isGroupView && room.availableCount !== undefined
-                    ? `${room.availableCount} phòng đang trống`
-                    : 'Phòng trống khả dụng'}
+                    ? t('roomDetail.availableCount', { count: room.availableCount })
+                    : t('roomDetail.roomAvailable')}
                 </span>
               </div>
             </div>
@@ -221,7 +224,7 @@ export const RoomDetail: React.FC = () => {
             </h1>
             {isGroupView && (
               <p className="text-xs text-slate-500">
-                Tin đăng đại diện cho {room.availableCount ?? 'nhiều'} phòng giống hệt nhau (cùng diện tích, giá, loại phòng) trong {room.houseName}.
+                {t('roomDetail.groupDescription', { count: room.availableCount ?? t('roomDetail.several'), houseName: room.houseName })}
               </p>
             )}
             <p className="flex items-center gap-1.5 text-sm text-slate-600">
@@ -233,21 +236,21 @@ export const RoomDetail: React.FC = () => {
           {/* Key Specifications Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 bg-slate-50 rounded-3xl border border-slate-200/80">
             <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-semibold block">Giá Thuê</span>
+              <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.rentPrice')}</span>
               <span className="text-lg font-black text-emerald-600 font-heading">
-                {formatPrice(room.price)}/tháng
+                {formatPrice(room.price)}{t('roomCard.perMonth')}
               </span>
             </div>
 
             <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-semibold block">Tiền Cọc</span>
+              <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.deposit')}</span>
               <span className="text-sm font-bold text-slate-800">
                 {formatPrice(room.depositPrice)}
               </span>
             </div>
 
             <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-semibold block">Diện Tích</span>
+              <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.area')}</span>
               <span className="text-sm font-bold text-slate-800 flex items-center gap-1">
                 <Maximize2 className="w-4 h-4 text-indigo-500" />
                 {room.area} m²
@@ -255,10 +258,10 @@ export const RoomDetail: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-semibold block">Số Người Ở</span>
+              <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.occupancy')}</span>
               <span className="text-sm font-bold text-slate-800 flex items-center gap-1">
                 <Users className="w-4 h-4 text-indigo-500" />
-                Tối đa {room.maxPeople} người
+                {t('roomCard.maxPeople', { count: room.maxPeople })}
               </span>
             </div>
           </div>
@@ -266,7 +269,7 @@ export const RoomDetail: React.FC = () => {
           {/* Amenities Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-slate-900 font-heading">
-              Tiện Ích & Trang Thiết Bị
+              {t('roomDetail.amenitiesTitle')}
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {room.amenities.map((amt, idx) => (
@@ -285,7 +288,7 @@ export const RoomDetail: React.FC = () => {
           {room.services && room.services.length > 0 && (
             <div className="space-y-4 pt-4 border-t border-slate-200">
               <h3 className="text-lg font-bold text-slate-900 font-heading">
-                Dịch Vụ & Phí Đi Kèm
+                {t('roomDetail.servicesTitle')}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {room.services.map((svc) => (
@@ -297,7 +300,7 @@ export const RoomDetail: React.FC = () => {
                     <div>
                       <p className="text-sm font-bold text-slate-800">{svc.name}</p>
                       <p className="text-xs text-emerald-600 font-semibold">
-                        {svc.price !== undefined ? `${svc.price.toLocaleString('vi-VN')} đ` : 'Liên hệ chủ nhà'}
+                        {svc.price !== undefined ? `${svc.price.toLocaleString('vi-VN')} ${t('roomDetail.currency')}` : t('roomDetail.contactOwner')}
                       </p>
                       {svc.note && <p className="text-[11px] text-slate-400 mt-0.5">{svc.note}</p>}
                     </div>
@@ -310,7 +313,7 @@ export const RoomDetail: React.FC = () => {
           {/* Description Section */}
           <div className="space-y-3 pt-4 border-t border-slate-200">
             <h3 className="text-lg font-bold text-slate-900 font-heading">
-              Mô Tả Chi Tiết Phòng
+              {t('roomDetail.descriptionTitle')}
             </h3>
             <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/50 p-5 rounded-2xl border border-slate-200/60">
               {room.description}
@@ -336,14 +339,14 @@ export const RoomDetail: React.FC = () => {
             
             {/* Price Box */}
             <div className="p-4 bg-slate-900 text-white rounded-2xl space-y-1">
-              <span className="text-xs text-slate-400 font-semibold">Giá thuê niêm yết</span>
+              <span className="text-xs text-slate-400 font-semibold">{t('roomDetail.listedPrice')}</span>
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-black text-emerald-400 font-heading">
                   {formatPrice(room.price)}
                 </span>
-                <span className="text-xs text-slate-300">/ tháng</span>
+                <span className="text-xs text-slate-300">{t('roomDetail.perMonthLong')}</span>
               </div>
-              <p className="text-[11px] text-slate-400">Đã bao gồm tiền phí quản lý tòa nhà</p>
+              <p className="text-[11px] text-slate-400">{t('roomDetail.priceIncludesFee')}</p>
             </div>
 
             {/* Landlord Profile */}
@@ -354,11 +357,11 @@ export const RoomDetail: React.FC = () => {
                 className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-indigo-200"
               />
               <div className="flex-1 min-w-0">
-                <span className="text-xs text-slate-500 font-semibold block">Đăng bởi Chủ nhà</span>
+                <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.postedByOwner')}</span>
                 <h4 className="text-sm font-bold text-slate-900 truncate">{room.landlordName}</h4>
                 <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  Đã xác minh danh tính
+                  {t('roomDetail.identityVerified')}
                 </span>
               </div>
             </div>
@@ -369,7 +372,7 @@ export const RoomDetail: React.FC = () => {
                 activeAppointment.status === 'PENDING_OWNER' ? (
                   <div className="w-full py-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed text-center px-3">
                     <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>Đã Yêu Cầu Xem Phòng (Chờ Chủ Nhà)</span>
+                    <span>{t('roomDetail.statusPending')}</span>
                   </div>
                 ) : activeAppointment.status === 'OWNER_OFFERED_TIMES' ? (
                   <button
@@ -377,7 +380,7 @@ export const RoomDetail: React.FC = () => {
                     className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xl shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 text-center px-3"
                   >
                     <AlertCircle className="w-4 h-4 text-amber-300 shrink-0" />
-                    <span>Chủ Nhà Đã Đề Xuất Khung Giờ - Chọn Lịch Ngay</span>
+                    <span>{t('roomDetail.statusOffered')}</span>
                   </button>
                 ) : (
                   <button
@@ -385,7 +388,7 @@ export const RoomDetail: React.FC = () => {
                     className="w-full py-4 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-xl shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 text-center px-3"
                   >
                     <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
-                    <span>Đã Chốt Lịch Xem Phòng</span>
+                    <span>{t('roomDetail.statusConfirmed')}</span>
                   </button>
                 )
               ) : (
@@ -395,7 +398,7 @@ export const RoomDetail: React.FC = () => {
                   className="w-full py-4 rounded-2xl gradient-bg text-white font-bold text-sm shadow-xl shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   <CalendarCheck className="w-5 h-5" />
-                  <span>{submitting ? 'Đang gửi...' : 'Yêu Cầu Xem Phòng Trực Tiếp'}</span>
+                  <span>{submitting ? t('roomDetail.sending') : t('roomDetail.requestViewingButton')}</span>
                 </button>
               )}
 
@@ -404,7 +407,7 @@ export const RoomDetail: React.FC = () => {
                 className="w-full py-3.5 rounded-2xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-sm border border-indigo-200 transition-colors flex items-center justify-center gap-2"
               >
                 <PhoneCall className="w-4 h-4 text-indigo-600" />
-                <span>Gọi Chủ Nhà: {room.landlordPhone}</span>
+                <span>{t('roomDetail.callOwner', { phone: room.landlordPhone })}</span>
               </a>
             </div>
 
@@ -412,11 +415,11 @@ export const RoomDetail: React.FC = () => {
             <div className="space-y-2 pt-2 border-t border-slate-200 text-xs text-slate-500">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>Đặt hẹn nhanh chóng, chủ nhà hỗ trợ 24/7</span>
+                <span>{t('roomDetail.trustNote1')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>Miễn phí 100% dịch vụ xem phòng cho người thuê</span>
+                <span>{t('roomDetail.trustNote2')}</span>
               </div>
             </div>
 
@@ -429,13 +432,13 @@ export const RoomDetail: React.FC = () => {
         <section className="pt-10 border-t border-slate-200 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-black text-slate-900 font-heading">
-              Phòng Trọ Tương Tự
+              {t('roomDetail.similarRoomsTitle')}
             </h2>
             <Link
               to="/rooms"
               className="text-sm font-bold text-indigo-600 hover:underline flex items-center gap-1"
             >
-              <span>Khám phá thêm</span>
+              <span>{t('roomDetail.exploreMore')}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

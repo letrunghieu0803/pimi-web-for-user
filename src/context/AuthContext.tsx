@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { axiosClient } from '@/services/axiosClient';
+import { getApiErrorMessage } from '@/utils/apiError';
+
+// ERR_MSG_NEED_VERIFY_EMAIL in bff-for-pimi's error constants.
+const ERR_CODE_NEED_VERIFY_EMAIL = '000006';
 
 export interface UserProfile {
   id: string;
@@ -37,6 +42,7 @@ const AUTH_TOKEN_KEY = 'pimi_tenant_auth_token';
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { t } = useTranslation();
   const [user, setUser] = useState<UserProfile | null>(() => {
     const saved = localStorage.getItem(AUTH_USER_KEY);
     if (saved) {
@@ -110,26 +116,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return {
         success: true,
-        message: 'Đăng nhập tài khoản thành công!',
+        message: t('authContext.loginSuccess'),
       };
     } catch (err: any) {
       console.warn('Backend login error:', err);
 
-      const rawErr = err?.response?.data?.message || err?.message || 'Đăng nhập thất bại!';
-      const errStr = Array.isArray(rawErr) ? rawErr.join(', ') : String(rawErr);
-
-      // Check if backend returned unverified email error (400_006)
-      if (errStr.includes('verify your email') || errStr.includes('400_006')) {
+      // Check if backend returned the "unverified email" business error
+      if (err?.code === ERR_CODE_NEED_VERIFY_EMAIL) {
         const unverifiedEmail = usernameOrPhone.includes('@') ? usernameOrPhone.trim().toLowerCase() : '';
         return {
           success: true,
           needsVerification: true,
           email: unverifiedEmail,
-          message: 'Tài khoản của bạn chưa được xác thực email. Vui lòng nhập mã OTP để xác thực!',
+          message: t('authContext.needVerifyEmail'),
         };
       }
 
-      throw new Error(errStr);
+      const wrapped = new Error(getApiErrorMessage(err));
+      (wrapped as any).code = err?.code;
+      throw wrapped;
     }
   };
 
@@ -180,12 +185,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         success: true,
         needsVerification: true,
         email: email.trim().toLowerCase(),
-        message: 'Đăng ký tài khoản thành công! Vui lòng nhập mã OTP xác thực email.',
+        message: t('authContext.registerSuccess'),
       };
     } catch (err: any) {
       console.warn('Backend registration failed:', err);
-      const rawErr = err?.response?.data?.message || err?.message || 'Đăng ký thất bại!';
-      throw new Error(Array.isArray(rawErr) ? rawErr.join(', ') : rawErr);
+      const wrapped = new Error(getApiErrorMessage(err));
+      (wrapped as any).code = err?.code;
+      throw wrapped;
     }
   };
 

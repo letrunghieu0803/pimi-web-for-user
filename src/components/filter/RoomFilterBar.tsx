@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FilterState } from '@/types';
 import { DISTRICTS, AMENITIES_LIST } from '@/data/mockData';
 import { Search, MapPin, DollarSign, Home, SlidersHorizontal, RotateCcw, Layers, Check } from 'lucide-react';
@@ -10,6 +11,7 @@ interface RoomFilterBarProps {
 }
 
 export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange, onReset }) => {
+  const { t } = useTranslation();
   const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange({ ...filters, keyword: e.target.value });
   };
@@ -47,7 +49,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
         <Search className="w-5 h-5 text-slate-400 absolute left-4 top-3.5" />
         <input
           type="text"
-          placeholder="Tìm theo tên đường, tên tòa nhà, vị trí..."
+          placeholder={t('roomFilterBar.searchPlaceholder')}
           value={filters.keyword}
           onChange={handleKeywordChange}
           className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 font-medium"
@@ -61,7 +63,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
         <div>
           <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Khu Vực / Quận Huyện</span>
+            <span>{t('roomFilterBar.districtLabel')}</span>
           </label>
           <select
             value={filters.district}
@@ -80,17 +82,17 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
         <div>
           <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
             <Home className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Loại Phòng</span>
+            <span>{t('roomFilterBar.roomTypeLabel')}</span>
           </label>
           <select
             value={filters.roomType}
             onChange={(e) => handleRoomTypeChange(e.target.value)}
             className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
           >
-            <option value="ALL">Tất cả loại phòng</option>
-            <option value="APARTMENT">Căn hộ dịch vụ</option>
-            <option value="MINI_APARTMENT">Chung cư mini</option>
-            <option value="BOARDING_HOUSE">Phòng trọ giá rẻ</option>
+            <option value="ALL">{t('roomFilterBar.roomTypeAll')}</option>
+            <option value="APARTMENT">{t('roomFilterBar.roomTypeApartment')}</option>
+            <option value="MINI_APARTMENT">{t('roomFilterBar.roomTypeMiniApartment')}</option>
+            <option value="BOARDING_HOUSE">{t('roomFilterBar.roomTypeBoarding')}</option>
           </select>
         </div>
 
@@ -98,7 +100,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
         <div>
           <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
             <Layers className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Kiểu Thiết Kế</span>
+            <span>{t('roomFilterBar.designTypeLabel')}</span>
           </label>
           <button
             type="button"
@@ -109,7 +111,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            <span>Có gác xép kiên cố</span>
+            <span>{t('roomFilterBar.mezzanineToggle')}</span>
             {filters.hasMezzanine === true && <Check className="w-4 h-4" />}
           </button>
         </div>
@@ -119,15 +121,15 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
       <div>
         <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
           <DollarSign className="w-3.5 h-3.5 text-indigo-600" />
-          <span>Mức Giá Thuê (VNĐ / Tháng)</span>
+          <span>{t('roomFilterBar.priceRangeLabel')}</span>
         </label>
         <div className="flex flex-wrap gap-2">
           {[
-            { id: 'ALL', label: 'Tất cả giá' },
-            { id: '0-3m', label: 'Dưới 3 triệu' },
-            { id: '3m-5m', label: '3 - 5 triệu' },
-            { id: '5m-8m', label: '5 - 8 triệu' },
-            { id: '8m+', label: 'Trên 8 triệu' },
+            { id: 'ALL', label: t('roomFilterBar.priceAll') },
+            { id: '0-3m', label: t('home.price0to3') },
+            { id: '3m-5m', label: t('home.price3to5') },
+            { id: '5m-8m', label: t('home.price5to8') },
+            { id: '8m+', label: t('roomFilterBar.priceOver8') },
           ].map((item) => (
             <button
               key={item.id}
@@ -148,7 +150,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
       <div>
         <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
           <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-600" />
-          <span>Tiện Ích Đi Kèm</span>
+          <span>{t('roomFilterBar.amenitiesLabel')}</span>
         </label>
         <div className="flex flex-wrap gap-2">
           {AMENITIES_LIST.map((amt) => {
@@ -178,7 +180,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
           className="text-xs font-bold text-slate-500 hover:text-rose-600 transition-colors flex items-center gap-1.5"
         >
           <RotateCcw className="w-3.5 h-3.5" />
-          <span>Đặt lại tất cả bộ lọc</span>
+          <span>{t('roomList.resetFilters')}</span>
         </button>
       </div>
     </div>

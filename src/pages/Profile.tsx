@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { roomApi } from '@/services/roomApi';
@@ -7,6 +8,7 @@ import { User, Phone, Mail, MapPin, Save, ShieldCheck, CalendarCheck, CheckCircl
 import { Link } from 'react-router-dom';
 
 export const Profile: React.FC = () => {
+  const { t } = useTranslation();
   const { user, updateProfile } = useAuth();
   const toast = useToast();
   const { state: notifState, enableNotifications, isSupported: notifSupported } = useNotificationPermission();
@@ -20,9 +22,9 @@ export const Profile: React.FC = () => {
   if (!user) {
     return (
       <div className="max-w-md mx-auto py-20 text-center space-y-4">
-        <h2 className="text-xl font-bold text-slate-900 font-heading">Bạn chưa đăng nhập</h2>
+        <h2 className="text-xl font-bold text-slate-900 font-heading">{t('profile.notLoggedIn')}</h2>
         <Link to="/login" className="gradient-bg text-white px-6 py-2.5 rounded-2xl text-xs font-bold shadow-md inline-block">
-          Đăng nhập tài khoản
+          {t('profile.loginAccount')}
         </Link>
       </div>
     );
@@ -43,7 +45,7 @@ export const Profile: React.FC = () => {
         address: address.trim(),
       });
       setSaving(false);
-      toast.success('Cập nhật thông tin cá nhân thành công!');
+      toast.success(t('profile.toastUpdateSuccess'));
     }, 400);
   };
 
@@ -61,10 +63,10 @@ export const Profile: React.FC = () => {
           <div className="flex items-center justify-center sm:justify-start gap-2">
             <h1 className="text-2xl font-black text-slate-900 font-heading">{user.fullName}</h1>
             <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border border-emerald-200">
-              Người Thuê Đã Xác Thực
+              {t('profile.verifiedTenant')}
             </span>
           </div>
-          <p className="text-xs text-slate-500">{user.phoneNumber} • {user.email || 'Chưa cập nhật email'}</p>
+          <p className="text-xs text-slate-500">{user.phoneNumber} • {user.email || t('profile.noEmail')}</p>
         </div>
 
         <Link
@@ -72,7 +74,7 @@ export const Profile: React.FC = () => {
           className="px-5 py-3 rounded-2xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs border border-indigo-200 transition-all flex items-center gap-2"
         >
           <CalendarCheck className="w-4 h-4 text-indigo-600" />
-          <span>Xem Lịch Sử Booking ({userBookings.length})</span>
+          <span>{t('profile.viewBookingHistory', { count: userBookings.length })}</span>
         </Link>
       </div>
 
@@ -84,7 +86,7 @@ export const Profile: React.FC = () => {
           </div>
           <div>
             <span className="text-2xl font-black text-slate-900 font-heading">{userBookings.length}</span>
-            <span className="block text-xs text-slate-500 font-semibold">Tổng lịch hẹn xem phòng</span>
+            <span className="block text-xs text-slate-500 font-semibold">{t('profile.totalAppointments')}</span>
           </div>
         </div>
 
@@ -94,7 +96,7 @@ export const Profile: React.FC = () => {
           </div>
           <div>
             <span className="text-2xl font-black text-slate-900 font-heading">{pendingCount}</span>
-            <span className="block text-xs text-slate-500 font-semibold">Đang chờ chủ nhà duyệt</span>
+            <span className="block text-xs text-slate-500 font-semibold">{t('profile.pendingApproval')}</span>
           </div>
         </div>
 
@@ -104,7 +106,7 @@ export const Profile: React.FC = () => {
           </div>
           <div>
             <span className="text-2xl font-black text-slate-900 font-heading">{confirmedCount}</span>
-            <span className="block text-xs text-slate-500 font-semibold">Đã xác nhận xem phòng</span>
+            <span className="block text-xs text-slate-500 font-semibold">{t('profile.confirmedViewing')}</span>
           </div>
         </div>
       </div>
@@ -117,13 +119,13 @@ export const Profile: React.FC = () => {
               <Bell className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-900">Thông báo đẩy (Push Notification)</p>
+              <p className="text-sm font-bold text-slate-900">{t('profile.pushNotificationTitle')}</p>
               <p className="text-xs text-slate-500">
                 {notifState === 'granted'
-                  ? 'Đã bật thông báo trên thiết bị này.'
+                  ? t('profile.pushEnabled')
                   : notifState === 'denied'
-                    ? 'Trình duyệt đã chặn thông báo. Vui lòng bật lại trong cài đặt trình duyệt.'
-                    : 'Nhận thông báo ngay cả khi không mở trình duyệt.'}
+                    ? t('profile.pushDenied')
+                    : t('profile.pushPrompt')}
               </p>
             </div>
           </div>
@@ -133,7 +135,7 @@ export const Profile: React.FC = () => {
               disabled={notifState === 'requesting' || notifState === 'denied'}
               className="px-4 py-2.5 rounded-2xl gradient-bg text-white font-bold text-xs shadow-md disabled:opacity-50 shrink-0"
             >
-              {notifState === 'requesting' ? 'Đang bật...' : 'Bật thông báo'}
+              {notifState === 'requesting' ? t('profile.pushEnabling') : t('profile.pushEnableButton')}
             </button>
           )}
         </div>
@@ -143,14 +145,14 @@ export const Profile: React.FC = () => {
       <div className="glass-panel p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
         <h2 className="text-xl font-bold text-slate-900 font-heading flex items-center gap-2">
           <User className="w-5 h-5 text-indigo-600" />
-          <span>Chỉnh Sửa Thông Tin Cá Nhân</span>
+          <span>{t('profile.editTitle')}</span>
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Họ và tên *
+                {t('profile.fullNameLabel')}
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -166,7 +168,7 @@ export const Profile: React.FC = () => {
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Số điện thoại *
+                {t('profile.phoneLabel')}
               </label>
               <div className="relative">
                 <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -183,7 +185,7 @@ export const Profile: React.FC = () => {
 
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Địa chỉ Email
+              {t('profile.emailLabel')}
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -198,13 +200,13 @@ export const Profile: React.FC = () => {
 
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Địa chỉ hiện tại
+              {t('profile.addressLabel')}
             </label>
             <div className="relative">
               <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <input
                 type="text"
-                placeholder="Ví dụ: Quận Cầu Giấy, Hà Nội"
+                placeholder={t('profile.addressPlaceholder')}
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500"
@@ -219,7 +221,7 @@ export const Profile: React.FC = () => {
               className="gradient-bg text-white px-8 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-indigo-500/25 hover:scale-105 transition-transform flex items-center gap-2 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              <span>{saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}</span>
+              <span>{saving ? t('profile.saving') : t('profile.saveChanges')}</span>
             </button>
           </div>
         </form>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Bell, CheckCheck, Calendar, FileText, Info, Trash2, CheckCircle2, Clock, RotateCcw } from 'lucide-react';
 import { notificationApi, NotificationItem } from '@/services/notificationApi';
 import { FilterTabs } from '@/components/common/FilterTabs';
@@ -8,6 +9,7 @@ import { NotificationListSkeleton } from '@/components/ui/Skeleton';
 const PAGE_SIZE = 10;
 
 export const NotificationsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'UNREAD' | 'READ'>('ALL');
@@ -143,9 +145,9 @@ export const NotificationsPage: React.FC = () => {
               <Bell className="w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 font-heading">Thông báo của bạn</h1>
+              <h1 className="text-2xl font-black text-slate-900 font-heading">{t('notifications.title')}</h1>
               <p className="text-sm font-medium text-slate-500">
-                {unreadCount > 0 ? `Bạn có ${unreadCount} thông báo chưa đọc` : 'Bạn đã đọc tất cả thông báo'}
+                {unreadCount > 0 ? t('notifications.unreadCount', { count: unreadCount }) : t('notifications.allRead')}
               </p>
             </div>
           </div>
@@ -156,7 +158,7 @@ export const NotificationsPage: React.FC = () => {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold text-xs transition-colors self-start sm:self-auto"
             >
               <CheckCheck className="w-4 h-4" />
-              <span>Đánh dấu tất cả đã đọc</span>
+              <span>{t('notifications.markAllRead')}</span>
             </button>
           )}
         </div>
@@ -164,9 +166,9 @@ export const NotificationsPage: React.FC = () => {
         {/* Filter tabs */}
         <FilterTabs
           tabs={[
-            { key: 'ALL', label: 'Tất cả', count: totalCount },
-            { key: 'UNREAD', label: 'Chưa đọc', count: unreadCount },
-            { key: 'READ', label: 'Đã đọc', count: Math.max(0, totalCount - unreadCount) },
+            { key: 'ALL', label: t('tenantAppointments.filterAll'), count: totalCount },
+            { key: 'UNREAD', label: t('notifications.unread'), count: unreadCount },
+            { key: 'READ', label: t('notifications.read'), count: Math.max(0, totalCount - unreadCount) },
           ]}
           active={activeTab}
           onChange={handleTabChange}
@@ -180,8 +182,8 @@ export const NotificationsPage: React.FC = () => {
             <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mx-auto mb-4">
               <Bell className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-bold text-slate-800">Không có thông báo nào</h3>
-            <p className="text-sm text-slate-500 mt-1">Danh sách thông báo của bạn sẽ xuất hiện ở đây.</p>
+            <h3 className="text-lg font-bold text-slate-800">{t('notifications.emptyTitle')}</h3>
+            <p className="text-sm text-slate-500 mt-1">{t('notifications.emptyDesc')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -224,7 +226,7 @@ export const NotificationsPage: React.FC = () => {
                     {!isUnread && (
                       <button
                         onClick={(e) => handleMarkAsUnread(e, item)}
-                        title="Đánh dấu chưa đọc"
+                        title={t('notifications.markUnread')}
                         className="p-2 rounded-xl text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
                       >
                         <RotateCcw className="w-4 h-4" />
@@ -232,7 +234,7 @@ export const NotificationsPage: React.FC = () => {
                     )}
                     <button
                       onClick={(e) => handleDelete(e, item.id)}
-                      title="Xóa thông báo"
+                      title={t('notifications.deleteNotification')}
                       className="p-2 rounded-xl text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />

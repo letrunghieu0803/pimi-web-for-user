@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Room, ViewingRequest } from '@/types';
 import { roomApi } from '@/services/roomApi';
 import { appointmentApi } from '@/services/appointmentApi';
 import { useToast } from '@/context/ToastContext';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { X, Calendar, Clock, User, Phone, Mail, FileText, Send, Building2, ShieldCheck } from 'lucide-react';
 
 interface RequestTourModalProps {
@@ -12,6 +14,7 @@ interface RequestTourModalProps {
 }
 
 export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const toast = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -32,32 +35,36 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
     e.preventDefault();
 
     if (!tenantName.trim()) {
-      toast.warning('Vui lòng nhập họ và tên của bạn!');
+      toast.warning(t('requestTourModal.toastNeedName'));
       return;
     }
     if (!tenantPhone.trim() || tenantPhone.length < 9) {
-      toast.warning('Vui lòng nhập số điện thoại hợp lệ!');
+      toast.warning(t('requestTourModal.toastInvalidPhone'));
       return;
     }
     if (!preferredDate) {
-      toast.warning('Vui lòng chọn ngày bạn muốn xem phòng!');
+      toast.warning(t('requestTourModal.toastNeedDate'));
       return;
     }
 
     setLoading(true);
     try {
-      const fullNote = `Ngày mong muốn: ${preferredDate} lúc ${preferredTime}${notes.trim() ? `. Ghi chú: ${notes.trim()}` : ''}`;
+      const fullNote = t('requestTourModal.noteTemplate', {
+        date: preferredDate,
+        time: preferredTime,
+        extra: notes.trim() ? t('requestTourModal.noteExtra', { notes: notes.trim() }) : '',
+      });
       await appointmentApi.createAppointment(
         room.roomGroupId
           ? { roomGroupId: room.roomGroupId, note: fullNote }
           : { rentRoomId: room.id, note: fullNote }
       );
 
-      toast.success('Đã gửi yêu cầu xem phòng thành công! Chủ nhà sẽ phản hồi các khung giờ phù hợp cho bạn.');
+      toast.success(t('requestTourModal.toastSuccess'));
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || 'Có lỗi xảy ra khi gửi yêu cầu xem phòng!');
+      toast.error(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -78,10 +85,10 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
           
           <div className="flex items-center gap-2 text-indigo-200 text-xs font-bold uppercase tracking-wider mb-1">
             <Calendar className="w-4 h-4" />
-            <span>Đặt Lịch Xem Phòng Miễn Phí</span>
+            <span>{t('requestTourModal.badge')}</span>
           </div>
-          <h2 className="text-xl font-bold font-heading">Yêu Cầu Xem Phòng Trực Tiếp</h2>
-          <p className="text-xs text-indigo-100 mt-1">Chủ nhà sẽ chủ động gọi điện xác nhận lịch hẹn với bạn.</p>
+          <h2 className="text-xl font-bold font-heading">{t('requestTourModal.title')}</h2>
+          <p className="text-xs text-indigo-100 mt-1">{t('requestTourModal.subtitle')}</p>
         </div>
 
         {/* Selected Room Banner */}
@@ -95,7 +102,7 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
             <h4 className="text-sm font-bold text-slate-900 truncate">{room.name}</h4>
             <p className="text-xs text-indigo-600 font-semibold">{room.houseName} • {room.district}</p>
             <p className="text-xs font-bold text-emerald-600 mt-0.5">
-              {(room.price / 1000000).toLocaleString('vi-VN')} triệu/tháng
+              {(room.price / 1000000).toLocaleString('vi-VN')} {t('roomCard.million')}{t('roomCard.perMonth')}
             </p>
           </div>
         </div>
@@ -106,13 +113,13 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
           {/* Tenant Name */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Họ và tên người xem phòng *
+              {t('requestTourModal.tenantNameLabel')}
             </label>
             <div className="relative">
               <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <input
                 type="text"
-                placeholder="Ví dụ: Nguyễn Văn A"
+                placeholder={t('register.fullNamePlaceholder')}
                 value={tenantName}
                 onChange={(e) => setTenantName(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500"
@@ -124,13 +131,13 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
           {/* Tenant Phone */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Số điện thoại liên hệ *
+              {t('register.phoneLabel')}
             </label>
             <div className="relative">
               <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <input
                 type="tel"
-                placeholder="Ví dụ: 0987654321"
+                placeholder={t('register.phonePlaceholder')}
                 value={tenantPhone}
                 onChange={(e) => setTenantPhone(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500"
@@ -143,7 +150,7 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Ngày muốn xem *
+                {t('requestTourModal.dateLabel')}
               </label>
               <div className="relative">
                 <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -160,7 +167,7 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Giờ hẹn xem *
+                {t('requestTourModal.timeLabel')}
               </label>
               <div className="relative">
                 <Clock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -169,12 +176,12 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
                   onChange={(e) => setPreferredTime(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500"
                 >
-                  <option value="08:30">08:30 sáng</option>
-                  <option value="10:00">10:00 sáng</option>
-                  <option value="12:00">12:00 trưa</option>
-                  <option value="14:30">14:30 chiều</option>
-                  <option value="17:00">17:00 chiều</option>
-                  <option value="18:30">18:30 tối</option>
+                  <option value="08:30">{t('requestTourModal.time0830')}</option>
+                  <option value="10:00">{t('requestTourModal.time1000')}</option>
+                  <option value="12:00">{t('requestTourModal.time1200')}</option>
+                  <option value="14:30">{t('requestTourModal.time1430')}</option>
+                  <option value="17:00">{t('requestTourModal.time1700')}</option>
+                  <option value="18:30">{t('requestTourModal.time1830')}</option>
                 </select>
               </div>
             </div>
@@ -183,7 +190,7 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
           {/* Tenant Email Optional */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Email nhận thông báo (Không bắt buộc)
+              {t('requestTourModal.emailLabel')}
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -200,13 +207,13 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
           {/* Notes */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Ghi chú thêm cho chủ nhà
+              {t('requestTourModal.notesLabel')}
             </label>
             <div className="relative">
               <FileText className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
               <textarea
                 rows={2}
-                placeholder="Ví dụ: Tôi muốn hỏi thêm về chỗ đỗ xe ô tô..."
+                placeholder={t('requestTourModal.notesPlaceholder')}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500"
@@ -217,7 +224,7 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
           {/* Trust guarantee */}
           <div className="flex items-center gap-2 text-xs text-slate-500 bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
             <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
-            <span>Pimi cam kết không thu bất kỳ phí dịch vụ nào từ người xem phòng.</span>
+            <span>{t('requestTourModal.trustNote')}</span>
           </div>
 
           {/* Actions */}
@@ -227,7 +234,7 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
               onClick={onClose}
               className="w-1/3 py-3 rounded-xl border border-slate-200 text-slate-700 font-bold text-sm hover:bg-slate-100 transition-colors"
             >
-              Hủy
+              {t('requestTourModal.cancel')}
             </button>
             <button
               type="submit"
@@ -235,7 +242,7 @@ export const RequestTourModal: React.FC<RequestTourModalProps> = ({ room, onClos
               className="w-2/3 py-3 rounded-xl gradient-bg text-white font-bold text-sm shadow-lg shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
-              <span>{loading ? 'Đang gửi...' : 'Gửi Yêu Cầu Xem Phòng'}</span>
+              <span>{loading ? t('roomDetail.sending') : t('requestTourModal.submitButton')}</span>
             </button>
           </div>
         </form>

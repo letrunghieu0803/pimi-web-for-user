@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Room } from '@/types';
 import { MapPin, Maximize2, Users, CalendarCheck, ShieldCheck, Layers } from 'lucide-react';
@@ -9,9 +10,10 @@ interface RoomCardProps {
 }
 
 export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
+  const { t } = useTranslation();
   const formatPrice = (price: number) => {
     if (price >= 1000000) {
-      return `${(price / 1000000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} triệu`;
+      return `${(price / 1000000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${t('roomCard.million')}`;
     }
     return `${price.toLocaleString('vi-VN')}đ`;
   };
@@ -36,15 +38,15 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>
               {room.roomGroupId && room.availableCount !== undefined
-                ? `${room.availableCount} phòng trống`
-                : 'Phòng trống'}
+                ? `${room.availableCount} ${t('roomCard.roomsAvailable')}`
+                : t('roomCard.roomAvailable')}
             </span>
           </span>
 
           {room.hasMezzanine && (
             <span className="badge-tag bg-indigo-600/90 text-white backdrop-blur-md shadow-sm">
               <Layers className="w-3.5 h-3.5" />
-              <span>Có gác xép</span>
+              <span>{t('roomCard.hasMezzanine')}</span>
             </span>
           )}
         </div>
@@ -54,7 +56,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
           <span className="text-lg font-black text-emerald-400 font-heading">
             {formatPrice(room.price)}
           </span>
-          <span className="text-[11px] text-slate-300">/tháng</span>
+          <span className="text-[11px] text-slate-300">{t('roomCard.perMonth')}</span>
         </div>
       </div>
 
@@ -90,7 +92,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
             </div>
             <div className="flex items-center gap-1.5">
               <Users className="w-3.5 h-3.5 text-indigo-500" />
-              <span>Tối đa {room.maxPeople} người</span>
+              <span>{t('roomCard.maxPeople', { count: room.maxPeople })}</span>
             </div>
           </div>
 
@@ -103,7 +105,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
             ))}
             {room.amenities.length > 3 && (
               <span className="text-[11px] text-slate-400 font-medium">
-                +{room.amenities.length - 3} khác
+                +{room.amenities.length - 3} {t('roomCard.more')}
               </span>
             )}
           </div>
@@ -115,15 +117,15 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
             to={detailLink}
             className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors text-center"
           >
-            Xem chi tiết
+            {t('roomCard.viewDetails')}
           </Link>
-          
+
           <Link
             to={detailLink}
             className="flex-1 py-2.5 rounded-xl gradient-bg text-white font-bold text-xs shadow-md shadow-indigo-500/20 hover:scale-[1.02] transition-transform flex items-center justify-center gap-1.5 text-center"
           >
             <CalendarCheck className="w-3.5 h-3.5" />
-            <span>Hẹn xem phòng</span>
+            <span>{t('roomCard.bookViewing')}</span>
           </Link>
         </div>
       </div>

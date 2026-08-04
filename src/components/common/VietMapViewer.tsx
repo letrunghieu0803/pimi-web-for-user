@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { vietmapService } from '@/services/vietmapService';
@@ -26,6 +27,7 @@ export const VietMapViewer: React.FC<VietMapViewerProps> = ({
   address,
   height = '350px',
 }) => {
+  const { t } = useTranslation();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -160,14 +162,14 @@ export const VietMapViewer: React.FC<VietMapViewerProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
           <MapPin className="w-4 h-4 text-indigo-600" />
-          <span>Vị Trí Định Vị Bản Đồ VietMap</span>
+          <span>{t('vietMapViewer.title')}</span>
         </div>
         <button
           onClick={openNavigation}
           className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
         >
           <Navigation className="w-3.5 h-3.5" />
-          <span>Chỉ đường tới đây</span>
+          <span>{t('vietMapViewer.getDirections')}</span>
         </button>
       </div>
 
