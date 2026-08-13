@@ -80,6 +80,7 @@
   "navbar": {
     "home": "Home",
     "findRooms": "Find a room",
+    "news": "News",
     "appointments": "Viewing appointments",
     "about": "About Pimi",
     "faq": "FAQ",
@@ -272,7 +273,28 @@
     "trustNote1": "Book quickly, owner support available 24/7",
     "trustNote2": "100% free viewing service for tenants",
     "similarRoomsTitle": "Similar Rooms",
-    "exploreMore": "Explore more"
+    "exploreMore": "Explore more",
+    "bookAndPayButton": "Book & Pay",
+    "creatingBooking": "Creating booking...",
+    "contactCollaboratorButton": "Contact collaborator"
+  },
+  "contactCollaboratorModal": {
+    "title": "Contact collaborator",
+    "subtitle": "The collaborator assigned to this building can help you rent this room."
+  },
+  "bookingPayment": {
+    "notFound": "Booking not found",
+    "countdownLabel": "Time left to pay",
+    "instructionTitle": "Payment instructions",
+    "instructionStep1": "1. Open any banking app and scan the QR code above.",
+    "instructionStep2": "2. Confirm the amount is correct, then complete the transfer.",
+    "referenceLabel": "Transfer note",
+    "waitingForPayment": "Waiting for payment confirmation...",
+    "paidTitle": "Payment successful!",
+    "paidText": "Please contact the landlord to complete your check-in.",
+    "expiredTitle": "Booking expired",
+    "expiredText": "The QR code has expired without receiving payment. Go back and book again if you still want this room.",
+    "backToRoomButton": "Back to room"
   },
   "tenantAppointments": {
     "title": "Viewing Appointment History",

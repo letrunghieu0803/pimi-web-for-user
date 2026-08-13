@@ -261,3 +261,178 @@ export const AMENITIES_LIST = [
   'Giờ giấc tự do',
   'Khóa vân tay',
 ];
+
+export interface HotLocation {
+  id: string;
+  district: string;
+  name: string;
+  city: string;
+  roomCount: string;
+  avgPrice: string;
+  image: string;
+  tag: string;
+}
+
+export const HOT_LOCATIONS: HotLocation[] = [
+  {
+    id: 'loc-1',
+    district: 'Cầu Giấy',
+    name: 'Quận Cầu Giấy',
+    city: 'Hà Nội',
+    roomCount: '480+ phòng',
+    avgPrice: 'Từ 3.5 triệu/tháng',
+    image: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=800&q=80',
+    tag: '🔥 Hot Nhất Sinh Viên',
+  },
+  {
+    id: 'loc-2',
+    district: 'Tây Hồ',
+    name: 'Quận Tây Hồ',
+    city: 'Hà Nội',
+    roomCount: '210+ phòng',
+    avgPrice: 'Từ 4.8 triệu/tháng',
+    image: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80',
+    tag: '🌅 View Hồ Tây Chill',
+  },
+  {
+    id: 'loc-3',
+    district: 'Bình Thạnh',
+    name: 'Quận Bình Thạnh',
+    city: 'TP. Hồ Chí Minh',
+    roomCount: '350+ phòng',
+    avgPrice: 'Từ 3.8 triệu/tháng',
+    image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?auto=format&fit=crop&w=800&q=80',
+    tag: '⚡ Gần Trung Tâm Q1',
+  },
+  {
+    id: 'loc-4',
+    district: 'Thanh Xuân',
+    name: 'Quận Thanh Xuân',
+    city: 'Hà Nội',
+    roomCount: '310+ phòng',
+    avgPrice: 'Từ 3.2 triệu/tháng',
+    image: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=800&q=80',
+    tag: '🎓 Cụm Trường Đại Học',
+  },
+  {
+    id: 'loc-5',
+    district: 'Hai Bà Trưng',
+    name: 'Quận Hai Bà Trưng',
+    city: 'Hà Nội',
+    roomCount: '290+ phòng',
+    avgPrice: 'Từ 3.0 triệu/tháng',
+    image: 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?auto=format&fit=crop&w=800&q=80',
+    tag: '🏛️ Bách - Kinh - Xây',
+  },
+  {
+    id: 'loc-6',
+    district: 'Đống Đa',
+    name: 'Quận Đống Đa',
+    city: 'Hà Nội',
+    roomCount: '380+ phòng',
+    avgPrice: 'Từ 3.6 triệu/tháng',
+    image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=800&q=80',
+    tag: '🏬 Nhộn Nhịp Tiện Ích',
+  },
+  {
+    id: 'loc-7',
+    district: 'Quận 1',
+    name: 'Quận 1',
+    city: 'TP. Hồ Chí Minh',
+    roomCount: '180+ phòng',
+    avgPrice: 'Từ 5.5 triệu/tháng',
+    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
+    tag: '🏙️ Đô Thị Sầm Uất',
+  },
+  {
+    id: 'loc-8',
+    district: 'Phú Nhuận',
+    name: 'Quận Phú Nhuận',
+    city: 'TP. Hồ Chí Minh',
+    roomCount: '220+ phòng',
+    avgPrice: 'Từ 4.2 triệu/tháng',
+    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+    tag: '✈️ Gần Sân Bay Tân Sơn Nhất',
+  },
+];
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  category: string;
+  date: string;
+  readTime: string;
+  image: string;
+  excerpt: string;
+  content: string;
+}
+
+export const NEWS_ARTICLES: NewsArticle[] = [
+  {
+    id: 'news-1',
+    title: '5 Điều Khoản Vàng Khi Ký Hợp Đồng Thuê Trọ Tránh Mất Tiền Oan',
+    category: 'Cẩm Nang Thuê Nhà',
+    date: '05/08/2026',
+    readTime: '4 phút đọc',
+    image: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80',
+    excerpt: 'Những điều khoản quan trọng về tiền cọc, chỉ số điện nước và thời hạn hợp đồng mà mọi người đi thuê cần phải thuộc lòng trước khi ký.',
+    content: `Khi thuê phòng trọ hoặc căn hộ mini, hợp đồng thuê nhà chính là văn bản duy nhất bảo vệ quyền lợi hợp pháp của bạn. Dưới đây là 5 điều khoản quan trọng bạn nhất định phải kiểm tra kỹ:
+1. Tiền cọc & điều kiện hoàn trả cọc: Thời gian thông báo báo trước khi dời đi (thường là 30 ngày) và cam kết hoàn 100% cọc.
+2. Đơn giá dịch vụ điện nước rõ ràng: Đã bao gồm thuế hay chưa, chỉ số công tơ ban đầu ghi chép thực tế.
+3. Trách nhiệm sửa chữa thiết bị hỏng hóc: Thiết bị xuống cấp tự nhiên do thời gian chủ nhà có nghĩa vụ sửa chữa.
+4. Thời hạn hợp đồng & điều khoản gia hạn: Mức giá cam kết không tăng trong suốt thời hạn hợp đồng.
+5. Danh mục kiểm kê nội thất bàn giao: Ghi rõ tình trạng hoạt động của điều hòa, nóng lạnh, giường tủ khi nhận phòng.`,
+  },
+  {
+    id: 'news-2',
+    title: 'Mẹo Tìm Phòng Trọ Sinh Viên Giá Rẻ Khu Vực Bách - Kinh - Xây',
+    category: 'Kinh Nghiệm',
+    date: '02/08/2026',
+    readTime: '5 phút đọc',
+    image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80',
+    excerpt: 'Tổng hợp kinh nghiệm chọn ngõ trọ an ninh, giá cả vừa túi tiền xung quanh ĐH Bách Khoa, Kinh tế Quốc dân và Xây dựng.',
+    content: `Khu vực Bách - Kinh - Xây luôn có mật độ sinh viên cực kỳ đông đúc. Để tìm được phòng trọ ưng ý:
+- Nên tìm phòng trong các tuyến ngõ Tạ Quang Bửu, Trần Đại Nghĩa, Lê Thanh Nghị, Giải Phóng.
+- Ưu tiên nhà có cổng khóa vân tay hoặc camera an ninh 24/7.
+- Kiểm tra khoảng cách đi bộ tới trường để tiết kiệm chi phí gửi xe và đi lại.
+- Đặt lịch hẹn xem phòng trực tiếp trên Pimi để làm việc chính chủ không qua cò đất.`,
+  },
+  {
+    id: 'news-3',
+    title: 'Kinh Nghiệm Chọn Căn Hộ Mini Có Gác Xép Rộng & Thoáng Mát',
+    category: 'Mẹo Chọn Phòng',
+    date: '28/07/2026',
+    readTime: '3 phút đọc',
+    image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80',
+    excerpt: 'Làm thế nào để nhận biết căn hộ gác xép không bị bí nóng, chiều cao trần đạt chuẩn và cách bố trí nội thất tối ưu.',
+    content: `Phòng có gác xép giúp gấp đôi diện tích sử dụng nhưng nếu thiết kế không chuẩn sẽ dễ bị hầm nóng vào mùa hè.
+- Độ cao trần tối thiểu từ 3.2m đến 3.5m để khi đứng trên gác xép không bị đụng đầu.
+- Nên chọn phòng gác xép có cửa sổ lớn hoặc lỗ thông gió tầng trên.
+- Kiểm tra chất liệu gác: Gác đúc bê tông hoặc khung thép lót tấm cemboard kiên cố không bị vặn vẹo hay phát ra tiếng ồn khi đi lại.`,
+  },
+  {
+    id: 'news-4',
+    title: 'Cách Kiểm Tra Công Tơ Điện Nước Tránh Bị Chủ Nhà Tăng Giá Ảo',
+    category: 'Pháp Lý & Giá Cả',
+    date: '25/07/2026',
+    readTime: '6 phút đọc',
+    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+    excerpt: 'Hướng dẫn kiểm tra rò rỉ điện, công tơ nước chạy sai và quy định mức giá trần điện nước theo quy định hiện hành.',
+    content: `Nhiều bạn sinh viên gặp tình trạng hóa đơn điện nước tăng vọt bất thường mà không rõ nguyên nhân.
+1. Thử ngắt toàn bộ thiết bị trong phòng: Nếu aptomat tắt mà công tơ vẫn quay tức là có hiện tượng rò điện hoặc đấu nối nhầm.
+2. Kiểm tra chỉ số chốt đầu tháng: Chụp ảnh công tơ điện/nước vào ngày đầu tiên chuyển vào và định kỳ ngày 1 hàng tháng.
+3. Tìm hiểu quy định giá điện sinh hoạt của nhà nước dành cho người thuê trọ.`,
+  },
+  {
+    id: 'news-5',
+    title: 'Quy Trình Đặt Cọc Giữ Phòng An Toàn 100% Trên Nền Tảng Pimi',
+    category: 'Hướng Dẫn Pimi',
+    date: '20/07/2026',
+    readTime: '3 phút đọc',
+    image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80',
+    excerpt: 'Bảo vệ quyền lợi tuyệt đối khi đặt tiền giữ chỗ phòng trọ, nhận phiếu xác nhận điện tử từ chủ nhà minh bạch.',
+    content: `Tránh tình trạng nộp tiền cọc giữ phòng rồi bị bùng phòng hoặc cướp tiền cọc.
+- Chỉ đặt cọc sau khi đã đến xem phòng thực tế và xác minh thông tin chủ nhà trên Pimi.
+- Nhận phiếu thu cọc điện tử hoặc giấy biên nhận có ghi rõ ngày dự kiến chuyển vào, số tiền cọc, và điều kiện phạt cọc nếu chủ nhà không giao phòng đúng hạn.`,
+  },
+];

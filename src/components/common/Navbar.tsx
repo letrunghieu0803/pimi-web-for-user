@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useSocket } from '@/context/SocketContext';
-import { Home, Search, Menu, X, Building2, HelpCircle, Info, LogIn, UserPlus, User, CalendarCheck, LogOut, ChevronDown, Bell, CheckCheck, Languages } from 'lucide-react';
+import { Home, Search, Menu, X, Building2, HelpCircle, Info, LogIn, UserPlus, User, CalendarCheck, LogOut, ChevronDown, Bell, CheckCheck, Languages, Newspaper } from 'lucide-react';
 import { notificationApi, NotificationItem } from '@/services/notificationApi';
 
 const LanguageSwitcher: React.FC<{ className?: string }> = ({ className = '' }) => {
@@ -171,6 +171,7 @@ export const Navbar: React.FC = () => {
   const navLinks = [
     { path: '/', label: t('navbar.home'), icon: Home },
     { path: '/rooms', label: t('navbar.findRooms'), icon: Search },
+    { path: '/news', label: t('navbar.news') || 'Tin tức', icon: Newspaper },
     ...(isAuthenticated ? [{ path: '/appointments', label: t('navbar.appointments'), icon: CalendarCheck }] : []),
     { path: '/about', label: t('navbar.about'), icon: Info },
     { path: '/faq', label: t('navbar.faq'), icon: HelpCircle },

@@ -4,9 +4,12 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Room } from '@/types';
 import { roomApi } from '@/services/roomApi';
 import { appointmentApi, Appointment } from '@/services/appointmentApi';
+import { bookingApi } from '@/services/bookingApi';
+import { collaboratorApi, HouseCollaborator } from '@/services/collaboratorApi';
 import { useAuth } from '@/context/AuthContext';
 import { RoomCard } from '@/components/common/RoomCard';
-import { MapPin, Maximize2, Users, ShieldCheck, PhoneCall, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt } from 'lucide-react';
+import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
+import { MapPin, Maximize2, Users, ShieldCheck, PhoneCall, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2 } from 'lucide-react';
 import { VietMapViewer } from '@/components/common/VietMapViewer';
 import { useToast } from '@/context/ToastContext';
 import { RoomDetailSkeleton } from '@/components/ui/Skeleton';
@@ -29,6 +32,9 @@ export const RoomDetail: React.FC = () => {
 
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [collaborators, setCollaborators] = useState<HouseCollaborator[]>([]);
+  const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
 
   const fetchActiveAppointment = async (currentRoom: Room | null) => {
     if (!isAuthenticated || !targetId || !currentRoom) return;
@@ -57,6 +63,12 @@ export const RoomDetail: React.FC = () => {
           setRoom(data);
           setActiveImageIndex(0);
           fetchActiveAppointment(data);
+          if (data?.houseId) {
+            collaboratorApi
+              .getHouseCollaborators(data.houseId)
+              .then((res: any) => setCollaborators(res?.data || res || []))
+              .catch(() => setCollaborators([]));
+          }
         })
         .finally(() => setLoading(false));
 
@@ -130,6 +142,32 @@ export const RoomDetail: React.FC = () => {
       toast.error(getApiErrorMessage(err));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Ngắn hạn = thanh toán QR trong app ngay; dài hạn = đặt lịch xem phòng như cũ.
+  // Cả 2 loại đều có thể "Liên hệ cộng tác viên" (ẩn nếu chưa có ai được gán cho toà nhà).
+  const canBookShortTerm =
+    (room.rentalTermType === 'SHORT_TERM' || room.rentalTermType === 'BOTH') && !!room.shortTermPrice;
+  const hasCollaborators = collaborators.length > 0;
+
+  const handleBookAndPay = async () => {
+    if (!isAuthenticated) {
+      toast.warning(t('roomDetail.toastNeedLogin'));
+      navigate(`/login?redirect=/rooms/${room.id}`);
+      return;
+    }
+
+    if (bookingSubmitting) return;
+    setBookingSubmitting(true);
+    try {
+      const res: any = await bookingApi.createBooking(room.id);
+      const booking = res?.data || res;
+      navigate(`/payment/${booking.id}`);
+    } catch (err: any) {
+      toast.error(getApiErrorMessage(err));
+    } finally {
+      setBookingSubmitting(false);
     }
   };
 
@@ -238,22 +276,38 @@ export const RoomDetail: React.FC = () => {
             <div className="space-y-1">
               <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.rentPrice')}</span>
               <span className="text-lg font-black text-emerald-600 font-heading">
-                {formatPrice(room.price)}{t('roomCard.perMonth')}
+                {formatPrice(room.price)} / {room.longTermDurationValue && room.longTermDurationValue > 1 ? `${room.longTermDurationValue} ` : ''}{room.longTermPriceUnit === 'PER_YEAR' ? 'năm' : 'tháng'}
               </span>
             </div>
 
-            <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.deposit')}</span>
-              <span className="text-sm font-bold text-slate-800">
-                {formatPrice(room.depositPrice)}
-              </span>
-            </div>
+            {room.shortTermPrice ? (
+              <div className="space-y-1">
+                <span className="text-xs text-slate-500 font-semibold block">Giá ngắn hạn</span>
+                <span className="text-base font-bold text-amber-600 font-heading">
+                  {formatPrice(room.shortTermPrice)} / {room.shortTermDurationValue && room.shortTermDurationValue > 1 ? `${room.shortTermDurationValue} ` : ''}{room.shortTermPriceUnit === 'PER_HOUR' ? 'giờ' : 'ngày'}
+                </span>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.deposit')}</span>
+                <span className="text-sm font-bold text-slate-800">
+                  {formatPrice(room.depositPrice)}
+                </span>
+              </div>
+            )}
 
             <div className="space-y-1">
               <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.area')}</span>
               <span className="text-sm font-bold text-slate-800 flex items-center gap-1">
                 <Maximize2 className="w-4 h-4 text-indigo-500" />
                 {room.area} m²
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-xs text-slate-500 font-semibold block">Thời hạn HĐ tối thiểu</span>
+              <span className="text-sm font-bold text-indigo-600">
+                {room.minContractTermMonths ? `${room.minContractTermMonths} tháng` : 'Linh hoạt'}
               </span>
             </div>
 
@@ -349,26 +403,38 @@ export const RoomDetail: React.FC = () => {
               <p className="text-[11px] text-slate-400">{t('roomDetail.priceIncludesFee')}</p>
             </div>
 
-            {/* Landlord Profile */}
-            <div className="flex items-center gap-3.5 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
-              <img
-                src={room.landlordAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'}
-                alt={room.landlordName}
-                className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-indigo-200"
-              />
-              <div className="flex-1 min-w-0">
-                <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.postedByOwner')}</span>
-                <h4 className="text-sm font-bold text-slate-900 truncate">{room.landlordName}</h4>
-                <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  {t('roomDetail.identityVerified')}
-                </span>
+            {/* Landlord Profile — ẩn hẳn khi backend không trả thông tin chủ nhà (mặc định với
+                người thuê: liên hệ qua cộng tác viên hoặc đặt lịch/đặt phòng trong app). */}
+            {room.landlordName && (
+              <div className="flex items-center gap-3.5 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                <img
+                  src={room.landlordAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'}
+                  alt={room.landlordName}
+                  className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-indigo-200"
+                />
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.postedByOwner')}</span>
+                  <h4 className="text-sm font-bold text-slate-900 truncate">{room.landlordName}</h4>
+                  <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    {t('roomDetail.identityVerified')}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Direct Primary Actions */}
             <div className="space-y-3">
-              {activeAppointment ? (
+              {canBookShortTerm ? (
+                <button
+                  onClick={handleBookAndPay}
+                  disabled={bookingSubmitting}
+                  className="w-full py-4 rounded-2xl gradient-bg text-white font-bold text-sm shadow-xl shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  <Wallet className="w-5 h-5" />
+                  <span>{bookingSubmitting ? t('roomDetail.creatingBooking') : t('roomDetail.bookAndPayButton')}</span>
+                </button>
+              ) : activeAppointment ? (
                 activeAppointment.status === 'PENDING_OWNER' ? (
                   <div className="w-full py-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed text-center px-3">
                     <Clock className="w-4 h-4 text-amber-600 shrink-0" />
@@ -402,13 +468,25 @@ export const RoomDetail: React.FC = () => {
                 </button>
               )}
 
-              <a
-                href={`tel:${room.landlordPhone}`}
-                className="w-full py-3.5 rounded-2xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-sm border border-indigo-200 transition-colors flex items-center justify-center gap-2"
-              >
-                <PhoneCall className="w-4 h-4 text-indigo-600" />
-                <span>{t('roomDetail.callOwner', { phone: room.landlordPhone })}</span>
-              </a>
+              {room.landlordPhone && (
+                <a
+                  href={`tel:${room.landlordPhone}`}
+                  className="w-full py-3.5 rounded-2xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-sm border border-indigo-200 transition-colors flex items-center justify-center gap-2"
+                >
+                  <PhoneCall className="w-4 h-4 text-indigo-600" />
+                  <span>{t('roomDetail.callOwner', { phone: room.landlordPhone })}</span>
+                </a>
+              )}
+
+              {hasCollaborators && (
+                <button
+                  onClick={() => setShowCollaboratorModal(true)}
+                  className="w-full py-3.5 rounded-2xl bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold text-sm border border-amber-200 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Users2 className="w-4 h-4 text-amber-600" />
+                  <span>{t('roomDetail.contactCollaboratorButton')}</span>
+                </button>
+              )}
             </div>
 
             {/* Trust Assurance Notes */}
@@ -449,6 +527,13 @@ export const RoomDetail: React.FC = () => {
             ))}
           </div>
         </section>
+      )}
+
+      {showCollaboratorModal && (
+        <ContactCollaboratorModal
+          collaborators={collaborators}
+          onClose={() => setShowCollaboratorModal(false)}
+        />
       )}
     </div>
   );

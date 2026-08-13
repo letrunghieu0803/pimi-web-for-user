@@ -80,6 +80,7 @@
   "navbar": {
     "home": "Trang chủ",
     "findRooms": "Tìm phòng trọ",
+    "news": "Tin tức",
     "appointments": "Lịch hẹn xem phòng",
     "about": "Về Pimi",
     "faq": "Hỏi đáp",
@@ -272,7 +273,28 @@
     "trustNote1": "Đặt hẹn nhanh chóng, chủ nhà hỗ trợ 24/7",
     "trustNote2": "Miễn phí 100% dịch vụ xem phòng cho người thuê",
     "similarRoomsTitle": "Phòng Trọ Tương Tự",
-    "exploreMore": "Khám phá thêm"
+    "exploreMore": "Khám phá thêm",
+    "bookAndPayButton": "Đặt Phòng & Thanh Toán",
+    "creatingBooking": "Đang tạo đơn...",
+    "contactCollaboratorButton": "Liên hệ cộng tác viên"
+  },
+  "contactCollaboratorModal": {
+    "title": "Liên hệ cộng tác viên",
+    "subtitle": "Cộng tác viên phụ trách toà nhà này sẽ hỗ trợ bạn thuê phòng."
+  },
+  "bookingPayment": {
+    "notFound": "Không tìm thấy đơn đặt phòng",
+    "countdownLabel": "Thời gian còn lại để thanh toán",
+    "instructionTitle": "Hướng dẫn thanh toán",
+    "instructionStep1": "1. Mở app ngân hàng bất kỳ và quét mã QR ở trên.",
+    "instructionStep2": "2. Kiểm tra đúng số tiền rồi xác nhận chuyển khoản.",
+    "referenceLabel": "Nội dung chuyển khoản",
+    "waitingForPayment": "Đang chờ xác nhận thanh toán...",
+    "paidTitle": "Thanh toán thành công!",
+    "paidText": "Vui lòng liên hệ chủ nhà để hoàn tất nhận phòng.",
+    "expiredTitle": "Đơn đặt phòng đã hết hạn",
+    "expiredText": "Mã QR đã hết hạn do chưa nhận được thanh toán. Vui lòng quay lại và đặt phòng lại nếu vẫn muốn thuê.",
+    "backToRoomButton": "Quay lại trang phòng"
   },
   "tenantAppointments": {
     "title": "Lịch sử Đặt lịch xem phòng",

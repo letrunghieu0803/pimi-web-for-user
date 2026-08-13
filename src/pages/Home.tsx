@@ -5,7 +5,9 @@ import { Room } from '@/types';
 import { roomApi } from '@/services/roomApi';
 import { RoomCard } from '@/components/common/RoomCard';
 import { RequestTourModal } from '@/components/common/RequestTourModal';
-import { Search, ShieldCheck, Zap, PhoneCall, Sparkles, Building2, ChevronRight, HeartHandshake, CheckCircle } from 'lucide-react';
+import { HotLocationsSlider } from '@/components/home/HotLocationsSlider';
+import { NewsArticlesSlider } from '@/components/home/NewsArticlesSlider';
+import { Search, ShieldCheck, Zap, PhoneCall, Sparkles, Building2, ChevronRight, HeartHandshake, MapPin } from 'lucide-react';
 import { DISTRICTS } from '@/data/mockData';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
 
@@ -40,10 +42,20 @@ export const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto space-y-6">
             
-            {/* Tag Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100/80 text-indigo-700 text-xs font-bold tracking-wide border border-indigo-200 shadow-sm animate-pulse">
-              <Sparkles className="w-4 h-4 text-indigo-600" />
-              <span>{t('home.heroBadge')}</span>
+            {/* Tag Badges */}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100/80 text-indigo-700 text-xs font-bold tracking-wide border border-indigo-200 shadow-sm animate-pulse">
+                <Sparkles className="w-4 h-4 text-indigo-600" />
+                <span>{t('home.heroBadge')}</span>
+              </div>
+
+              <Link
+                to="/rooms?nearby=true"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 transition-all hover:scale-105"
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                <span>📍 Tìm trọ quanh đây</span>
+              </Link>
             </div>
 
             {/* Main Title */}
@@ -114,6 +126,9 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Hot Locations Horizontal Slider Section */}
+      <HotLocationsSlider />
 
       {/* Featured Rooms Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -199,6 +214,9 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* News & Articles Horizontal Slider Section */}
+      <NewsArticlesSlider />
 
       {/* CTA Banner */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

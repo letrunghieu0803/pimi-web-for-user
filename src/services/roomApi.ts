@@ -37,10 +37,13 @@ const INITIAL_MOCK_BOOKINGS: ViewingRequest[] = [
 // Helper to map backend RentRoom model to user app Room interface
 const mapBackendRoomToRoom = (item: any): Room => {
   const house = item.rentHouse || {};
-  const owner = house.houseOwner || {};
-  
-  const ownerName = [owner.firstName, owner.lastName].filter(Boolean).join(' ') || 'Chủ nhà';
-  
+  // Backend không còn trả houseOwner cho endpoint công khai/người thuê — không tự bịa
+  // tên/SĐT giả nữa (trước đây fallback về 'Chủ nhà' + số điện thoại giả 0988776655).
+  const owner = house.houseOwner || null;
+  const ownerName = owner
+    ? [owner.firstName, owner.lastName].filter(Boolean).join(' ') || undefined
+    : undefined;
+
   const images = (item.images || [])
     .map((img: any) => img.image?.link || img.link)
     .filter(Boolean);
@@ -80,8 +83,10 @@ const mapBackendRoomToRoom = (item: any): Room => {
     amenities: amenities.length > 0 ? amenities : ['Điều hòa', 'Wifi', 'Nóng lạnh', 'Giờ giấc tự do'],
     description: `Phòng thuộc ${house.name || 'nhà trọ'}, địa chỉ ${house.address || 'Hà Nội'}. Diện tích ${areaNum}m², vị trí thoáng mát, an ninh tốt.`,
     landlordName: ownerName,
-    landlordPhone: owner.phoneNumber || '0988776655',
-    landlordAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+    landlordPhone: owner?.phoneNumber || undefined,
+    landlordAvatar: owner
+      ? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'
+      : undefined,
     latitude: house.lat !== undefined && house.lat !== null ? Number(house.lat) : undefined,
     longitude: house.long !== undefined && house.long !== null ? Number(house.long) : undefined,
     hasMezzanine: !!item.hasMezzanine,
@@ -91,6 +96,16 @@ const mapBackendRoomToRoom = (item: any): Room => {
     services,
     roomGroupId: item.roomGroupId || null,
     availableCount: item.availableCount,
+    distanceInKm: item.distanceInKm !== undefined && item.distanceInKm !== null ? Number(item.distanceInKm) : undefined,
+    isRecommended: item.isRecommended !== undefined ? !!item.isRecommended : false,
+    ratingScore: item.ratingScore !== undefined && item.ratingScore !== null ? Number(item.ratingScore) : 80,
+    rentalTermType: house.rentalTermType || item.rentalTermType || 'SHORT_TERM',
+    shortTermPrice: item.shortTermPrice !== undefined && item.shortTermPrice !== null ? Number(item.shortTermPrice) : undefined,
+    shortTermPriceUnit: item.shortTermPriceUnit || undefined,
+    shortTermDurationValue: item.shortTermDurationValue ? Number(item.shortTermDurationValue) : 1,
+    longTermPriceUnit: item.longTermPriceUnit || 'PER_MONTH',
+    longTermDurationValue: item.longTermDurationValue ? Number(item.longTermDurationValue) : 1,
+    minContractTermMonths: item.minContractTermMonths ? Number(item.minContractTermMonths) : undefined,
   };
 };
 
@@ -101,10 +116,15 @@ interface PublicFeedParams {
   maxPrice?: number;
   roomType?: string;
   hasMezzanine?: boolean | null;
+  isRecommended?: boolean | null;
+  rentalTermType?: 'SHORT_TERM' | 'LONG_TERM';
   amenities?: string[];
+  userLat?: number | null;
+  userLng?: number | null;
+  radiusInKm?: number | null;
   pageNumber?: number;
   pageSize?: number;
-  sortBy?: 'newest' | 'price_asc' | 'price_desc';
+  sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'distance';
 }
 
 interface PublicFeedResult {
@@ -151,7 +171,15 @@ const fetchPublicFeed = (params: PublicFeedParams): Promise<PublicFeedResult> =>
           params.hasMezzanine !== null && params.hasMezzanine !== undefined
             ? params.hasMezzanine
             : undefined,
+        isRecommended:
+          params.isRecommended !== null && params.isRecommended !== undefined
+            ? params.isRecommended
+            : undefined,
+        rentalTermType: params.rentalTermType || 'SHORT_TERM',
         amenities: params.amenities && params.amenities.length > 0 ? params.amenities.join(',') : undefined,
+        userLat: params.userLat ?? undefined,
+        userLng: params.userLng ?? undefined,
+        radiusInKm: params.radiusInKm ?? undefined,
         pageNumber: params.pageNumber,
         pageSize: params.pageSize,
         sortBy: params.sortBy,
@@ -247,9 +275,12 @@ export const roomApi = {
     keyword?: string;
     amenities?: string[];
     hasMezzanine?: boolean | null;
+    userLat?: number | null;
+    userLng?: number | null;
+    radiusInKm?: number | null;
     pageNumber?: number;
     pageSize?: number;
-    sortBy?: 'newest' | 'price_asc' | 'price_desc';
+    sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'distance';
   }): Promise<PublicFeedResult> => {
     const { minPrice, maxPrice } = priceRangeToMinMax(params?.priceRange);
     return fetchPublicFeed({
@@ -260,6 +291,9 @@ export const roomApi = {
       roomType: params?.roomType,
       hasMezzanine: params?.hasMezzanine,
       amenities: params?.amenities,
+      userLat: params?.userLat,
+      userLng: params?.userLng,
+      radiusInKm: params?.radiusInKm,
       pageNumber: params?.pageNumber,
       pageSize: params?.pageSize,
       sortBy: params?.sortBy,
@@ -275,6 +309,10 @@ export const roomApi = {
     keyword?: string;
     amenities?: string[];
     hasMezzanine?: boolean | null;
+    userLat?: number | null;
+    userLng?: number | null;
+    radiusInKm?: number | null;
+    sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'distance';
   }): Promise<Room[]> => {
     const result = await roomApi.getRoomsPaginated({ ...params, pageNumber: 1, pageSize: 100 });
     return result.rooms;

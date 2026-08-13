@@ -16,6 +16,8 @@ import { About } from '@/pages/About';
 import { FAQ } from '@/pages/FAQ';
 import { Privacy } from '@/pages/Privacy';
 import { Contact } from '@/pages/Contact';
+import { NewsList } from '@/pages/NewsList';
+import { NewsDetail } from '@/pages/NewsDetail';
 
 // Auth & Tenant Profile Pages
 import { Login } from '@/pages/Login';
@@ -24,6 +26,7 @@ import { ForgotPassword } from '@/pages/ForgotPassword';
 import { VerifyEmail } from '@/pages/VerifyEmail';
 import { Profile } from '@/pages/Profile';
 import { BookingHistory } from '@/pages/BookingHistory';
+import { BookingPayment } from '@/pages/BookingPayment';
 import { TenantAppointments } from '@/pages/TenantAppointments';
 import { NotificationsPage } from '@/pages/Notifications';
 
@@ -53,6 +56,8 @@ export const App: React.FC = () => {
                     <Route path="/rooms/:id" element={<RoomDetail />} />
                     <Route path="/room-groups/:groupId" element={<RoomDetail />} />
                     <Route path="/about" element={<About />} />
+                    <Route path="/news" element={<NewsList />} />
+                    <Route path="/news/:id" element={<NewsDetail />} />
                     <Route path="/faq" element={<FAQ />} />
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/contact" element={<Contact />} />
@@ -64,6 +69,7 @@ export const App: React.FC = () => {
                     <Route path="/verify-email" element={<VerifyEmail />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/bookings" element={<BookingHistory />} />
+                    <Route path="/payment/:bookingId" element={<BookingPayment />} />
                     <Route path="/appointments" element={<TenantAppointments />} />
                     <Route path="/notifications" element={<NotificationsPage />} />
                   </Routes>
