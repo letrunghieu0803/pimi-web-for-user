@@ -53,7 +53,7 @@ export const newsApi = {
     try {
       const response: any = await axiosClient.get('/v1/news/public/feed', {
         params: {
-          audience: 'TENANT',
+          audience: 'RENT_USER',
           search: params?.search || undefined,
           pageNumber: params?.pageNumber || 1,
           pageSize: params?.pageSize || 10,
@@ -105,7 +105,7 @@ export const newsApi = {
     // 2. Fetch from backend API
     try {
       const response: any = await axiosClient.get(`/v1/news/public/${id}`, {
-        params: { audience: 'TENANT' },
+        params: { audience: 'RENT_USER' },
       });
       const raw = response?.data || response;
       if (raw && raw.id) {

@@ -169,10 +169,8 @@ export const Navbar: React.FC = () => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const navLinks = [
-    { path: '/', label: t('navbar.home'), icon: Home },
     { path: '/rooms', label: t('navbar.findRooms'), icon: Search },
     { path: '/news', label: t('navbar.news') || 'Tin tức', icon: Newspaper },
-    ...(isAuthenticated ? [{ path: '/appointments', label: t('navbar.appointments'), icon: CalendarCheck }] : []),
     { path: '/about', label: t('navbar.about'), icon: Info },
     { path: '/faq', label: t('navbar.faq'), icon: HelpCircle },
   ];
