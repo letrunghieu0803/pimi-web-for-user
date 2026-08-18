@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Room } from '@/types';
-import { MapPin, Maximize2, Users, CalendarCheck, ShieldCheck, Layers } from 'lucide-react';
+import { MapPin, Maximize2, Users, CalendarCheck, ShieldCheck, Layers, Navigation, Star, Sparkles } from 'lucide-react';
 
 interface RoomCardProps {
   room: Room;
@@ -34,29 +34,70 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
         
         {/* Top Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
-          <span className="badge-tag bg-emerald-500/90 text-white backdrop-blur-md shadow-sm">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>
-              {room.roomGroupId && room.availableCount !== undefined
-                ? `${room.availableCount} ${t('roomCard.roomsAvailable')}`
-                : t('roomCard.roomAvailable')}
+          <div className="flex items-center gap-1.5">
+            {room.isRecommended && (
+              <span className="badge-tag bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black backdrop-blur-md shadow-md">
+                <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
+                <span>⭐ Đề Cử</span>
+              </span>
+            )}
+            <span className="badge-tag bg-emerald-500/90 text-white backdrop-blur-md shadow-sm">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>
+                {room.roomGroupId && room.availableCount !== undefined
+                  ? `${room.availableCount} ${t('roomCard.roomsAvailable')}`
+                  : t('roomCard.roomAvailable')}
+              </span>
             </span>
-          </span>
+          </div>
 
-          {room.hasMezzanine && (
-            <span className="badge-tag bg-indigo-600/90 text-white backdrop-blur-md shadow-sm">
-              <Layers className="w-3.5 h-3.5" />
-              <span>{t('roomCard.hasMezzanine')}</span>
-            </span>
-          )}
+          <div className="flex items-center gap-1.5">
+            {room.ratingScore !== undefined && (
+              <span className="badge-tag bg-slate-900/85 text-amber-300 font-bold backdrop-blur-md shadow-sm">
+                <Star className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
+                <span>{room.ratingScore}đ</span>
+              </span>
+            )}
+
+            {room.distanceInKm !== undefined && (
+              <span className="badge-tag bg-amber-500/95 text-white backdrop-blur-md shadow-sm animate-pulse">
+                <Navigation className="w-3.5 h-3.5" />
+                <span>{room.distanceInKm} km</span>
+              </span>
+            )}
+
+            {room.hasMezzanine && (
+              <span className="badge-tag bg-indigo-600/90 text-white backdrop-blur-md shadow-sm">
+                <Layers className="w-3.5 h-3.5" />
+                <span>{t('roomCard.hasMezzanine')}</span>
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Price Tag Overlay */}
         <div className="absolute bottom-3 left-3 bg-slate-900/85 backdrop-blur-md text-white px-3.5 py-1.5 rounded-2xl shadow-lg flex items-baseline gap-1">
-          <span className="text-lg font-black text-emerald-400 font-heading">
-            {formatPrice(room.price)}
-          </span>
-          <span className="text-[11px] text-slate-300">{t('roomCard.perMonth')}</span>
+          {room.shortTermPrice ? (
+            <>
+              <span className="text-lg font-black text-emerald-400 font-heading">
+                {formatPrice(room.shortTermPrice)}
+              </span>
+              <span className="text-[11px] text-slate-300">
+                / {room.shortTermDurationValue && room.shortTermDurationValue > 1 ? `${room.shortTermDurationValue} ` : ''}
+                {room.shortTermPriceUnit === 'PER_HOUR' ? 'giờ' : 'ngày'}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-lg font-black text-emerald-400 font-heading">
+                {formatPrice(room.price)}
+              </span>
+              <span className="text-[11px] text-slate-300">
+                / {room.longTermDurationValue && room.longTermDurationValue > 1 ? `${room.longTermDurationValue} ` : ''}
+                {room.longTermPriceUnit === 'PER_YEAR' ? 'năm' : 'tháng'}
+              </span>
+            </>
+          )}
         </div>
       </div>
 

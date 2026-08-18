@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { User, Phone, Mail, Lock, UserPlus, ShieldCheck, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { Seo } from '@/components/common/Seo';
 
 export const Register: React.FC = () => {
   const { t } = useTranslation();
@@ -71,8 +72,9 @@ export const Register: React.FC = () => {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
+      <Seo title={t('register.title')} path="/register" noindex />
       <div className="max-w-md w-full glass-panel p-8 rounded-3xl border border-slate-200 shadow-2xl space-y-6">
-        
+
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="w-12 h-12 rounded-2xl gradient-bg flex items-center justify-center text-white mx-auto shadow-lg shadow-indigo-500/25">

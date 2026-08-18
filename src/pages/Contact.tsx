@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Mail, Phone, MapPin, Send, MessageSquare, Clock, CheckCircle } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
+import { Seo } from '@/components/common/Seo';
 
 export const Contact: React.FC = () => {
   const { t } = useTranslation();
@@ -33,7 +34,7 @@ export const Contact: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-      
+      <Seo title={t('seo.contactTitle')} description={t('seo.contactDescription')} path="/contact" />
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-wider">

@@ -13,7 +13,7 @@ export interface UserProfile {
   email?: string;
   avatar?: string;
   address?: string;
-  role: 'TENANT';
+  role: 'RENT_USER';
   isVerified?: boolean;
   createdAt: string;
 }
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         phoneNumber: rawUser.phoneNumber || usernameOrPhone,
         email: rawUser.email,
         avatar: rawUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
-        role: 'TENANT',
+        role: 'RENT_USER',
         isVerified: true,
         createdAt: rawUser.createdAt || new Date().toISOString(),
       };
@@ -173,7 +173,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         phoneNumber,
         email,
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
-        role: 'TENANT',
+        role: 'RENT_USER',
         isVerified: false,
         createdAt: new Date().toISOString(),
       };

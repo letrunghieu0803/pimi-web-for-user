@@ -19,6 +19,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Seo } from '@/components/common/Seo';
 
 export interface RentalHistoryItem {
   id: string;
@@ -99,7 +100,8 @@ export const BookingHistory: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-8">
-      
+      <Seo title={t('bookingHistory.title')} path="/bookings" noindex />
+
       {/* Page Header */}
       <div>
         <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">

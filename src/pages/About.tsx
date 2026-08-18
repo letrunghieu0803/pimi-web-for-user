@@ -2,11 +2,13 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Building2, ShieldCheck, HeartHandshake, Zap, Users, Target, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Seo } from '@/components/common/Seo';
 
 export const About: React.FC = () => {
   const { t } = useTranslation();
   return (
     <div className="space-y-16 pb-16">
+      <Seo title={t('seo.aboutTitle')} description={t('seo.aboutDescription')} path="/about" />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-b from-indigo-50/70 to-slate-50 py-16 border-b border-slate-200/60">

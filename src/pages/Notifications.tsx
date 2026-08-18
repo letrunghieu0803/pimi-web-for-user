@@ -5,6 +5,7 @@ import { notificationApi, NotificationItem } from '@/services/notificationApi';
 import { FilterTabs } from '@/components/common/FilterTabs';
 import { Pagination } from '@/components/common/Pagination';
 import { NotificationListSkeleton } from '@/components/ui/Skeleton';
+import { Seo } from '@/components/common/Seo';
 
 const PAGE_SIZE = 10;
 
@@ -136,8 +137,9 @@ export const NotificationsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
+      <Seo title={t('notifications.title')} path="/notifications" noindex />
       <div className="max-w-4xl mx-auto space-y-6">
-        
+
         {/* Header */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">

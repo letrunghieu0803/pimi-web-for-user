@@ -5,8 +5,29 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pimi - Tìm Phòng Trọ & Đặt Lịch Xem Phòng Miễn Phí</title>
-    <meta name="description" content="Nền tảng tìm kiếm và đặt lịch xem phòng trọ, chung cư mini chính chủ xác thực. Trải nghiệm thuê nhà minh bạch, không qua trung gian." />
-    
+    <!--
+      Thẻ meta tĩnh dưới đây là fallback cho các bot KHÔNG chạy JavaScript (Facebook/Zalo
+      link-preview crawler, một số công cụ SEO cũ...). Với các route cụ thể (phòng, tin tức),
+      component <Seo> sẽ ghi đè title/description/OG bằng nội dung đúng của trang đó ngay khi
+      React mount — Google/Bing (có chạy JS) sẽ thấy bản đã ghi đè này.
+
+      QUAN TRỌNG: đánh dấu data-default="true" trên các thẻ <meta name="description">/OG/Twitter
+      này để <Seo> tự xoá chúng ngay khi mount lần đầu. React 19 chỉ tự dedupe <title> nó tự
+      render (thẻ <title> tĩnh này KHÔNG cần data-default vì React thay thế nó đúng cách) —
+      nhưng KHÔNG tự dedupe <meta> do nó không phải là tác giả của thẻ tĩnh này, nên nếu không
+      xoá thủ công thì sẽ tồn tại 2 thẻ <meta name="description"> cùng lúc và trình duyệt/bot
+      luôn lấy thẻ ĐẦU TIÊN trong DOM (tức bản tĩnh sai) thay vì bản động đúng của từng trang.
+    -->
+    <meta name="description" content="Nền tảng tìm kiếm và đặt lịch xem phòng trọ, chung cư mini chính chủ xác thực. Trải nghiệm thuê nhà minh bạch, không qua trung gian." data-default="true" />
+    <meta property="og:type" content="website" data-default="true" />
+    <meta property="og:site_name" content="Pimi" data-default="true" />
+    <meta property="og:title" content="Pimi - Tìm Phòng Trọ & Đặt Lịch Xem Phòng Miễn Phí" data-default="true" />
+    <meta property="og:description" content="Nền tảng tìm kiếm và đặt lịch xem phòng trọ, chung cư mini chính chủ xác thực. Trải nghiệm thuê nhà minh bạch, không qua trung gian." data-default="true" />
+    <meta property="og:locale" content="vi_VN" data-default="true" />
+    <meta name="twitter:card" content="summary_large_image" data-default="true" />
+    <meta name="twitter:title" content="Pimi - Tìm Phòng Trọ & Đặt Lịch Xem Phòng Miễn Phí" data-default="true" />
+    <meta name="twitter:description" content="Nền tảng tìm kiếm và đặt lịch xem phòng trọ, chung cư mini chính chủ xác thực. Trải nghiệm thuê nhà minh bạch, không qua trung gian." data-default="true" />
+
     <!-- Google Fonts: Outfit & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

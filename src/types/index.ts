@@ -2,6 +2,10 @@ export type RoomStatus = 'EMPTY' | 'OCCUPIED' | 'MAINTENANCE';
 
 export type RoomType = 'APARTMENT' | 'MINI_APARTMENT' | 'BOARDING_HOUSE' | 'WHOLE_HOUSE';
 
+export type RentalTermType = 'SHORT_TERM' | 'LONG_TERM' | 'BOTH';
+export type ShortTermPriceUnit = 'PER_DAY' | 'PER_HOUR';
+export type LongTermPriceUnit = 'PER_MONTH' | 'PER_YEAR';
+
 export interface Room {
   id: string;
   name: string;
@@ -20,8 +24,11 @@ export interface Room {
   images: string[];
   amenities: string[];
   description: string;
-  landlordName: string;
-  landlordPhone: string;
+  // Chủ nhà: backend không còn trả về thông tin liên hệ của chủ nhà cho người thuê (khách
+  // liên hệ qua cộng tác viên hoặc đặt lịch/đặt phòng trong app) — để optional, UI ẩn hẳn
+  // khối "Chủ nhà" khi thiếu thay vì hiển thị tên/SĐT giả.
+  landlordName?: string;
+  landlordPhone?: string;
   landlordAvatar?: string;
   latitude?: number;
   longitude?: number;
@@ -32,6 +39,16 @@ export interface Room {
   services?: RoomService[];
   roomGroupId?: string | null;
   availableCount?: number;
+  distanceInKm?: number;
+  isRecommended?: boolean;
+  ratingScore?: number;
+  rentalTermType?: RentalTermType;
+  shortTermPrice?: number;
+  shortTermPriceUnit?: ShortTermPriceUnit;
+  shortTermDurationValue?: number;
+  longTermPriceUnit?: LongTermPriceUnit;
+  longTermDurationValue?: number;
+  minContractTermMonths?: number;
 }
 
 export interface RoomService {
@@ -62,6 +79,11 @@ export interface FilterState {
   priceRange: string; // 'ALL' | '0-3m' | '3m-5m' | '5m-8m' | '8m+'
   roomType: string; // 'ALL' | RoomType
   hasMezzanine: boolean | null;
+  isRecommended?: boolean | null;
+  rentalTermType: 'SHORT_TERM' | 'LONG_TERM';
   amenities: string[];
   keyword: string;
+  userLat?: number | null;
+  userLng?: number | null;
+  radiusInKm?: number | null;
 }

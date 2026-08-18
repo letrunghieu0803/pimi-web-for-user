@@ -80,6 +80,7 @@
   "navbar": {
     "home": "Home",
     "findRooms": "Find a room",
+    "news": "News",
     "appointments": "Viewing appointments",
     "about": "About Pimi",
     "faq": "FAQ",
@@ -272,7 +273,29 @@
     "trustNote1": "Book quickly, owner support available 24/7",
     "trustNote2": "100% free viewing service for tenants",
     "similarRoomsTitle": "Similar Rooms",
-    "exploreMore": "Explore more"
+    "exploreMore": "Explore more",
+    "bookAndPayButton": "Book & Pay",
+    "creatingBooking": "Creating booking...",
+    "contactCollaboratorButton": "Contact collaborator"
+  },
+  "contactCollaboratorModal": {
+    "title": "Contact collaborator",
+    "subtitle": "The collaborator assigned to this building can help you rent this room."
+  },
+  "bookingPayment": {
+    "title": "Booking Payment",
+    "notFound": "Booking not found",
+    "countdownLabel": "Time left to pay",
+    "instructionTitle": "Payment instructions",
+    "instructionStep1": "1. Open any banking app and scan the QR code above.",
+    "instructionStep2": "2. Confirm the amount is correct, then complete the transfer.",
+    "referenceLabel": "Transfer note",
+    "waitingForPayment": "Waiting for payment confirmation...",
+    "paidTitle": "Payment successful!",
+    "paidText": "Please contact the landlord to complete your check-in.",
+    "expiredTitle": "Booking expired",
+    "expiredText": "The QR code has expired without receiving payment. Go back and book again if you still want this room.",
+    "backToRoomButton": "Back to room"
   },
   "tenantAppointments": {
     "title": "Viewing Appointment History",
@@ -333,6 +356,7 @@
     "deleteNotification": "Delete notification"
   },
   "profile": {
+    "title": "My Profile",
     "notLoggedIn": "You're not signed in",
     "loginAccount": "Sign in to your account",
     "toastUpdateSuccess": "Profile updated successfully!",
@@ -476,5 +500,17 @@
     "loginSuccess": "Signed in successfully!",
     "needVerifyEmail": "Your account's email is not verified yet. Please enter the OTP to verify!",
     "registerSuccess": "Account created successfully! Please enter the OTP to verify your email."
+  },
+  "seo": {
+    "roomListDescription": "Browse verified boarding rooms, mini apartments, and service apartments across the Pimi platform — filter by area, price, and property type to find the right fit.",
+    "roomDetailFallbackDescription": "View details for {{name}} at {{address}} — pricing, area, amenities, and request a viewing directly on Pimi.",
+    "newsListTitle": "News & Rental Guides",
+    "newsListDescription": "Rental tips, housing market news, and useful room-hunting advice from Pimi.",
+    "aboutTitle": "About Pimi",
+    "aboutDescription": "Learn about Pimi — the platform connecting tenants and landlords with verified, transparent boarding rooms and mini apartments.",
+    "contactTitle": "Contact Us",
+    "contactDescription": "Get in touch with the Pimi support team for rental guidance, contract questions, and other assistance.",
+    "privacyTitle": "Privacy Policy",
+    "privacyDescription": "Pimi's privacy policy and personal data protection practices for platform users."
   }
 }

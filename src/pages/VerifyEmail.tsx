@@ -6,6 +6,7 @@ import { useToast } from '@/context/ToastContext';
 import { axiosClient } from '@/services/axiosClient';
 import { getApiErrorMessage } from '@/utils/apiError';
 import { MailCheck, KeyRound, RefreshCw, ArrowLeft, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Seo } from '@/components/common/Seo';
 
 export const VerifyEmail: React.FC = () => {
   const { t } = useTranslation();
@@ -90,8 +91,9 @@ export const VerifyEmail: React.FC = () => {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
+      <Seo title={t('verifyEmail.title')} path="/verify-email" noindex />
       <div className="max-w-md w-full glass-panel p-8 rounded-3xl border border-slate-200 shadow-2xl space-y-6">
-        
+
         {/* Header Icon */}
         <div className="text-center space-y-2">
           <div className="w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center text-white mx-auto shadow-lg shadow-indigo-500/25">

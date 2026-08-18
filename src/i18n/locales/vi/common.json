@@ -80,6 +80,7 @@
   "navbar": {
     "home": "Trang chủ",
     "findRooms": "Tìm phòng trọ",
+    "news": "Tin tức",
     "appointments": "Lịch hẹn xem phòng",
     "about": "Về Pimi",
     "faq": "Hỏi đáp",
@@ -272,7 +273,29 @@
     "trustNote1": "Đặt hẹn nhanh chóng, chủ nhà hỗ trợ 24/7",
     "trustNote2": "Miễn phí 100% dịch vụ xem phòng cho người thuê",
     "similarRoomsTitle": "Phòng Trọ Tương Tự",
-    "exploreMore": "Khám phá thêm"
+    "exploreMore": "Khám phá thêm",
+    "bookAndPayButton": "Đặt Phòng & Thanh Toán",
+    "creatingBooking": "Đang tạo đơn...",
+    "contactCollaboratorButton": "Liên hệ cộng tác viên"
+  },
+  "contactCollaboratorModal": {
+    "title": "Liên hệ cộng tác viên",
+    "subtitle": "Cộng tác viên phụ trách toà nhà này sẽ hỗ trợ bạn thuê phòng."
+  },
+  "bookingPayment": {
+    "title": "Thanh toán đặt phòng",
+    "notFound": "Không tìm thấy đơn đặt phòng",
+    "countdownLabel": "Thời gian còn lại để thanh toán",
+    "instructionTitle": "Hướng dẫn thanh toán",
+    "instructionStep1": "1. Mở app ngân hàng bất kỳ và quét mã QR ở trên.",
+    "instructionStep2": "2. Kiểm tra đúng số tiền rồi xác nhận chuyển khoản.",
+    "referenceLabel": "Nội dung chuyển khoản",
+    "waitingForPayment": "Đang chờ xác nhận thanh toán...",
+    "paidTitle": "Thanh toán thành công!",
+    "paidText": "Vui lòng liên hệ chủ nhà để hoàn tất nhận phòng.",
+    "expiredTitle": "Đơn đặt phòng đã hết hạn",
+    "expiredText": "Mã QR đã hết hạn do chưa nhận được thanh toán. Vui lòng quay lại và đặt phòng lại nếu vẫn muốn thuê.",
+    "backToRoomButton": "Quay lại trang phòng"
   },
   "tenantAppointments": {
     "title": "Lịch sử Đặt lịch xem phòng",
@@ -333,6 +356,7 @@
     "deleteNotification": "Xóa thông báo"
   },
   "profile": {
+    "title": "Hồ sơ cá nhân",
     "notLoggedIn": "Bạn chưa đăng nhập",
     "loginAccount": "Đăng nhập tài khoản",
     "toastUpdateSuccess": "Cập nhật thông tin cá nhân thành công!",
@@ -476,5 +500,17 @@
     "loginSuccess": "Đăng nhập tài khoản thành công!",
     "needVerifyEmail": "Tài khoản của bạn chưa được xác thực email. Vui lòng nhập mã OTP để xác thực!",
     "registerSuccess": "Đăng ký tài khoản thành công! Vui lòng nhập mã OTP xác thực email."
+  },
+  "seo": {
+    "roomListDescription": "Danh sách phòng trọ, chung cư mini, căn hộ dịch vụ chính chủ đã xác thực trên toàn hệ thống Pimi — lọc theo khu vực, giá thuê, loại hình phù hợp nhu cầu của bạn.",
+    "roomDetailFallbackDescription": "Xem chi tiết {{name}} tại {{address}} — thông tin giá thuê, diện tích, tiện ích và đặt lịch xem phòng trực tiếp trên Pimi.",
+    "newsListTitle": "Tin tức & cẩm nang thuê trọ",
+    "newsListDescription": "Cẩm nang kinh nghiệm thuê nhà trọ, tin tức thị trường bất động sản cho thuê và mẹo tìm phòng hữu ích từ Pimi.",
+    "aboutTitle": "Về Pimi",
+    "aboutDescription": "Tìm hiểu về Pimi — nền tảng kết nối người thuê và chủ nhà trọ, chung cư mini minh bạch, xác thực chính chủ.",
+    "contactTitle": "Liên hệ",
+    "contactDescription": "Liên hệ đội ngũ hỗ trợ Pimi để được tư vấn thuê phòng trọ, giải đáp thắc mắc hợp đồng và các vấn đề khác.",
+    "privacyTitle": "Chính sách bảo mật",
+    "privacyDescription": "Chính sách bảo mật và quyền riêng tư dữ liệu cá nhân của người dùng khi sử dụng nền tảng Pimi."
   }
 }

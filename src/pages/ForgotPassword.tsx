@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, KeyRound, ArrowLeft, Building2, Send, Eye, EyeOff } from 'lucide-react';
+import { Seo } from '@/components/common/Seo';
 import { useToast } from '@/context/ToastContext';
 import { axiosClient } from '@/services/axiosClient';
 import { getApiErrorMessage } from '@/utils/apiError';
@@ -76,6 +77,7 @@ export const ForgotPassword: React.FC = () => {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4 py-12">
+      <Seo title={t('forgotPassword.title')} path="/forgot-password" noindex />
       <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-8 shadow-2xl">
         {/* Brand Header */}
         <div className="text-center mb-8">
