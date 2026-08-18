@@ -8,6 +8,7 @@ export const NewsArticlesSlider: React.FC = () => {
   const navigate = useNavigate();
 
   const [articles, setArticles] = useState<NewsItem[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,12 +16,17 @@ export const NewsArticlesSlider: React.FC = () => {
       .getPublicNews({ pageNumber: 1, pageSize: 10 })
       .then((res) => {
         setArticles(res.items.slice(0, 10));
+        setTotalItems(res.totalItems);
         setLoading(false);
       })
       .catch(() => {
         setLoading(false);
       });
   }, []);
+
+  // Số bài còn lại NGOÀI 10 bài đã hiện sẵn trong slide — nút "Xem thêm" phải phản ánh đúng
+  // con số này (không phải hardcode), và tự ẩn khi không còn bài nào khác để xem thêm.
+  const remainingCount = Math.max(totalItems - articles.length, 0);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -49,13 +55,15 @@ export const NewsArticlesSlider: React.FC = () => {
 
         {/* Scroll & View More Action Buttons */}
         <div className="flex items-center gap-3 shrink-0">
-          <Link
-            to="/news"
-            className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200/80 text-xs font-bold hover:bg-indigo-100 transition-colors"
-          >
-            <span>Xem thêm 10+ bài viết</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          {!loading && remainingCount > 0 && (
+            <Link
+              to="/news"
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200/80 text-xs font-bold hover:bg-indigo-100 transition-colors"
+            >
+              <span>Xem thêm {remainingCount} bài viết</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          )}
 
           <div className="flex items-center gap-1.5">
             <button
@@ -150,15 +158,17 @@ export const NewsArticlesSlider: React.FC = () => {
       </div>
 
       {/* Bottom Mobile View More Button */}
-      <div className="mt-4 text-center sm:hidden">
-        <Link
-          to="/news"
-          className="inline-flex items-center gap-2 gradient-bg text-white px-6 py-2.5 rounded-2xl text-xs font-bold shadow-md"
-        >
-          <span>Xem thêm tất cả bài viết</span>
-          <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
+      {!loading && remainingCount > 0 && (
+        <div className="mt-4 text-center sm:hidden">
+          <Link
+            to="/news"
+            className="inline-flex items-center gap-2 gradient-bg text-white px-6 py-2.5 rounded-2xl text-xs font-bold shadow-md"
+          >
+            <span>Xem thêm {remainingCount} bài viết</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      )}
     </section>
   );
 };
