@@ -283,6 +283,7 @@
     "subtitle": "Cộng tác viên phụ trách toà nhà này sẽ hỗ trợ bạn thuê phòng."
   },
   "bookingPayment": {
+    "title": "Thanh toán đặt phòng",
     "notFound": "Không tìm thấy đơn đặt phòng",
     "countdownLabel": "Thời gian còn lại để thanh toán",
     "instructionTitle": "Hướng dẫn thanh toán",
@@ -355,6 +356,7 @@
     "deleteNotification": "Xóa thông báo"
   },
   "profile": {
+    "title": "Hồ sơ cá nhân",
     "notLoggedIn": "Bạn chưa đăng nhập",
     "loginAccount": "Đăng nhập tài khoản",
     "toastUpdateSuccess": "Cập nhật thông tin cá nhân thành công!",
@@ -498,5 +500,17 @@
     "loginSuccess": "Đăng nhập tài khoản thành công!",
     "needVerifyEmail": "Tài khoản của bạn chưa được xác thực email. Vui lòng nhập mã OTP để xác thực!",
     "registerSuccess": "Đăng ký tài khoản thành công! Vui lòng nhập mã OTP xác thực email."
+  },
+  "seo": {
+    "roomListDescription": "Danh sách phòng trọ, chung cư mini, căn hộ dịch vụ chính chủ đã xác thực trên toàn hệ thống Pimi — lọc theo khu vực, giá thuê, loại hình phù hợp nhu cầu của bạn.",
+    "roomDetailFallbackDescription": "Xem chi tiết {{name}} tại {{address}} — thông tin giá thuê, diện tích, tiện ích và đặt lịch xem phòng trực tiếp trên Pimi.",
+    "newsListTitle": "Tin tức & cẩm nang thuê trọ",
+    "newsListDescription": "Cẩm nang kinh nghiệm thuê nhà trọ, tin tức thị trường bất động sản cho thuê và mẹo tìm phòng hữu ích từ Pimi.",
+    "aboutTitle": "Về Pimi",
+    "aboutDescription": "Tìm hiểu về Pimi — nền tảng kết nối người thuê và chủ nhà trọ, chung cư mini minh bạch, xác thực chính chủ.",
+    "contactTitle": "Liên hệ",
+    "contactDescription": "Liên hệ đội ngũ hỗ trợ Pimi để được tư vấn thuê phòng trọ, giải đáp thắc mắc hợp đồng và các vấn đề khác.",
+    "privacyTitle": "Chính sách bảo mật",
+    "privacyDescription": "Chính sách bảo mật và quyền riêng tư dữ liệu cá nhân của người dùng khi sử dụng nền tảng Pimi."
   }
 }

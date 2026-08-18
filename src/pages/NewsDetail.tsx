@@ -3,6 +3,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { newsApi, NewsItem } from '@/services/newsApi';
 import { ArrowLeft, Calendar, Clock, Share2, Newspaper, Sparkles, BookOpen, Check } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
+import { Seo } from '@/components/common/Seo';
+import { JsonLd } from '@/components/common/JsonLd';
+import { absoluteUrl } from '@/config/seo';
 
 export const NewsDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -70,9 +73,25 @@ export const NewsDetail: React.FC = () => {
     );
   }
 
+  const newsPath = `/news/${article.id}`;
+
   return (
     <article className="pb-20 space-y-12">
-      
+      <Seo title={article.title} description={article.excerpt} path={newsPath} image={article.image} type="article" />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: article.title,
+          description: article.excerpt,
+          image: article.image ? [article.image] : undefined,
+          datePublished: article.createdAt,
+          author: { '@type': 'Organization', name: 'Pimi' },
+          publisher: { '@type': 'Organization', name: 'Pimi', logo: { '@type': 'ImageObject', url: absoluteUrl('/favicon.svg') } },
+          mainEntityOfPage: absoluteUrl(newsPath),
+        }}
+      />
+
       {/* Unified Width Container (Same width for header, feature image, and content) */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
         

@@ -14,6 +14,9 @@ import { VietMapViewer } from '@/components/common/VietMapViewer';
 import { useToast } from '@/context/ToastContext';
 import { RoomDetailSkeleton } from '@/components/ui/Skeleton';
 import { getApiErrorMessage } from '@/utils/apiError';
+import { Seo } from '@/components/common/Seo';
+import { JsonLd } from '@/components/common/JsonLd';
+import { absoluteUrl } from '@/config/seo';
 
 export const RoomDetail: React.FC = () => {
   const { t } = useTranslation();
@@ -171,9 +174,49 @@ export const RoomDetail: React.FC = () => {
     }
   };
 
+  const detailPath = isGroupView ? `/room-groups/${targetId}` : `/rooms/${targetId}`;
+  const effectivePrice = room.price || room.shortTermPrice || 0;
+  const roomSeoDescription = (room.description || '').replace(/\s+/g, ' ').trim().slice(0, 160) ||
+    t('seo.roomDetailFallbackDescription', { name: room.name, address: room.address });
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
-      
+      <Seo
+        title={`${room.name} - ${room.address}`}
+        description={roomSeoDescription}
+        path={detailPath}
+        image={room.images?.[0]}
+        type="article"
+      />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: room.name,
+          description: roomSeoDescription,
+          image: room.images?.length ? room.images : undefined,
+          brand: { '@type': 'Organization', name: room.houseName },
+          offers: {
+            '@type': 'Offer',
+            priceCurrency: 'VND',
+            price: effectivePrice || undefined,
+            availability: room.status === 'EMPTY' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            url: absoluteUrl(detailPath),
+          },
+        }}
+      />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: t('navbar.home'), item: absoluteUrl('/') },
+            { '@type': 'ListItem', position: 2, name: t('roomList.title'), item: absoluteUrl('/rooms') },
+            { '@type': 'ListItem', position: 3, name: room.name, item: absoluteUrl(detailPath) },
+          ],
+        }}
+      />
+
       {/* Back link & actions */}
       <div className="flex items-center justify-between">
         <Link

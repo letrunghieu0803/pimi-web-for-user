@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HelpCircle, ChevronDown, Calendar, ShieldCheck, FileText, PhoneCall } from 'lucide-react';
+import { Seo } from '@/components/common/Seo';
+import { JsonLd } from '@/components/common/JsonLd';
 
 interface FAQItem {
   question: string;
@@ -19,7 +21,21 @@ export const FAQ: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-10">
-      
+      <Seo title={t('faq.title')} description={t('faq.subtitle')} path="/faq" />
+      {/* FAQPage giúp Google có cơ hội hiện trực tiếp câu hỏi/trả lời ngay trên trang kết quả
+          tìm kiếm (rich result) — dùng đúng nội dung đang hiển thị, không thêm câu hỏi ẩn. */}
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: FAQS.map((faq) => ({
+            '@type': 'Question',
+            name: faq.question,
+            acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+          })),
+        }}
+      />
+
       {/* Header */}
       <div className="text-center space-y-3">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-wider">

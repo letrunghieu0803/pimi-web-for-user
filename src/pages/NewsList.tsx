@@ -5,6 +5,7 @@ import { newsApi, NewsItem } from '@/services/newsApi';
 import { Newspaper, Search, Calendar, Clock, ArrowRight, BookOpen, Sparkles } from 'lucide-react';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
 import { Pagination } from '@/components/common/Pagination';
+import { Seo } from '@/components/common/Seo';
 
 const PAGE_SIZE = 9;
 
@@ -44,7 +45,8 @@ export const NewsList: React.FC = () => {
 
   return (
     <div className="space-y-12 pb-16">
-      
+      <Seo title={t('seo.newsListTitle')} description={t('seo.newsListDescription')} path="/news" />
+
       {/* Hero Banner Section */}
       <section className="relative pt-12 pb-16 overflow-hidden bg-gradient-to-b from-indigo-50/70 via-slate-50 to-slate-50 border-b border-slate-200/60">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-80 bg-gradient-to-r from-indigo-300/20 via-purple-300/20 to-pink-300/20 blur-3xl pointer-events-none -z-10" />

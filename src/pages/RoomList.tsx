@@ -12,6 +12,9 @@ import { CardGridSkeleton } from '@/components/ui/Skeleton';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { vietmapService } from '@/services/vietmapService';
+import { Seo } from '@/components/common/Seo';
+import { JsonLd } from '@/components/common/JsonLd';
+import { absoluteUrl } from '@/config/seo';
 
 const PAGE_SIZE = 10;
 
@@ -159,7 +162,9 @@ export const RoomList: React.FC = () => {
     hasMezzanine: null,
     rentalTermType: (searchParams.get('rentalTermType') as any) || 'SHORT_TERM',
     amenities: [],
-    keyword: '',
+    // Đọc từ ?search= — cho phép Google "Sitelinks Search Box" (JSON-LD SearchAction ở
+    // Home.tsx) điều hướng thẳng tới đây với từ khoá, kể cả khi UI chưa có ô tìm kiếm riêng.
+    keyword: searchParams.get('search') || '',
     userLat: searchParams.get('lat') ? Number(searchParams.get('lat')) : null,
     userLng: searchParams.get('lng') ? Number(searchParams.get('lng')) : null,
     radiusInKm: searchParams.get('radius') ? Number(searchParams.get('radius')) : null,
@@ -223,6 +228,7 @@ export const RoomList: React.FC = () => {
       priceRange: 'ALL',
       roomType: 'ALL',
       hasMezzanine: null,
+      rentalTermType: 'SHORT_TERM',
       amenities: [],
       keyword: '',
       userLat: null,
@@ -234,6 +240,23 @@ export const RoomList: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      {/* canonical luôn trỏ về /rooms không kèm query-string — tránh các tổ hợp filter/sort
+          (district, priceRange, sort...) bị Google index như những trang trùng nội dung. */}
+      <Seo title={t('roomList.title')} description={t('seo.roomListDescription')} path="/rooms" />
+      {rooms.length > 0 && (
+        <JsonLd
+          data={{
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            itemListElement: rooms.map((room, index) => ({
+              '@type': 'ListItem',
+              position: index + 1,
+              url: absoluteUrl(room.roomGroupId ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`),
+              name: room.name,
+            })),
+          }}
+        />
+      )}
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>

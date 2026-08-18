@@ -6,10 +6,14 @@ import { roomApi } from '@/services/roomApi';
 import { RoomCard } from '@/components/common/RoomCard';
 import { RequestTourModal } from '@/components/common/RequestTourModal';
 import { HotLocationsSlider } from '@/components/home/HotLocationsSlider';
+import { BannerSlider } from '@/components/home/BannerSlider';
 import { NewsArticlesSlider } from '@/components/home/NewsArticlesSlider';
 import { Search, ShieldCheck, Zap, PhoneCall, Sparkles, Building2, ChevronRight, HeartHandshake, MapPin } from 'lucide-react';
 import { DISTRICTS } from '@/data/mockData';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
+import { Seo } from '@/components/common/Seo';
+import { JsonLd } from '@/components/common/JsonLd';
+import { SITE_URL, SITE_NAME, DEFAULT_SEO } from '@/config/seo';
 
 export const Home: React.FC = () => {
   const { t } = useTranslation();
@@ -32,7 +36,31 @@ export const Home: React.FC = () => {
 
   return (
     <div className="space-y-16 pb-16">
-      
+      <Seo path="/" />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: SITE_NAME,
+          url: SITE_URL,
+          logo: `${SITE_URL}/favicon.svg`,
+          description: DEFAULT_SEO.description,
+        }}
+      />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: SITE_NAME,
+          url: SITE_URL,
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: `${SITE_URL}/rooms?search={search_term_string}`,
+            'query-input': 'required name=search_term_string',
+          },
+        }}
+      />
+
       {/* Hero Section */}
       <section className="relative pt-12 pb-20 overflow-hidden bg-gradient-to-b from-indigo-50/70 via-slate-50 to-slate-50 border-b border-slate-200/60">
         
@@ -126,6 +154,9 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Banner quảng cáo/khuyến mãi do admin quản lý */}
+      <BannerSlider />
 
       {/* Hot Locations Horizontal Slider Section */}
       <HotLocationsSlider />

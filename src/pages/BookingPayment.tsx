@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import { bookingApi, Booking } from '@/services/bookingApi';
 import { getApiErrorMessage } from '@/utils/apiError';
+import { Seo } from '@/components/common/Seo';
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -99,6 +100,7 @@ export const BookingPayment: React.FC = () => {
 
   return (
     <div className="max-w-xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <Seo title={t('bookingPayment.title')} path={`/payment/${bookingId}`} noindex />
       <button
         onClick={() => navigate(-1)}
         className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 transition-colors"

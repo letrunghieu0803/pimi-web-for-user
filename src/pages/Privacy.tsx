@@ -1,11 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ShieldCheck, Lock, Database, Target, ServerCog, Share2, UserCheck, Phone } from 'lucide-react';
+import { Seo } from '@/components/common/Seo';
 
 export const Privacy: React.FC = () => {
   const { t } = useTranslation();
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-8">
+      <Seo title={t('seo.privacyTitle')} description={t('seo.privacyDescription')} path="/privacy" />
 
       {/* Header */}
       <div className="space-y-3 border-b border-slate-200 pb-6">

@@ -18,6 +18,7 @@ import { FilterTabs } from '@/components/common/FilterTabs';
 import { Pagination } from '@/components/common/Pagination';
 import { AppointmentListSkeleton } from '@/components/ui/Skeleton';
 import { getApiErrorMessage } from '@/utils/apiError';
+import { Seo } from '@/components/common/Seo';
 
 const PAGE_SIZE = 10;
 const STATUS_KEYS = ['ALL', 'OWNER_OFFERED_TIMES', 'PENDING_OWNER', 'USER_ACCEPTED', 'COMPLETED'];
@@ -198,6 +199,7 @@ export const TenantAppointments: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+      <Seo title={t('tenantAppointments.title')} path="/appointments" noindex />
       {/* Title */}
       <div>
         <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">

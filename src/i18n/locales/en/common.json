@@ -283,6 +283,7 @@
     "subtitle": "The collaborator assigned to this building can help you rent this room."
   },
   "bookingPayment": {
+    "title": "Booking Payment",
     "notFound": "Booking not found",
     "countdownLabel": "Time left to pay",
     "instructionTitle": "Payment instructions",
@@ -355,6 +356,7 @@
     "deleteNotification": "Delete notification"
   },
   "profile": {
+    "title": "My Profile",
     "notLoggedIn": "You're not signed in",
     "loginAccount": "Sign in to your account",
     "toastUpdateSuccess": "Profile updated successfully!",
@@ -498,5 +500,17 @@
     "loginSuccess": "Signed in successfully!",
     "needVerifyEmail": "Your account's email is not verified yet. Please enter the OTP to verify!",
     "registerSuccess": "Account created successfully! Please enter the OTP to verify your email."
+  },
+  "seo": {
+    "roomListDescription": "Browse verified boarding rooms, mini apartments, and service apartments across the Pimi platform — filter by area, price, and property type to find the right fit.",
+    "roomDetailFallbackDescription": "View details for {{name}} at {{address}} — pricing, area, amenities, and request a viewing directly on Pimi.",
+    "newsListTitle": "News & Rental Guides",
+    "newsListDescription": "Rental tips, housing market news, and useful room-hunting advice from Pimi.",
+    "aboutTitle": "About Pimi",
+    "aboutDescription": "Learn about Pimi — the platform connecting tenants and landlords with verified, transparent boarding rooms and mini apartments.",
+    "contactTitle": "Contact Us",
+    "contactDescription": "Get in touch with the Pimi support team for rental guidance, contract questions, and other assistance.",
+    "privacyTitle": "Privacy Policy",
+    "privacyDescription": "Pimi's privacy policy and personal data protection practices for platform users."
   }
 }

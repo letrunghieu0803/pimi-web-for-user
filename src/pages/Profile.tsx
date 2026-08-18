@@ -6,6 +6,7 @@ import { roomApi } from '@/services/roomApi';
 import { useNotificationPermission } from '@/hooks/useNotificationPermission';
 import { User, Phone, Mail, MapPin, Save, ShieldCheck, CalendarCheck, CheckCircle2, Clock, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Seo } from '@/components/common/Seo';
 
 export const Profile: React.FC = () => {
   const { t } = useTranslation();
@@ -22,6 +23,7 @@ export const Profile: React.FC = () => {
   if (!user) {
     return (
       <div className="max-w-md mx-auto py-20 text-center space-y-4">
+        <Seo title={t('profile.title')} path="/profile" noindex />
         <h2 className="text-xl font-bold text-slate-900 font-heading">{t('profile.notLoggedIn')}</h2>
         <Link to="/login" className="gradient-bg text-white px-6 py-2.5 rounded-2xl text-xs font-bold shadow-md inline-block">
           {t('profile.loginAccount')}
@@ -51,7 +53,8 @@ export const Profile: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-8">
-      
+      <Seo title={t('profile.title', { defaultValue: 'Hồ sơ cá nhân' })} path="/profile" noindex />
+
       {/* Header Profile Badge */}
       <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl flex flex-col sm:flex-row items-center gap-6">
         <img

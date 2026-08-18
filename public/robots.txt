@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /verify-email
+Disallow: /profile
+Disallow: /bookings
+Disallow: /payment/
+Disallow: /appointments
+Disallow: /notifications
+
+# File này là bản dev/fallback tĩnh. Bản build production được scripts/generate-sitemap.mjs
+# ghi đè vào dist/robots.txt với đúng domain thật (VITE_SITE_URL) sau khi `vite build` chạy.
+Sitemap: http://localhost:5173/sitemap.xml
