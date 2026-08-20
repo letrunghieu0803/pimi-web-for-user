@@ -79,15 +79,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (usernameOrPhone: string, pass: string): Promise<AuthResult> => {
     try {
+      // loginAs='RENT_USER' — web này luôn đăng nhập với vai trò người thuê, kể cả cho tài
+      // khoản mà role thật trong DB là HOUSE_OWNER (1 người có thể vừa là chủ nhà vừa là người
+      // thuê; xem AuthService.login() ở backend). Không gửi field này thì 1 tài khoản chủ nhà
+      // đăng nhập ở đây sẽ nhận JWT role=HOUSE_OWNER, khiến các API dành riêng cho người thuê
+      // (đặt lịch xem phòng, đặt phòng...) bị chặn 403 sai.
       const response: any = await axiosClient.post('/v1/auth/login', {
         username: usernameOrPhone.trim().toLowerCase(),
         password: pass,
+        loginAs: 'RENT_USER',
       });
 
       const data = response?.data || response;
       const accessToken = data?.accessToken || data?.token;
       const refreshToken = data?.refreshToken;
-      const rawUser = data?.user || {};
 
       if (accessToken) {
         localStorage.setItem(AUTH_TOKEN_KEY, accessToken);
@@ -95,6 +100,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       if (refreshToken) {
         localStorage.setItem('pimi_refresh_token', refreshToken);
+      }
+
+      // Response của /v1/auth/login KHÔNG có object "user" (chỉ {accessToken, refreshToken,
+      // role}) — phải tự gọi /v1/users/me để lấy hồ sơ thật (trước đây code này âm thầm dùng
+      // 1 object rỗng, khiến id/email luôn rỗng/giả).
+      let rawUser: any = {};
+      try {
+        const profileRes: any = await axiosClient.get('/v1/users/me');
+        rawUser = profileRes?.data || profileRes || {};
+      } catch (profileErr) {
+        console.warn('Failed to fetch full profile after login:', profileErr);
       }
 
       const fullName = [rawUser.lastName, rawUser.firstName].filter(Boolean).join(' ') || rawUser.username || usernameOrPhone;
