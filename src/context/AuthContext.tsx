@@ -135,7 +135,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         message: t('authContext.loginSuccess'),
       };
     } catch (err: any) {
-      console.warn('Backend login error:', err);
+      // Chỉ log code/message, không log nguyên `err` — khi request thất bại do lỗi mạng (không
+      // có response từ server), interceptor ở axiosClient.ts trả thẳng lỗi axios gốc, mà
+      // `err.config.data` chính là body request gốc (chứa mật khẩu dạng plaintext vừa nhập).
+      console.warn('Backend login error:', { code: err?.code, message: err?.message });
 
       // Check if backend returned the "unverified email" business error
       if (err?.code === ERR_CODE_NEED_VERIFY_EMAIL) {
@@ -204,7 +207,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         message: t('authContext.registerSuccess'),
       };
     } catch (err: any) {
-      console.warn('Backend registration failed:', err);
+      // Cùng lý do như nhánh login ở trên — không log nguyên `err` (có thể chứa mật khẩu vừa
+      // nhập trong `err.config.data` khi request thất bại do lỗi mạng).
+      console.warn('Backend registration failed:', { code: err?.code, message: err?.message });
       const wrapped = new Error(getApiErrorMessage(err));
       (wrapped as any).code = err?.code;
       throw wrapped;
