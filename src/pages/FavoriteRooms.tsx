@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { Room } from '@/types';
 import { favoriteApi } from '@/services/favoriteApi';
 import { RoomCard } from '@/components/common/RoomCard';
+import { EmptyState } from '@/components/common/EmptyState';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
@@ -60,19 +61,14 @@ export const FavoriteRooms: React.FC = () => {
       {loading ? (
         <CardGridSkeleton count={6} />
       ) : visibleRooms.length === 0 ? (
-        <div className="glass-card rounded-3xl p-12 text-center space-y-4 border border-slate-200/80">
-          <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mx-auto">
-            <Heart className="w-8 h-8 text-rose-300" />
-          </div>
-          <h3 className="text-lg font-bold text-slate-900">{t('favoriteRooms.emptyTitle')}</h3>
-          <p className="text-sm text-slate-500 max-w-md mx-auto">{t('favoriteRooms.emptyDesc')}</p>
-          <Link
-            to="/rooms"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl gradient-bg text-white font-bold text-xs shadow-lg shadow-indigo-500/25 hover:scale-105 transition-transform"
-          >
-            {t('favoriteRooms.browseRooms')}
-          </Link>
-        </div>
+        <EmptyState
+          icon={Heart}
+          tone="rose"
+          title={t('favoriteRooms.emptyTitle')}
+          description={t('favoriteRooms.emptyDesc')}
+          actionLabel={t('favoriteRooms.browseRooms')}
+          actionTo="/rooms"
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {visibleRooms.map((room) => (

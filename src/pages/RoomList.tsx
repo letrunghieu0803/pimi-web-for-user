@@ -7,6 +7,7 @@ import { RoomCard } from '@/components/common/RoomCard';
 import { RoomFilterBar } from '@/components/filter/RoomFilterBar';
 import { RequestTourModal } from '@/components/common/RequestTourModal';
 import { Pagination } from '@/components/common/Pagination';
+import { EmptyState } from '@/components/common/EmptyState';
 import { Building2, ArrowUpDown, Info, Map, LayoutGrid } from 'lucide-react';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
 import L from 'leaflet';
@@ -345,23 +346,15 @@ export const RoomList: React.FC = () => {
       {loading ? (
         <CardGridSkeleton count={PAGE_SIZE} />
       ) : rooms.length === 0 ? (
-        <div className="py-16 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-4 max-w-lg mx-auto">
-          <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
-            <Info className="w-6 h-6" />
-          </div>
-          <h3 className="text-lg font-bold text-slate-900 font-heading">
-            {t('roomList.emptyTitle')}
-          </h3>
-          <p className="text-xs text-slate-500 max-w-xs mx-auto">
-            {t('roomList.emptyDesc')}
-          </p>
-          <button
-            onClick={handleResetFilters}
-            className="gradient-bg text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-md"
-          >
-            {t('roomList.resetFilters')}
-          </button>
-        </div>
+        <EmptyState
+          icon={Info}
+          tone="amber"
+          title={t('roomList.emptyTitle')}
+          description={t('roomList.emptyDesc')}
+          actionLabel={t('roomList.resetFilters')}
+          onAction={handleResetFilters}
+          className="max-w-lg mx-auto"
+        />
       ) : viewMode === 'map' ? (
         <RoomsMapView
           rooms={rooms}

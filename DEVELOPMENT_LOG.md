@@ -4,6 +4,19 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-21 — Đồng bộ khối "trống dữ liệu" dùng chung (EmptyState)
+
+**Vì sao:** 3 trang (Phòng yêu thích, Đã xem gần đây, Danh sách phòng khi lọc ra 0 kết quả) mỗi trang tự viết lại y hệt cấu trúc "icon tròn + tiêu đề + mô tả + nút hành động" — 2 trang mới (yêu thích/đã xem) giống nhau nhưng trang danh sách phòng (có từ trước) lại lệch hẳn: khung vuông bo góc thay vì tròn, tông màu/đệm khác, nút không có shadow/hover-scale như 2 trang kia.
+
+**Thay đổi:**
+- `src/components/common/EmptyState.tsx` (mới): component dùng chung — icon trong vòng tròn màu (`tone`: rose/indigo/amber/emerald), tiêu đề, mô tả, nút hành động (điều hướng qua `actionTo` hoặc chạy hàm qua `onAction`).
+- `src/pages/FavoriteRooms.tsx`, `src/pages/RecentlyViewed.tsx`: thay khối tự viết tay bằng `<EmptyState />`.
+- `src/pages/RoomList.tsx`: khối "Không tìm thấy phòng phù hợp" (khi lọc ra 0 kết quả) đổi sang dùng chung `<EmptyState />` (tone amber, nút "Reset filters" gọi `onAction`) — đồng bộ giao diện với 2 trang trên thay vì kiểu cũ.
+
+**Đã kiểm tra:** `npm run build` sạch. Test sống qua trình duyệt thật: trang Yêu thích/Đã xem gần đây hiện đúng như trước khi tách; lọc phòng ra 0 kết quả hiện đúng khối mới (vòng tròn hổ phách + icon Info), bấm "Reset filters" trả lại đúng danh sách đầy đủ.
+
+---
+
 ## 2026-08-21 — Đã xem gần đây — hoàn toàn phía trình duyệt, không gọi API
 
 **Vì sao:** Người thuê muốn xem lại các phòng mình từng mở xem, khác "yêu thích" ở chỗ không cần chủ động lưu và không cần đăng nhập — chỉ đơn thuần là vết xem theo thiết bị. Yêu cầu rõ ràng từ đầu: không thêm bất kỳ API/bảng dữ liệu nào ở backend.
