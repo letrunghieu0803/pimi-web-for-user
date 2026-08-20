@@ -29,7 +29,9 @@
     "feature3Desc": "Người đi thuê nhà không phải trả bất kỳ khoản phí môi giới nào. Làm việc & ký hợp đồng trực tiếp với chủ nhà.",
     "ctaTitle": "Bạn Chưa Tìm Được Phòng Trọ Phù Hợp?",
     "ctaDesc": "Gọi ngay Hotline chăm sóc khách hàng của Pimi để được trợ lý hỗ trợ tư vấn và gợi ý danh sách phòng trống mới nhất theo yêu cầu.",
-    "ctaCallHotline": "Gọi Hotline 0987.654.321"
+    "ctaCallHotline": "Gọi Hotline 0987.654.321",
+    "recentlyViewedTag": "Dành cho bạn",
+    "recentlyViewedTitle": "Phòng đã xem gần đây"
   },
   "login": {
     "title": "Đăng Nhập Tài Khoản",
@@ -96,7 +98,8 @@
     "markAllRead": "Đọc tất cả",
     "noNotifications": "Không có thông báo nào",
     "viewAllNotifications": "Xem tất cả thông báo",
-    "favoriteRooms": "Phòng yêu thích"
+    "favoriteRooms": "Phòng yêu thích",
+    "recentlyViewed": "Đã xem gần đây"
   },
   "footer": {
     "brandDesc": "Nền tảng tìm kiếm và đặt lịch xem phòng trọ, căn hộ mini trực tiếp từ chủ nhà xác thực. Trải nghiệm minh bạch, nhanh chóng và an toàn tuyệt đối.",
@@ -528,6 +531,14 @@
     "subtitle": "Danh sách các phòng bạn đã lưu để xem lại sau",
     "emptyTitle": "Chưa có phòng yêu thích nào",
     "emptyDesc": "Bấm vào biểu tượng trái tim trên thẻ phòng hoặc trang chi tiết phòng để lưu lại phòng bạn quan tâm.",
+    "browseRooms": "Khám phá phòng trọ"
+  },
+  "recentlyViewed": {
+    "title": "Đã xem gần đây",
+    "subtitle": "Danh sách phòng bạn từng xem trên thiết bị này",
+    "clearButton": "Xoá lịch sử",
+    "emptyTitle": "Chưa có phòng nào",
+    "emptyDesc": "Các phòng bạn xem qua sẽ tự động xuất hiện ở đây để xem lại sau.",
     "browseRooms": "Khám phá phòng trọ"
   }
 }

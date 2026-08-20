@@ -31,6 +31,7 @@ import { BookingPayment } from '@/pages/BookingPayment';
 import { TenantAppointments } from '@/pages/TenantAppointments';
 import { NotificationsPage } from '@/pages/Notifications';
 import { FavoriteRooms } from '@/pages/FavoriteRooms';
+import { RecentlyViewed } from '@/pages/RecentlyViewed';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,6 +77,7 @@ export const App: React.FC = () => {
                       <Route path="/appointments" element={<TenantAppointments />} />
                       <Route path="/notifications" element={<NotificationsPage />} />
                       <Route path="/favorites" element={<FavoriteRooms />} />
+                      <Route path="/recently-viewed" element={<RecentlyViewed />} />
                     </Routes>
                   </main>
                   <Footer />

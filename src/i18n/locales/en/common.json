@@ -29,7 +29,9 @@
     "feature3Desc": "Tenants never pay any broker fee. Work with and sign your contract directly with the owner.",
     "ctaTitle": "Haven't Found The Right Room Yet?",
     "ctaDesc": "Call Pimi's customer care hotline now and our team will help you find the newest available rooms that match what you need.",
-    "ctaCallHotline": "Call Hotline 0987.654.321"
+    "ctaCallHotline": "Call Hotline 0987.654.321",
+    "recentlyViewedTag": "For you",
+    "recentlyViewedTitle": "Recently viewed rooms"
   },
   "login": {
     "title": "Sign In To Your Account",
@@ -96,7 +98,8 @@
     "markAllRead": "Mark all read",
     "noNotifications": "No notifications yet",
     "viewAllNotifications": "View all notifications",
-    "favoriteRooms": "Favorites"
+    "favoriteRooms": "Favorites",
+    "recentlyViewed": "Recently viewed"
   },
   "footer": {
     "brandDesc": "A platform to search for and book room viewings, mini-apartments directly from verified owners. A transparent, fast, and completely safe experience.",
@@ -528,6 +531,14 @@
     "subtitle": "Rooms you have saved to revisit later",
     "emptyTitle": "No favorite rooms yet",
     "emptyDesc": "Tap the heart icon on a room card or its detail page to save rooms you are interested in.",
+    "browseRooms": "Browse rooms"
+  },
+  "recentlyViewed": {
+    "title": "Recently viewed",
+    "subtitle": "Rooms you have viewed on this device",
+    "clearButton": "Clear history",
+    "emptyTitle": "No rooms yet",
+    "emptyDesc": "Rooms you view will automatically show up here so you can revisit them later.",
     "browseRooms": "Browse rooms"
   }
 }

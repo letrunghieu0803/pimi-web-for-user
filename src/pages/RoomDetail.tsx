@@ -8,6 +8,7 @@ import { bookingApi } from '@/services/bookingApi';
 import { collaboratorApi, HouseCollaborator } from '@/services/collaboratorApi';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
+import { recentlyViewedApi } from '@/utils/recentlyViewed';
 import { RoomCard } from '@/components/common/RoomCard';
 import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
 import { MapPin, Maximize2, Users, ShieldCheck, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2 } from 'lucide-react';
@@ -67,6 +68,9 @@ export const RoomDetail: React.FC = () => {
           setRoom(data);
           setActiveImageIndex(0);
           fetchActiveAppointment(data);
+          if (data) {
+            recentlyViewedApi.add(data);
+          }
           if (data?.houseId) {
             collaboratorApi
               .getHouseCollaborators(data.houseId)

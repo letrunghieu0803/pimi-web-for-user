@@ -4,6 +4,21 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-21 — Đã xem gần đây — hoàn toàn phía trình duyệt, không gọi API
+
+**Vì sao:** Người thuê muốn xem lại các phòng mình từng mở xem, khác "yêu thích" ở chỗ không cần chủ động lưu và không cần đăng nhập — chỉ đơn thuần là vết xem theo thiết bị. Yêu cầu rõ ràng từ đầu: không thêm bất kỳ API/bảng dữ liệu nào ở backend.
+
+**Thay đổi:**
+- `src/utils/recentlyViewed.ts` (mới): đọc/ghi thẳng `localStorage` (key theo **thiết bị**, không theo tài khoản — dùng chung cho khách lẫn mọi tài khoản đăng nhập, giống cách các sàn TMĐT vẫn làm). Giữ tối đa 24 phòng gần nhất kiểu LRU (xem lại 1 phòng đã có thì đẩy lên đầu thay vì trùng lặp); mỗi bản ghi chỉ giữ 1 ảnh đầu + bỏ `description`/`services` để không phình dữ liệu vô ích. Bọc try/catch quanh mọi thao tác `localStorage` (Safari riêng tư/hết quota không được phép làm gãy luồng xem phòng chính).
+- `src/pages/RoomDetail.tsx`: gọi `recentlyViewedApi.add(room)` ngay sau khi fetch chi tiết phòng thành công (không ghi lúc đang loading/lỗi).
+- `src/pages/Home.tsx`: thêm khối "Phòng đã xem gần đây" (đọc 1 lần lúc mount, không qua API), đặt trước "Phòng nổi bật" vì là nội dung cá nhân hoá; tự ẩn hoàn toàn nếu chưa từng xem phòng nào.
+- `src/pages/RecentlyViewed.tsx` (mới): trang `/recently-viewed` — lưới đầy đủ + nút "Xoá lịch sử"; không yêu cầu đăng nhập.
+- `src/components/common/Navbar.tsx`: thêm link "Đã xem gần đây" vào menu tài khoản (desktop dropdown + mobile drawer).
+
+**Đã kiểm tra:** `npm run build` sạch, đối chiếu i18n vi/en. Test sống qua trình duyệt thật: mở 1 phòng → xác nhận đúng bản ghi (1 ảnh, không mô tả) xuất hiện trong `localStorage`; trang chủ hiện đúng khối "Phòng đã xem gần đây"; vào `/recently-viewed` thấy đúng phòng; bấm "Xoá lịch sử" → danh sách về rỗng, hiện đúng trạng thái trống.
+
+---
+
 ## 2026-08-20 — Phòng yêu thích cho người thuê
 
 **Vì sao:** Người thuê muốn bấm tim lưu lại các phòng đang quan tâm để xem lại sau, thay vì phải tìm kiếm lại từ đầu mỗi lần.
