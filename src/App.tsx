@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@/context/ToastContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { FavoritesProvider } from '@/context/FavoritesContext';
 import { SocketProvider } from '@/context/SocketContext';
 import { Navbar } from '@/components/common/Navbar';
 import { Footer } from '@/components/common/Footer';
@@ -29,6 +30,7 @@ import { BookingHistory } from '@/pages/BookingHistory';
 import { BookingPayment } from '@/pages/BookingPayment';
 import { TenantAppointments } from '@/pages/TenantAppointments';
 import { NotificationsPage } from '@/pages/Notifications';
+import { FavoriteRooms } from '@/pages/FavoriteRooms';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,40 +46,43 @@ export const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <AuthProvider>
-          <SocketProvider>
-            <Router>
-              <RouteTracker />
-              <div className="min-h-screen flex flex-col justify-between bg-slate-50 font-sans text-slate-900 selection:bg-indigo-500 selection:text-white">
-                <Navbar />
-                <main className="flex-1">
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/rooms" element={<RoomList />} />
-                    <Route path="/rooms/:id" element={<RoomDetail />} />
-                    <Route path="/room-groups/:groupId" element={<RoomDetail />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/news" element={<NewsList />} />
-                    <Route path="/news/:id" element={<NewsDetail />} />
-                    <Route path="/faq" element={<FAQ />} />
-                    <Route path="/privacy" element={<Privacy />} />
-                    <Route path="/contact" element={<Contact />} />
+          <FavoritesProvider>
+            <SocketProvider>
+              <Router>
+                <RouteTracker />
+                <div className="min-h-screen flex flex-col justify-between bg-slate-50 font-sans text-slate-900 selection:bg-indigo-500 selection:text-white">
+                  <Navbar />
+                  <main className="flex-1">
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/rooms" element={<RoomList />} />
+                      <Route path="/rooms/:id" element={<RoomDetail />} />
+                      <Route path="/room-groups/:groupId" element={<RoomDetail />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/news" element={<NewsList />} />
+                      <Route path="/news/:id" element={<NewsDetail />} />
+                      <Route path="/faq" element={<FAQ />} />
+                      <Route path="/privacy" element={<Privacy />} />
+                      <Route path="/contact" element={<Contact />} />
 
-                    {/* Auth Routes */}
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/verify-email" element={<VerifyEmail />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/bookings" element={<BookingHistory />} />
-                    <Route path="/payment/:bookingId" element={<BookingPayment />} />
-                    <Route path="/appointments" element={<TenantAppointments />} />
-                    <Route path="/notifications" element={<NotificationsPage />} />
-                  </Routes>
-                </main>
-                <Footer />
-              </div>
-            </Router>
-          </SocketProvider>
+                      {/* Auth Routes */}
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
+                      <Route path="/verify-email" element={<VerifyEmail />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/bookings" element={<BookingHistory />} />
+                      <Route path="/payment/:bookingId" element={<BookingPayment />} />
+                      <Route path="/appointments" element={<TenantAppointments />} />
+                      <Route path="/notifications" element={<NotificationsPage />} />
+                      <Route path="/favorites" element={<FavoriteRooms />} />
+                    </Routes>
+                  </main>
+                  <Footer />
+                </div>
+              </Router>
+            </SocketProvider>
+          </FavoritesProvider>
         </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>

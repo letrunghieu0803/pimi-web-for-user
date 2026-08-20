@@ -34,8 +34,9 @@ const INITIAL_MOCK_BOOKINGS: ViewingRequest[] = [
   },
 ];
 
-// Helper to map backend RentRoom model to user app Room interface
-const mapBackendRoomToRoom = (item: any): Room => {
+// Helper to map backend RentRoom model to user app Room interface — cũng dùng lại ở
+// favoriteApi.ts (danh sách phòng yêu thích trả về đúng shape RentRoom này).
+export const mapBackendRoomToRoom = (item: any): Room => {
   const house = item.rentHouse || {};
 
   const images = (item.images || [])

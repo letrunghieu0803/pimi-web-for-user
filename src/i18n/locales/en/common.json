@@ -95,7 +95,8 @@
     "newNotifications": "New notifications",
     "markAllRead": "Mark all read",
     "noNotifications": "No notifications yet",
-    "viewAllNotifications": "View all notifications"
+    "viewAllNotifications": "View all notifications",
+    "favoriteRooms": "Favorites"
   },
   "footer": {
     "brandDesc": "A platform to search for and book room viewings, mini-apartments directly from verified owners. A transparent, fast, and completely safe experience.",
@@ -127,7 +128,10 @@
     "maxPeople": "Up to {{count}} people",
     "more": "more",
     "viewDetails": "View details",
-    "bookViewing": "Book a viewing"
+    "bookViewing": "Book a viewing",
+    "favorite": "Save to favorites",
+    "unfavorite": "Remove from favorites",
+    "favoriteError": "Couldn't update favorites, please try again"
   },
   "contact": {
     "badge": "Contact Support",
@@ -518,5 +522,12 @@
     "contactDescription": "Get in touch with the Pimi support team for rental guidance, contract questions, and other assistance.",
     "privacyTitle": "Privacy Policy",
     "privacyDescription": "Pimi's privacy policy and personal data protection practices for platform users."
+  },
+  "favoriteRooms": {
+    "title": "Favorite rooms",
+    "subtitle": "Rooms you have saved to revisit later",
+    "emptyTitle": "No favorite rooms yet",
+    "emptyDesc": "Tap the heart icon on a room card or its detail page to save rooms you are interested in.",
+    "browseRooms": "Browse rooms"
   }
 }

@@ -4,6 +4,22 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-20 — Phòng yêu thích cho người thuê
+
+**Vì sao:** Người thuê muốn bấm tim lưu lại các phòng đang quan tâm để xem lại sau, thay vì phải tìm kiếm lại từ đầu mỗi lần.
+
+**Thay đổi:**
+- `src/services/favoriteApi.ts` (mới): `getFavoriteIds`, `getMyFavorites`, `addFavorite`, `removeFavorite`.
+- `src/context/FavoritesContext.tsx` (mới): fetch id yêu thích 1 lần ngay sau khi biết đã đăng nhập, giữ trong `Set` cục bộ; `toggleFavorite` cập nhật lạc quan trên UI trước, gọi API nền, tự revert nếu lỗi.
+- `src/components/common/RoomCard.tsx`: thêm nút tim overlay góc dưới-phải ảnh (thẻ trước đây chưa có nút yêu thích nào) — bấm khi chưa đăng nhập thì báo + điều hướng `/login`, giống hệt pattern gate đăng nhập đã có ở `RoomDetail.tsx`.
+- `src/pages/RoomDetail.tsx`: nút tim sẵn có ở trang chi tiết (trước đây chỉ là `useState` cục bộ giả, không gọi API nào) nay nối vào `FavoritesContext` thật.
+- `src/pages/FavoriteRooms.tsx` (mới): trang "Phòng yêu thích" tại `/favorites` — lưới `RoomCard`, trạng thái rỗng có nút "Khám phá phòng trọ".
+- `src/components/common/Navbar.tsx`: thêm link "Phòng yêu thích" vào menu tài khoản (cả bản desktop dropdown lẫn mobile drawer).
+
+**Đã kiểm tra:** `npm run build` sạch, đối chiếu i18n vi/en. Test sống qua trình duyệt thật với tài khoản RENT_USER thật: bấm tim trên thẻ danh sách → API `POST` 201 → vào trang Phòng yêu thích thấy đúng phòng vừa lưu; bấm tim ở trang chi tiết phòng → đổi trạng thái đúng; bỏ tim tại trang Phòng yêu thích → API `DELETE` 200 → trang tự cập nhật về trạng thái rỗng.
+
+---
+
 ## 2026-08-20 — Lịch sử thuê phòng dùng dữ liệu thật (thay 100% mock)
 
 **Vì sao:** Trang "Lịch sử thuê phòng" trước đó toàn bộ là dữ liệu giả tĩnh (`INITIAL_RENTAL_HISTORY`), chưa từng gọi API thật dù backend đã có sẵn cả hợp đồng dài hạn lẫn đặt phòng ngắn hạn cho người thuê.

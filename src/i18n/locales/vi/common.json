@@ -95,7 +95,8 @@
     "newNotifications": "Thông báo mới",
     "markAllRead": "Đọc tất cả",
     "noNotifications": "Không có thông báo nào",
-    "viewAllNotifications": "Xem tất cả thông báo"
+    "viewAllNotifications": "Xem tất cả thông báo",
+    "favoriteRooms": "Phòng yêu thích"
   },
   "footer": {
     "brandDesc": "Nền tảng tìm kiếm và đặt lịch xem phòng trọ, căn hộ mini trực tiếp từ chủ nhà xác thực. Trải nghiệm minh bạch, nhanh chóng và an toàn tuyệt đối.",
@@ -127,7 +128,10 @@
     "maxPeople": "Tối đa {{count}} người",
     "more": "khác",
     "viewDetails": "Xem chi tiết",
-    "bookViewing": "Hẹn xem phòng"
+    "bookViewing": "Hẹn xem phòng",
+    "favorite": "Lưu vào yêu thích",
+    "unfavorite": "Bỏ khỏi yêu thích",
+    "favoriteError": "Không thể cập nhật yêu thích, vui lòng thử lại"
   },
   "contact": {
     "badge": "Liên Hệ Hỗ Trợ",
@@ -518,5 +522,12 @@
     "contactDescription": "Liên hệ đội ngũ hỗ trợ Pimi để được tư vấn thuê phòng trọ, giải đáp thắc mắc hợp đồng và các vấn đề khác.",
     "privacyTitle": "Chính sách bảo mật",
     "privacyDescription": "Chính sách bảo mật và quyền riêng tư dữ liệu cá nhân của người dùng khi sử dụng nền tảng Pimi."
+  },
+  "favoriteRooms": {
+    "title": "Phòng yêu thích",
+    "subtitle": "Danh sách các phòng bạn đã lưu để xem lại sau",
+    "emptyTitle": "Chưa có phòng yêu thích nào",
+    "emptyDesc": "Bấm vào biểu tượng trái tim trên thẻ phòng hoặc trang chi tiết phòng để lưu lại phòng bạn quan tâm.",
+    "browseRooms": "Khám phá phòng trọ"
   }
 }

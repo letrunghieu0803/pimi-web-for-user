@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useSocket } from '@/context/SocketContext';
-import { Home, Search, Menu, X, Building2, HelpCircle, Info, LogIn, UserPlus, User, CalendarCheck, LogOut, ChevronDown, Bell, CheckCheck, Languages, Newspaper } from 'lucide-react';
+import { Home, Search, Menu, X, Building2, HelpCircle, Info, LogIn, UserPlus, User, CalendarCheck, LogOut, ChevronDown, Bell, CheckCheck, Languages, Newspaper, Heart } from 'lucide-react';
 import { notificationApi, NotificationItem } from '@/services/notificationApi';
 
 const LanguageSwitcher: React.FC<{ className?: string }> = ({ className = '' }) => {
@@ -282,6 +282,15 @@ export const Navbar: React.FC = () => {
                       </Link>
 
                       <Link
+                        to="/favorites"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                      >
+                        <Heart className="w-4 h-4 text-indigo-500" />
+                        <span>{t('navbar.favoriteRooms')}</span>
+                      </Link>
+
+                      <Link
                         to="/bookings"
                         onClick={() => setUserDropdownOpen(false)}
                         className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
@@ -375,6 +384,15 @@ export const Navbar: React.FC = () => {
                 >
                   <User className="w-5 h-5 text-indigo-600" />
                   <span>{t('navbar.profile')} ({user.fullName})</span>
+                </Link>
+
+                <Link
+                  to="/favorites"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-indigo-50 text-indigo-700 font-bold text-sm"
+                >
+                  <Heart className="w-5 h-5 text-indigo-600" />
+                  <span>{t('navbar.favoriteRooms')}</span>
                 </Link>
 
                 <Link

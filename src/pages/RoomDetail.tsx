@@ -7,6 +7,7 @@ import { appointmentApi, Appointment } from '@/services/appointmentApi';
 import { bookingApi } from '@/services/bookingApi';
 import { collaboratorApi, HouseCollaborator } from '@/services/collaboratorApi';
 import { useAuth } from '@/context/AuthContext';
+import { useFavorites } from '@/context/FavoritesContext';
 import { RoomCard } from '@/components/common/RoomCard';
 import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
 import { MapPin, Maximize2, Users, ShieldCheck, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2 } from 'lucide-react';
@@ -26,11 +27,11 @@ export const RoomDetail: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const { user, isAuthenticated } = useAuth();
+  const { isFavorited, toggleFavorite } = useFavorites();
 
   const [room, setRoom] = useState<Room | null>(null);
   const [similarRooms, setSimilarRooms] = useState<Room[]>([]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
@@ -236,16 +237,25 @@ export const RoomDetail: React.FC = () => {
             <span className="hidden sm:inline">{t('roomDetail.share')}</span>
           </button>
           <button
-            onClick={() => {
-              setSaved(!saved);
-              toast.success(saved ? t('roomDetail.toastUnsaved') : t('roomDetail.toastSaved'));
+            onClick={async () => {
+              if (!isAuthenticated) {
+                toast.warning(t('roomDetail.toastNeedLogin'));
+                navigate(`/login?redirect=${detailPath}`);
+                return;
+              }
+              try {
+                const nowFavorited = await toggleFavorite(room.id);
+                toast.success(nowFavorited ? t('roomDetail.toastSaved') : t('roomDetail.toastUnsaved'));
+              } catch (err) {
+                toast.error(getApiErrorMessage(err));
+              }
             }}
             className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-              saved ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              isFavorited(room.id) ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            <Heart className={`w-4 h-4 ${saved ? 'fill-rose-600' : ''}`} />
-            <span className="hidden sm:inline">{saved ? t('roomDetail.savedLabel') : t('roomDetail.saveRoom')}</span>
+            <Heart className={`w-4 h-4 ${isFavorited(room.id) ? 'fill-rose-600' : ''}`} />
+            <span className="hidden sm:inline">{isFavorited(room.id) ? t('roomDetail.savedLabel') : t('roomDetail.saveRoom')}</span>
           </button>
         </div>
       </div>
