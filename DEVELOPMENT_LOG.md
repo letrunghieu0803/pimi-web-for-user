@@ -4,6 +4,34 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-20 — Lịch sử thuê phòng dùng dữ liệu thật (thay 100% mock)
+
+**Vì sao:** Trang "Lịch sử thuê phòng" trước đó toàn bộ là dữ liệu giả tĩnh (`INITIAL_RENTAL_HISTORY`), chưa từng gọi API thật dù backend đã có sẵn cả hợp đồng dài hạn lẫn đặt phòng ngắn hạn cho người thuê.
+
+**Thay đổi:**
+- `src/services/contractApi.ts` (mới): `getMyContracts(params)` → `GET /v1/contracts/mine`.
+- `src/pages/BookingHistory.tsx`: viết lại hoàn toàn — gộp hợp đồng dài hạn (`contractApi.getMyContracts`) + đặt phòng ngắn hạn đã thanh toán (`bookingApi.getTenantBookings`, hàm đã có sẵn nhưng chưa từng được gọi), sắp theo ngày mới nhất. Bỏ khái niệm "xác nhận trực tiếp với chủ nhà" (mock cũ tự bịa, hệ thống thật không có luồng này). Nút liên hệ đổi thành "Nhắn Zalo" (mở `ContactCollaboratorModal`), modal chi tiết hợp đồng không còn hiển thị tên/SĐT chủ nhà (khớp chính sách chung — xem đợt dưới).
+- `src/components/common/ContactCollaboratorModal.tsx`: thêm trạng thái rỗng khi toà nhà chưa có cộng tác viên nào.
+
+**Đã kiểm tra:** `npm run build` sạch, đối chiếu i18n vi/en. Test sống qua trình duyệt thật: đăng nhập tài khoản có booking thật → hiện đúng thẻ "Đã thanh toán"/"Đã hoàn tất", bấm "Nhắn Zalo" mở đúng modal liên hệ cộng tác viên của toà nhà đó, bấm "Xem Đơn Đặt Phòng" điều hướng đúng sang trang trạng thái thanh toán.
+
+---
+
+## 2026-08-20 — Ẩn hoàn toàn thông tin liên hệ chủ nhà, chuyển sang liên hệ Zalo qua cộng tác viên
+
+**Vì sao:** Người thuê không được liên hệ trực tiếp chủ nhà — mọi liên hệ đi qua cộng tác viên phụ trách toà nhà, kênh chính thức là Zalo (backend đã chặn từ trước, nhưng frontend còn sót code chết/mock hiển thị tên-SĐT chủ nhà nếu API từng đổi lại).
+
+**Thay đổi:**
+- `src/pages/RoomDetail.tsx`, `src/pages/TenantAppointments.tsx`: xoá hẳn khối "Chủ nhà"/nút gọi điện (`tel:`) — dữ liệu vốn luôn rỗng vì backend không trả `houseOwner` cho endpoint công khai/người thuê, nhưng vẫn dọn sạch để tránh sống lại nếu API đổi.
+- `src/services/roomApi.ts`, `src/services/appointmentApi.ts`, `src/types/index.ts`, `src/data/mockData.ts`: bỏ hẳn field `landlordName`/`landlordPhone`/`landlordAvatar`/`houseOwner` khỏi type + mapping + mock data.
+- `src/services/collaboratorApi.ts`: `HouseCollaborator` thêm `zaloLink` — kênh liên lạc chính thức admin cài đặt cho từng cộng tác viên.
+- `src/components/common/ContactCollaboratorModal.tsx`: nút "Gọi điện" (`tel:`) đổi thành "Nhắn Zalo" (mở `zaloLink`), tự ẩn nếu admin chưa cài đặt link.
+- Sửa vài chuỗi text còn nhắc "chủ nhà" như điểm liên hệ (`roomDetail.contactOwner`, `roomDetail.trustNote1`, `bookingPayment.paidText`) sang trung lập/cộng tác viên.
+
+**Đã kiểm tra:** `npm run build` sạch, đối chiếu i18n vi/en.
+
+---
+
 ## 2026-08-20 — Chuyển token sang cookie httpOnly, gắn CSRF
 
 **Vì sao:** Backend (bff-for-pimi) vừa chuyển sang set token qua cookie `httpOnly` thay vì trả JSON để FE tự lưu `localStorage`. FE phải ngưng đọc/ghi token thủ công và để trình duyệt tự gửi cookie kèm request.

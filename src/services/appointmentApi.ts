@@ -27,16 +27,13 @@ export interface Appointment {
     roomGroupId?: string | null;
     images?: Array<{ image?: { link?: string } }>;
   };
+  // Không có houseOwner — GET /v1/appointments/tenant (getTenantAppointments) không trả thông
+  // tin liên hệ chủ nhà cho người thuê (xem appointments.service.ts ở backend). Người thuê liên
+  // hệ qua cộng tác viên (nút "Liên hệ cộng tác viên"), không liên hệ trực tiếp chủ nhà.
   rentHouse?: {
     id: string;
     name: string;
     address?: string;
-    houseOwner?: {
-      firstName?: string;
-      lastName?: string;
-      phoneNumber?: string;
-      email?: string;
-    };
   };
   timeSlots?: TimeSlot[];
 }

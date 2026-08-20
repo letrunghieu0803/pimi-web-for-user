@@ -9,7 +9,7 @@ import { collaboratorApi, HouseCollaborator } from '@/services/collaboratorApi';
 import { useAuth } from '@/context/AuthContext';
 import { RoomCard } from '@/components/common/RoomCard';
 import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
-import { MapPin, Maximize2, Users, ShieldCheck, PhoneCall, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2 } from 'lucide-react';
+import { MapPin, Maximize2, Users, ShieldCheck, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2 } from 'lucide-react';
 import { VietMapViewer } from '@/components/common/VietMapViewer';
 import { useToast } from '@/context/ToastContext';
 import { RoomDetailSkeleton } from '@/components/ui/Skeleton';
@@ -446,26 +446,6 @@ export const RoomDetail: React.FC = () => {
               <p className="text-[11px] text-slate-400">{t('roomDetail.priceIncludesFee')}</p>
             </div>
 
-            {/* Landlord Profile — ẩn hẳn khi backend không trả thông tin chủ nhà (mặc định với
-                người thuê: liên hệ qua cộng tác viên hoặc đặt lịch/đặt phòng trong app). */}
-            {room.landlordName && (
-              <div className="flex items-center gap-3.5 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
-                <img
-                  src={room.landlordAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'}
-                  alt={room.landlordName}
-                  className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-indigo-200"
-                />
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.postedByOwner')}</span>
-                  <h4 className="text-sm font-bold text-slate-900 truncate">{room.landlordName}</h4>
-                  <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    {t('roomDetail.identityVerified')}
-                  </span>
-                </div>
-              </div>
-            )}
-
             {/* Direct Primary Actions */}
             <div className="space-y-3">
               {canBookShortTerm ? (
@@ -509,16 +489,6 @@ export const RoomDetail: React.FC = () => {
                   <CalendarCheck className="w-5 h-5" />
                   <span>{submitting ? t('roomDetail.sending') : t('roomDetail.requestViewingButton')}</span>
                 </button>
-              )}
-
-              {room.landlordPhone && (
-                <a
-                  href={`tel:${room.landlordPhone}`}
-                  className="w-full py-3.5 rounded-2xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-sm border border-indigo-200 transition-colors flex items-center justify-center gap-2"
-                >
-                  <PhoneCall className="w-4 h-4 text-indigo-600" />
-                  <span>{t('roomDetail.callOwner', { phone: room.landlordPhone })}</span>
-                </a>
               )}
 
               {hasCollaborators && (

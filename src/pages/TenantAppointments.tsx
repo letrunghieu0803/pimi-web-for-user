@@ -9,7 +9,6 @@ import {
   CheckSquare,
   Home,
   MapPin,
-  Phone,
   MessageSquare,
 } from 'lucide-react';
 import { appointmentApi, Appointment, TimeSlot } from '@/services/appointmentApi';
@@ -256,12 +255,6 @@ export const TenantAppointments: React.FC = () => {
                       </p>
                     )}
 
-                    {app.rentHouse?.houseOwner && (
-                      <p className="text-xs text-slate-600 flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        {t('tenantAppointments.ownerLabel')}: {app.rentHouse.houseOwner.lastName} {app.rentHouse.houseOwner.firstName} - {app.rentHouse.houseOwner.phoneNumber}
-                      </p>
-                    )}
                   </div>
 
                   {/* Confirmed Slot */}

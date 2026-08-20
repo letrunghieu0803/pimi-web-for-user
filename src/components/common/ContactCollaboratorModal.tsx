@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, PhoneCall, UserRound } from 'lucide-react';
+import { X, MessageCircle, UserRound } from 'lucide-react';
 import { HouseCollaborator } from '@/services/collaboratorApi';
 
 interface ContactCollaboratorModalProps {
@@ -26,6 +26,9 @@ export const ContactCollaboratorModal: React.FC<ContactCollaboratorModalProps> =
         </div>
 
         <div className="p-6 space-y-3">
+          {collaborators.length === 0 && (
+            <p className="text-xs text-slate-400 text-center py-4">{t('contactCollaboratorModal.emptyText')}</p>
+          )}
           {collaborators.map((c, idx) => (
             <div
               key={idx}
@@ -38,12 +41,19 @@ export const ContactCollaboratorModal: React.FC<ContactCollaboratorModalProps> =
                 <h4 className="text-sm font-bold text-slate-900 truncate">{c.name}</h4>
                 <p className="text-xs text-slate-500">{c.phone}</p>
               </div>
-              <a
-                href={`tel:${c.phone}`}
-                className="p-2.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors"
-              >
-                <PhoneCall className="w-4 h-4" />
-              </a>
+              {/* Kênh liên lạc chính thức là Zalo (admin cài đặt link cho từng cộng tác viên) —
+                  không còn nút gọi điện trực tiếp. Ẩn hẳn nút nếu admin chưa cài đặt link. */}
+              {c.zaloLink && (
+                <a
+                  href={c.zaloLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#0068ff]/10 text-[#0068ff] hover:bg-[#0068ff]/20 border border-[#0068ff]/20 transition-colors font-bold text-xs shrink-0"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{t('contactCollaboratorModal.zaloButton')}</span>
+                </a>
+              )}
             </div>
           ))}
         </div>

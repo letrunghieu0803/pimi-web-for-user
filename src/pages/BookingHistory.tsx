@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/context/AuthContext';
 import {
   FileText,
   Calendar,
@@ -8,94 +7,139 @@ import {
   Building2,
   CheckCircle2,
   ChevronRight,
-  PhoneCall,
+  MessageCircle,
   ShieldCheck,
   Award,
-  DollarSign,
   UserCheck,
-  Clock,
+  Wallet,
   Eye,
   X,
-  Sparkles
+  Loader2
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Seo } from '@/components/common/Seo';
+import { contractApi, Contract } from '@/services/contractApi';
+import { bookingApi, Booking } from '@/services/bookingApi';
+import { collaboratorApi, HouseCollaborator } from '@/services/collaboratorApi';
+import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
 
-export interface RentalHistoryItem {
+// Lịch sử thuê hợp nhất từ 2 nguồn dữ liệu thật, khác hẳn nhau về bản chất — không còn khái
+// niệm "xác nhận trực tiếp với chủ nhà" (mock cũ tự bịa, hệ thống thật không có luồng này):
+// - CONTRACT: hợp đồng dài hạn (bảng Contract) — không có ngày kết thúc lưu sẵn, "đã kết thúc"
+//   suy ra từ isDeleted (deleteOne() ở backend soft-delete khi chấm dứt hợp đồng thật).
+// - BOOKING: đặt phòng ngắn hạn đã thanh toán qua app (bảng Booking) — chỉ tính các trạng thái
+//   đã thực sự xảy ra (PAID/CHECKED_IN/PAYOUT_COMPLETED), bỏ qua PENDING_PAYMENT/EXPIRED vì đó
+//   là các lượt đặt chưa từng thành công.
+interface HistoryItem {
   id: string;
+  kind: 'CONTRACT' | 'BOOKING';
   roomId: string;
-  roomName: string;
+  houseId: string;
   houseName: string;
-  address: string;
-  district: string;
-  city: string;
+  roomName: string;
   price: number;
-  depositPrice: number;
-  startDate: string;
-  endDate: string;
-  landlordName: string;
-  landlordPhone: string;
-  hasContract: boolean;
-  contractCode?: string;
-  paymentDay?: number;
-  status: 'ACTIVE' | 'COMPLETED';
+  date: string;
+  isEnded: boolean;
+  contract?: Contract;
+  booking?: Booking;
 }
 
-const INITIAL_RENTAL_HISTORY: RentalHistoryItem[] = [
-  {
-    id: 'rent-001',
-    roomId: 'room-1',
-    roomName: 'Phòng Studio Đầy Đủ Nội Thất Cao Cấp Cầu Giấy',
-    houseName: 'Pimi Home Cầu Giấy',
-    address: 'Số 15 Ngõ 68 Cầu Giấy, Phường Quan Hoa',
-    district: 'Cầu Giấy',
-    city: 'Hà Nội',
-    price: 4500000,
-    depositPrice: 4500000,
-    startDate: '2026-01-01',
-    endDate: '2027-01-01',
-    landlordName: 'Nguyễn Văn Minh',
-    landlordPhone: '0987654321',
-    hasContract: true,
-    contractCode: 'HD-PIMI-2026-088',
-    paymentDay: 5,
-    status: 'ACTIVE',
-  },
-  {
-    id: 'rent-002',
-    roomId: 'room-2',
-    roomName: 'Căn Hộ Mini Có Gác Xép Rộng Trần Duy Hưng',
-    houseName: 'Ký Túc Xá & Căn Hộ Pimi Luxury',
-    address: 'Ngõ 204 Trần Duy Hưng, Phường Trung Hòa',
-    district: 'Cầu Giấy',
-    city: 'Hà Nội',
-    price: 3800000,
-    depositPrice: 3800000,
-    startDate: '2025-06-01',
-    endDate: '2026-06-01',
-    landlordName: 'Trần Thị Thu',
-    landlordPhone: '0912345678',
-    hasContract: false,
-    status: 'COMPLETED',
-  },
-];
+const SUCCESSFUL_BOOKING_STATUSES = ['PAID', 'CHECKED_IN', 'PAYOUT_COMPLETED'];
+
+const toNumber = (v: unknown): number => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
 
 export const BookingHistory: React.FC = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const [filterType, setFilterType] = useState<'ALL' | 'WITH_CONTRACT' | 'DIRECT_RENTAL'>('ALL');
-  const [selectedContract, setSelectedContract] = useState<RentalHistoryItem | null>(null);
+  const navigate = useNavigate();
+  const [filterType, setFilterType] = useState<'ALL' | 'CONTRACT' | 'BOOKING'>('ALL');
+  const [items, setItems] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [contactHouseId, setContactHouseId] = useState<string | null>(null);
+  const [contactCollaborators, setContactCollaborators] = useState<HouseCollaborator[]>([]);
+  const [loadingCollaborators, setLoadingCollaborators] = useState(false);
 
-  const rentalList = INITIAL_RENTAL_HISTORY;
+  useEffect(() => {
+    const fetchHistory = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const [contractsRes, bookingsRes]: [any, any] = await Promise.all([
+          contractApi.getMyContracts({ pageSize: 100 }),
+          bookingApi.getTenantBookings({ pageSize: 100 })
+        ]);
 
-  const filtered = rentalList.filter((item) => {
-    if (filterType === 'WITH_CONTRACT') return item.hasContract;
-    if (filterType === 'DIRECT_RENTAL') return !item.hasContract;
+        const contracts: Contract[] = contractsRes?.data || [];
+        const bookings: Booking[] = bookingsRes?.data || [];
+
+        const contractItems: HistoryItem[] = contracts.map((c) => ({
+          id: `contract-${c.id}`,
+          kind: 'CONTRACT',
+          roomId: c.rentRoomId,
+          houseId: c.rentHouseId,
+          houseName: c.rentHouse?.name || '',
+          roomName: c.roomName,
+          price: toNumber(c.roomPrice),
+          date: c.createdAt,
+          isEnded: c.isDeleted,
+          contract: c
+        }));
+
+        const bookingItems: HistoryItem[] = bookings
+          .filter((b) => SUCCESSFUL_BOOKING_STATUSES.includes(b.status))
+          .map((b) => ({
+            id: `booking-${b.id}`,
+            kind: 'BOOKING',
+            roomId: b.rentRoomId,
+            houseId: b.rentHouseId,
+            houseName: (b as any).rentHouse?.name || '',
+            roomName: b.roomName,
+            price: toNumber(b.amount),
+            date: (b.paidAt as string) || (b as any).createdAt,
+            isEnded: b.status === 'PAYOUT_COMPLETED',
+            booking: b
+          }));
+
+        const merged = [...contractItems, ...bookingItems].sort(
+          (a, bItem) => new Date(bItem.date).getTime() - new Date(a.date).getTime()
+        );
+
+        setItems(merged);
+      } catch (err) {
+        setError(t('bookingHistory.loadError'));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [t]);
+
+  const filtered = items.filter((item) => {
+    if (filterType === 'CONTRACT') return item.kind === 'CONTRACT';
+    if (filterType === 'BOOKING') return item.kind === 'BOOKING';
     return true;
   });
 
   const formatPrice = (price: number) => {
     return `${(price / 1000000).toLocaleString('vi-VN')} ${t('roomCard.million')}`;
+  };
+
+  const openContactModal = async (houseId: string) => {
+    setContactHouseId(houseId);
+    setLoadingCollaborators(true);
+    try {
+      const res: any = await collaboratorApi.getHouseCollaborators(houseId);
+      setContactCollaborators(res?.data || res || []);
+    } catch {
+      setContactCollaborators([]);
+    } finally {
+      setLoadingCollaborators(false);
+    }
   };
 
   return (
@@ -116,184 +160,206 @@ export const BookingHistory: React.FC = () => {
         </p>
       </div>
 
-      {/* Overview Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs text-slate-500 font-semibold block">{t('bookingHistory.totalRented')}</span>
-            <span className="text-2xl font-black text-slate-900 font-heading">{t('bookingHistory.roomCount', { count: rentalList.length })}</span>
-          </div>
+      {loading ? (
+        <div className="py-20 flex items-center justify-center text-slate-400">
+          <Loader2 className="w-6 h-6 animate-spin" />
         </div>
-
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-            <FileText className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs text-slate-500 font-semibold block">{t('bookingHistory.withContract')}</span>
-            <span className="text-2xl font-black text-slate-900 font-heading">
-              {t('bookingHistory.roomCount', { count: rentalList.filter((r) => r.hasContract).length })}
-            </span>
-          </div>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-            <UserCheck className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs text-slate-500 font-semibold block">{t('bookingHistory.directConfirm')}</span>
-            <span className="text-2xl font-black text-slate-900 font-heading">
-              {t('bookingHistory.roomCount', { count: rentalList.filter((r) => !r.hasContract).length })}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto">
-        {[
-          { id: 'ALL', label: t('bookingHistory.filterAll') },
-          { id: 'WITH_CONTRACT', label: t('bookingHistory.filterWithContract') },
-          { id: 'DIRECT_RENTAL', label: t('bookingHistory.filterDirect') },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setFilterType(tab.id as any)}
-            className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
-              filterType === tab.id
-                ? 'gradient-bg text-white shadow-md shadow-indigo-500/20'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Rental List Cards */}
-      {filtered.length === 0 ? (
-        <div className="py-16 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-4 max-w-md mx-auto">
-          <Building2 className="w-10 h-10 text-slate-400 mx-auto" />
-          <h3 className="text-lg font-bold text-slate-900 font-heading">{t('bookingHistory.emptyTitle')}</h3>
-          <p className="text-xs text-slate-500">
-            {t('bookingHistory.emptyDesc')}
-          </p>
-          <Link
-            to="/rooms"
-            className="gradient-bg text-white px-6 py-2.5 rounded-2xl text-xs font-bold shadow-md inline-block"
-          >
-            {t('bookingHistory.exploreRooms')}
-          </Link>
+      ) : error ? (
+        <div className="py-16 bg-rose-50 rounded-3xl border border-rose-200 text-center text-sm text-rose-700">
+          {error}
         </div>
       ) : (
-        <div className="space-y-5">
-          {filtered.map((item) => (
-            <div
-              key={item.id}
-              className="glass-panel p-6 rounded-3xl border border-slate-200/90 shadow-lg space-y-5 hover:border-indigo-200 transition-all"
-            >
-              {/* Top Row: Title + Contract Badge */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/60 pb-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Building2 className="w-4 h-4 text-indigo-600" />
-                    <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">
-                      {item.houseName}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 font-heading">
-                    {item.roomName}
-                  </h3>
-                  <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>{item.address}, {item.district}, {item.city}</span>
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {item.hasContract ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-xs">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      <span>{t('bookingHistory.officialContract', { code: item.contractCode })}</span>
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 text-xs font-bold">
-                      <UserCheck className="w-4 h-4 text-sky-600" />
-                      <span>{t('bookingHistory.directConfirm')}</span>
-                    </span>
-                  )}
-                </div>
+        <>
+          {/* Overview Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-6 h-6" />
               </div>
-
-              {/* Specification Info Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-medium text-slate-700 bg-slate-50/80 p-4 rounded-2xl border border-slate-200/60">
-                <div>
-                  <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">{t('bookingHistory.monthlyRent')}</span>
-                  <strong className="text-slate-900 text-sm font-black text-emerald-600">
-                    {formatPrice(item.price)}{t('roomCard.perMonth')}
-                  </strong>
-                </div>
-
-                <div>
-                  <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">{t('roomDetail.deposit')}</span>
-                  <strong className="text-slate-900 text-xs font-bold">
-                    {formatPrice(item.depositPrice)}
-                  </strong>
-                </div>
-
-                <div>
-                  <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">{t('bookingHistory.contractDuration')}</span>
-                  <strong className="text-slate-900 text-xs font-bold flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-indigo-500" />
-                    {item.startDate} → {item.endDate}
-                  </strong>
-                </div>
-
-                <div>
-                  <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">{t('bookingHistory.ownerContact')}</span>
-                  <strong className="text-slate-900 text-xs font-bold block truncate">
-                    {item.landlordName} ({item.landlordPhone})
-                  </strong>
-                </div>
-              </div>
-
-              {/* Footer Actions */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-                <Link
-                  to={`/rooms/${item.roomId}`}
-                  className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
-                >
-                  <span>{t('bookingHistory.viewRoomDetails')}</span>
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
-
-                <div className="flex items-center gap-2">
-                  <a
-                    href={`tel:${item.landlordPhone}`}
-                    className="px-3.5 py-2 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs border border-indigo-200 transition-colors flex items-center gap-1.5"
-                  >
-                    <PhoneCall className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>{t('bookingHistory.callOwner')}</span>
-                  </a>
-
-                  {item.hasContract && (
-                    <button
-                      onClick={() => setSelectedContract(item)}
-                      className="px-4 py-2 rounded-xl gradient-bg text-white font-bold text-xs shadow-md hover:scale-105 transition-all flex items-center gap-1.5"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>{t('bookingHistory.viewContract')}</span>
-                    </button>
-                  )}
-                </div>
+              <div>
+                <span className="text-xs text-slate-500 font-semibold block">{t('bookingHistory.totalRented')}</span>
+                <span className="text-2xl font-black text-slate-900 font-heading">{t('bookingHistory.roomCount', { count: items.length })}</span>
               </div>
             </div>
-          ))}
-        </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <FileText className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-xs text-slate-500 font-semibold block">{t('bookingHistory.withContract')}</span>
+                <span className="text-2xl font-black text-slate-900 font-heading">
+                  {t('bookingHistory.roomCount', { count: items.filter((i) => i.kind === 'CONTRACT').length })}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+                <Wallet className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-xs text-slate-500 font-semibold block">{t('bookingHistory.shortTermBookings')}</span>
+                <span className="text-2xl font-black text-slate-900 font-heading">
+                  {t('bookingHistory.roomCount', { count: items.filter((i) => i.kind === 'BOOKING').length })}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto">
+            {[
+              { id: 'ALL', label: t('bookingHistory.filterAll') },
+              { id: 'CONTRACT', label: t('bookingHistory.filterContract') },
+              { id: 'BOOKING', label: t('bookingHistory.filterBooking') }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setFilterType(tab.id as any)}
+                className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
+                  filterType === tab.id
+                    ? 'gradient-bg text-white shadow-md shadow-indigo-500/20'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Rental List Cards */}
+          {filtered.length === 0 ? (
+            <div className="py-16 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-4 max-w-md mx-auto">
+              <Building2 className="w-10 h-10 text-slate-400 mx-auto" />
+              <h3 className="text-lg font-bold text-slate-900 font-heading">{t('bookingHistory.emptyTitle')}</h3>
+              <p className="text-xs text-slate-500">
+                {t('bookingHistory.emptyDesc')}
+              </p>
+              <Link
+                to="/rooms"
+                className="gradient-bg text-white px-6 py-2.5 rounded-2xl text-xs font-bold shadow-md inline-block"
+              >
+                {t('bookingHistory.exploreRooms')}
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {filtered.map((item) => (
+                <div
+                  key={item.id}
+                  className="glass-panel p-6 rounded-3xl border border-slate-200/90 shadow-lg space-y-5 hover:border-indigo-200 transition-all"
+                >
+                  {/* Top Row: Title + Kind Badge */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/60 pb-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Building2 className="w-4 h-4 text-indigo-600" />
+                        <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">
+                          {item.houseName}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-900 font-heading">
+                        {item.roomName}
+                      </h3>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {item.kind === 'CONTRACT' ? (
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shadow-xs border ${
+                            item.isEnded
+                              ? 'bg-slate-100 text-slate-500 border-slate-200'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          }`}
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>{item.isEnded ? t('bookingHistory.contractEnded') : t('bookingHistory.contractActive')}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 text-xs font-bold">
+                          <UserCheck className="w-4 h-4 text-sky-600" />
+                          <span>{t(`bookingHistory.bookingStatus.${item.booking?.status}`)}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Specification Info Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs font-medium text-slate-700 bg-slate-50/80 p-4 rounded-2xl border border-slate-200/60">
+                    <div>
+                      <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">
+                        {item.kind === 'CONTRACT' ? t('bookingHistory.monthlyRent') : t('bookingHistory.totalPaid')}
+                      </span>
+                      <strong className="text-slate-900 text-sm font-black text-emerald-600">
+                        {formatPrice(item.price)}{item.kind === 'CONTRACT' ? t('roomCard.perMonth') : ''}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">
+                        {item.kind === 'CONTRACT' ? t('bookingHistory.contractDuration') : t('bookingHistory.bookingDate')}
+                      </span>
+                      <strong className="text-slate-900 text-xs font-bold flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                        {item.kind === 'CONTRACT'
+                          ? t('bookingHistory.monthsValue', { count: item.contract?.monthDurationToPay })
+                          : new Date(item.date).toLocaleDateString('vi-VN')}
+                      </strong>
+                    </div>
+
+                    <div className="col-span-2 sm:col-span-1">
+                      <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">{t('bookingHistory.startDate')}</span>
+                      <strong className="text-slate-900 text-xs font-bold flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        {new Date(item.date).toLocaleDateString('vi-VN')}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* Footer Actions */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+                    <Link
+                      to={`/rooms/${item.roomId}`}
+                      className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
+                    >
+                      <span>{t('bookingHistory.viewRoomDetails')}</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </Link>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openContactModal(item.houseId)}
+                        className="px-3.5 py-2 rounded-xl bg-[#0068ff]/10 text-[#0068ff] hover:bg-[#0068ff]/20 font-bold text-xs border border-[#0068ff]/20 transition-colors flex items-center gap-1.5"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>{t('bookingHistory.zaloButton')}</span>
+                      </button>
+
+                      {item.kind === 'CONTRACT' ? (
+                        <button
+                          onClick={() => setSelectedContract(item.contract || null)}
+                          className="px-4 py-2 rounded-xl gradient-bg text-white font-bold text-xs shadow-md hover:scale-105 transition-all flex items-center gap-1.5"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>{t('bookingHistory.viewContract')}</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => navigate(`/payment/${item.booking?.id}`)}
+                          className="px-4 py-2 rounded-xl gradient-bg text-white font-bold text-xs shadow-md hover:scale-105 transition-all flex items-center gap-1.5"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>{t('bookingHistory.viewBooking')}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Contract Detail Modal */}
@@ -309,7 +375,6 @@ export const BookingHistory: React.FC = () => {
                   <h3 className="text-base font-bold text-slate-900">
                     {t('bookingHistory.contractModalTitle')}
                   </h3>
-                  <span className="text-xs font-bold text-emerald-600">{selectedContract.contractCode}</span>
                 </div>
               </div>
               <button
@@ -327,12 +392,8 @@ export const BookingHistory: React.FC = () => {
                   <strong className="text-slate-900 font-bold">{selectedContract.roomName}</strong>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">{t('bookingHistory.modalAddress')}</span>
-                  <span className="text-slate-900 font-semibold">{selectedContract.address}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">{t('bookingHistory.modalOwner')}</span>
-                  <strong className="text-slate-900 font-bold">{selectedContract.landlordName} ({selectedContract.landlordPhone})</strong>
+                  <span className="text-slate-500">{t('bookingHistory.modalHouse')}</span>
+                  <span className="text-slate-900 font-semibold">{selectedContract.rentHouse?.name}</span>
                 </div>
               </div>
 
@@ -340,28 +401,21 @@ export const BookingHistory: React.FC = () => {
                 <div>
                   <span className="text-slate-500 block text-[11px]">{t('bookingHistory.modalAgreedPrice')}</span>
                   <strong className="text-emerald-600 font-black text-sm">
-                    {formatPrice(selectedContract.price)}{t('roomCard.perMonth')}
-                  </strong>
-                </div>
-
-                <div>
-                  <span className="text-slate-500 block text-[11px]">{t('bookingHistory.modalDeposit')}</span>
-                  <strong className="text-slate-900 font-bold text-xs">
-                    {formatPrice(selectedContract.depositPrice)}
+                    {formatPrice(toNumber(selectedContract.roomPrice))}{t('roomCard.perMonth')}
                   </strong>
                 </div>
 
                 <div>
                   <span className="text-slate-500 block text-[11px]">{t('bookingHistory.modalPaymentDay')}</span>
                   <strong className="text-indigo-600 font-bold text-xs">
-                    {t('bookingHistory.modalPaymentDayValue', { day: selectedContract.paymentDay || 5 })}
+                    {t('bookingHistory.modalPaymentDayValue', { day: selectedContract.rentDueDate || 5 })}
                   </strong>
                 </div>
 
-                <div>
+                <div className="col-span-2">
                   <span className="text-slate-500 block text-[11px]">{t('bookingHistory.modalValidity')}</span>
                   <strong className="text-slate-900 font-bold text-xs">
-                    {t('bookingHistory.modalValidityValue')}
+                    {t('bookingHistory.monthsValue', { count: selectedContract.monthDurationToPay })}
                   </strong>
                 </div>
               </div>
@@ -384,6 +438,13 @@ export const BookingHistory: React.FC = () => {
         </div>
       )}
 
+      {/* Contact Collaborator Modal */}
+      {contactHouseId && !loadingCollaborators && (
+        <ContactCollaboratorModal
+          collaborators={contactCollaborators}
+          onClose={() => setContactHouseId(null)}
+        />
+      )}
     </div>
   );
 };
