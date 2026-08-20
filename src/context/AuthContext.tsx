@@ -27,7 +27,6 @@ export interface AuthResult {
 
 interface AuthContextType {
   user: UserProfile | null;
-  token: string | null;
   isAuthenticated: boolean;
   login: (usernameOrPhone: string, pass: string) => Promise<AuthResult>;
   register: (fullName: string, phoneNumber: string, email: string, pass: string) => Promise<AuthResult>;
@@ -37,12 +36,15 @@ interface AuthContextType {
 }
 
 const AUTH_USER_KEY = 'pimi_tenant_auth_user';
-const AUTH_TOKEN_KEY = 'pimi_tenant_auth_token';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { t } = useTranslation();
+  // accessToken/refreshToken không còn lưu ở localStorage nữa — nằm trong cookie httpOnly do
+  // backend set (JS không đọc/ghi được, xem `axiosClient.ts`). `user` (không nhạy cảm) vẫn lưu
+  // như trước để hiển thị UI ngay không cần chờ network; sự tồn tại của nó cũng là gợi ý "đã
+  // đăng nhập" lạc quan cho `isAuthenticated`.
   const [user, setUser] = useState<UserProfile | null>(() => {
     const saved = localStorage.getItem(AUTH_USER_KEY);
     if (saved) {
@@ -55,10 +57,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return null;
   });
 
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem(AUTH_TOKEN_KEY);
-  });
-
   useEffect(() => {
     if (user) {
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
@@ -66,16 +64,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.removeItem(AUTH_USER_KEY);
     }
   }, [user]);
-
-  useEffect(() => {
-    if (token) {
-      localStorage.setItem(AUTH_TOKEN_KEY, token);
-      localStorage.setItem('pimi_access_token', token);
-    } else {
-      localStorage.removeItem(AUTH_TOKEN_KEY);
-      localStorage.removeItem('pimi_access_token');
-    }
-  }, [token]);
 
   const login = async (usernameOrPhone: string, pass: string): Promise<AuthResult> => {
     try {
@@ -90,17 +78,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loginAs: 'RENT_USER',
       });
 
-      const data = response?.data || response;
-      const accessToken = data?.accessToken || data?.token;
-      const refreshToken = data?.refreshToken;
-
-      if (accessToken) {
-        localStorage.setItem(AUTH_TOKEN_KEY, accessToken);
-        localStorage.setItem('pimi_access_token', accessToken);
-      }
-      if (refreshToken) {
-        localStorage.setItem('pimi_refresh_token', refreshToken);
-      }
+      // Token giờ do backend tự set qua cookie httpOnly (kèm theo response nhờ
+      // `withCredentials: true` ở axiosClient) — không tự đọc/lưu accessToken vào localStorage
+      // nữa như trước.
 
       // Response của /v1/auth/login KHÔNG có object "user" (chỉ {accessToken, refreshToken,
       // role}) — phải tự gọi /v1/users/me để lấy hồ sơ thật (trước đây code này âm thầm dùng
@@ -128,7 +108,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
 
       setUser(profile);
-      setToken(accessToken || `token-${Date.now()}`);
 
       return {
         success: true,
@@ -174,17 +153,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       const data = response?.data || response;
-      const accessToken = data?.accessToken || data?.token;
-      const refreshToken = data?.refreshToken;
       const rawUser = data?.user || {};
-
-      if (accessToken) {
-        localStorage.setItem(AUTH_TOKEN_KEY, accessToken);
-        localStorage.setItem('pimi_access_token', accessToken);
-      }
-      if (refreshToken) {
-        localStorage.setItem('pimi_refresh_token', refreshToken);
-      }
+      // Token (nếu backend có trả) giờ do backend tự set qua cookie httpOnly — không tự
+      // đọc/lưu vào localStorage nữa.
 
       const profile: UserProfile = {
         id: rawUser.id || `tenant-${Date.now()}`,
@@ -198,7 +169,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
 
       setUser(profile);
-      setToken(accessToken || `token-${Date.now()}`);
 
       return {
         success: true,
@@ -230,8 +200,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
+    // Token nằm trong cookie httpOnly — JS không tự xoá được, phải gọi backend để nó
+    // `clearCookie`. Không chặn UI chờ response (best-effort) — vẫn dọn state/local ngay.
+    axiosClient.post('/v1/auth/logout').catch(() => {
+      // ignore
+    });
     setUser(null);
-    setToken(null);
     localStorage.clear();
     sessionStorage.clear();
   };
@@ -240,7 +214,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <AuthContext.Provider
       value={{
         user,
-        token,
         isAuthenticated: !!user,
         login,
         register,
