@@ -540,5 +540,24 @@
     "emptyTitle": "No rooms yet",
     "emptyDesc": "Rooms you view will automatically show up here so you can revisit them later.",
     "browseRooms": "Browse rooms"
+  },
+  "roomReviews": {
+    "title": "Reviews from tenants",
+    "reviewCount": "{{count}} reviews",
+    "noReviewsYet": "No reviews yet",
+    "emptyList": "Be the first to review this room.",
+    "writeButton": "Write a review",
+    "editButton": "Edit review",
+    "notEligibleHint": "You need to have stayed at this room to review it.",
+    "commentPlaceholder": "Share your experience with this room...",
+    "submitButton": "Submit review",
+    "submitting": "Submitting...",
+    "cancelButton": "Cancel",
+    "scoreRequired": "Please select a star rating",
+    "submitSuccess": "Thanks for your review!",
+    "scoreHidden": "Score hidden by admin",
+    "commentHidden": "Comment hidden by admin",
+    "anonymousTenant": "Pimi tenant",
+    "loadMore": "Load more reviews"
   }
 }

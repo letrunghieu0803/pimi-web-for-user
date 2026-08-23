@@ -4,6 +4,19 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-23 — Đánh giá phòng sau khi ở (điểm sao + bình luận)
+
+**Vì sao:** Người thuê muốn đánh giá phòng đã ở, người thuê khác xem được trước khi quyết định thuê.
+
+**Thay đổi:**
+- `src/services/reviewApi.ts` (mới): `getRoomReviews`, `getEligibility`, `upsertMyReview`, `deleteMyReview`.
+- `src/components/room/RoomReviews.tsx` (mới): khối hiển thị trên trang chi tiết phòng — điểm trung bình + số lượng, danh sách đánh giá (điểm/bình luận bị admin ẩn hiện đúng dấu hiệu "đã ẩn" thay vì trống trơn khó hiểu), nút "Viết đánh giá"/"Sửa đánh giá" chỉ hiện khi đủ điều kiện (gọi `/eligibility` 1 lần), form chọn sao + textarea, "Xem thêm" phân trang.
+- `src/pages/RoomDetail.tsx`: gắn `<RoomReviews roomId={room.id} />` vào cuối trang.
+
+**Đã kiểm tra:** `npm run build` sạch, đối chiếu i18n vi/en. Test sống qua trình duyệt thật: viết đánh giá 4 sao → hiện đúng ngay trong danh sách + điểm trung bình cập nhật; admin ẩn bình luận ở phía backend → tải lại trang hiện đúng "Bình luận đã bị ẩn bởi quản trị viên" thay vì nội dung thật.
+
+---
+
 ## 2026-08-21 — Đồng bộ khối "trống dữ liệu" dùng chung (EmptyState)
 
 **Vì sao:** 3 trang (Phòng yêu thích, Đã xem gần đây, Danh sách phòng khi lọc ra 0 kết quả) mỗi trang tự viết lại y hệt cấu trúc "icon tròn + tiêu đề + mô tả + nút hành động" — 2 trang mới (yêu thích/đã xem) giống nhau nhưng trang danh sách phòng (có từ trước) lại lệch hẳn: khung vuông bo góc thay vì tròn, tông màu/đệm khác, nút không có shadow/hover-scale như 2 trang kia.

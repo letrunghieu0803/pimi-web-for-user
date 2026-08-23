@@ -540,5 +540,24 @@
     "emptyTitle": "Chưa có phòng nào",
     "emptyDesc": "Các phòng bạn xem qua sẽ tự động xuất hiện ở đây để xem lại sau.",
     "browseRooms": "Khám phá phòng trọ"
+  },
+  "roomReviews": {
+    "title": "Đánh giá từ người thuê",
+    "reviewCount": "{{count}} đánh giá",
+    "noReviewsYet": "Chưa có đánh giá nào",
+    "emptyList": "Hãy là người đầu tiên đánh giá phòng này.",
+    "writeButton": "Viết đánh giá",
+    "editButton": "Sửa đánh giá",
+    "notEligibleHint": "Bạn cần từng thuê phòng này mới có thể đánh giá.",
+    "commentPlaceholder": "Chia sẻ cảm nhận của bạn về phòng này...",
+    "submitButton": "Gửi đánh giá",
+    "submitting": "Đang gửi...",
+    "cancelButton": "Huỷ",
+    "scoreRequired": "Vui lòng chọn số sao đánh giá",
+    "submitSuccess": "Cảm ơn bạn đã đánh giá!",
+    "scoreHidden": "Điểm đã bị ẩn bởi quản trị viên",
+    "commentHidden": "Bình luận đã bị ẩn bởi quản trị viên",
+    "anonymousTenant": "Người thuê Pimi",
+    "loadMore": "Xem thêm đánh giá"
   }
 }
