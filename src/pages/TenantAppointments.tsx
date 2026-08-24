@@ -262,8 +262,7 @@ export const TenantAppointments: React.FC = () => {
                     <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-xs text-emerald-900">
                       <span className="font-bold block mb-1">{t('tenantAppointments.confirmedSlotLabel')}</span>
                       <p className="text-sm font-semibold">
-                        {new Date(selectedSlot.startTime).toLocaleString('vi-VN')} -{' '}
-                        {new Date(selectedSlot.endTime).toLocaleTimeString('vi-VN')}
+                        {new Date(selectedSlot.startTime).toLocaleString('vi-VN')}
                       </p>
                     </div>
                   )}
@@ -274,6 +273,7 @@ export const TenantAppointments: React.FC = () => {
                       <p className="text-xs font-bold text-indigo-900">
                         {t('tenantAppointments.offeredSlotsIntro')}
                       </p>
+                      <p className="text-[11px] text-indigo-700">{t('tenantAppointments.durationHint')}</p>
                       <div className="space-y-2">
                         {app.timeSlots.map((slot) => {
                           const slotId = slot.id || '';
@@ -295,10 +295,7 @@ export const TenantAppointments: React.FC = () => {
                                 onChange={() => {}}
                                 className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                               />
-                              <span>
-                                {new Date(slot.startTime).toLocaleString('vi-VN')} -{' '}
-                                {new Date(slot.endTime).toLocaleTimeString('vi-VN')}
-                              </span>
+                              <span>{new Date(slot.startTime).toLocaleString('vi-VN')}</span>
                             </label>
                           );
                         })}

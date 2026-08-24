@@ -3,7 +3,10 @@ import { axiosClient } from './axiosClient';
 export interface TimeSlot {
   id?: string;
   startTime: string;
-  endTime: string;
+  // Không còn bắt buộc — chủ nhà chỉ chọn giờ bắt đầu, buổi xem phòng báo trước sẽ mất khoảng
+  // 15-30 phút thay vì 1 khung giờ chính xác. Khung giờ cũ (tạo trước đợt đổi) vẫn có thể có
+  // giá trị, khung giờ mới luôn null.
+  endTime?: string | null;
   isSelected?: boolean;
 }
 

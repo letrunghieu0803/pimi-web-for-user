@@ -331,7 +331,8 @@
     "confirming": "Confirming...",
     "confirmSlot": "Confirm slot",
     "rejectReasonLabel": "Rejection reason:",
-    "confirmAttendance": "Confirm I attended the viewing"
+    "confirmAttendance": "Confirm I attended the viewing",
+    "durationHint": "Each viewing is expected to take about 15-30 minutes."
   },
   "roomList": {
     "badge": "Available Room Listings",

@@ -4,6 +4,19 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-25 — Đặt lịch xem phòng: bỏ hiển thị giờ kết thúc, thêm ghi chú thời lượng
+
+**Vì sao:** Nối UI cho thay đổi bên bff-for-pimi — khung giờ chủ nhà đề xuất giờ chỉ còn giờ bắt đầu (`endTime` sẽ là `null`), người thuê cần được báo trước buổi xem phòng dự kiến mất khoảng 15-30 phút thay vì thấy khung giờ chính xác.
+
+**Thay đổi:**
+- `src/pages/TenantAppointments.tsx`: bỏ hiển thị `endTime` ở khung giờ đã chốt lẫn danh sách khung giờ chủ nhà đề xuất; thêm dòng ghi chú thời lượng ngay trên danh sách khung giờ để chọn.
+- `src/services/appointmentApi.ts`: `TimeSlot.endTime` chuyển optional/nullable.
+- `src/i18n/locales/{vi,en}/common.json`: thêm `tenantAppointments.durationHint`, đối chiếu vi/en đủ.
+
+**Đã kiểm tra:** `npx tsc --noEmit` sạch. Logic khung giờ đã verify ở tầng backend (xem dev log bff-for-pimi) — chưa test sống qua trình duyệt (cần tài khoản người thuê thao tác trên 1 lịch hẹn thật).
+
+---
+
 ## 2026-08-24 — Gắn header `X-Client-App` — sửa lỗi đăng nhập đè cookie với 2 web kia
 
 **Vì sao:** bff-for-pimi tách tên cookie theo từng web (`pimi_at_user` thay vì `pimi_at` chung) để 3 web (người thuê/chủ nhà/admin) không còn ghi đè cookie đăng nhập của nhau khi mở cùng lúc trên 1 trình duyệt — xem DEVELOPMENT_LOG.md bên `bff-for-pimi` để hiểu đầy đủ nguyên nhân. Web này cần tự gắn header định danh để backend biết đọc/ghi đúng cookie `..._user`.

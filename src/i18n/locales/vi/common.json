@@ -331,7 +331,8 @@
     "confirming": "Đang chốt...",
     "confirmSlot": "Xác nhận chốt lịch",
     "rejectReasonLabel": "Lý do từ chối:",
-    "confirmAttendance": "Xác nhận đã tham gia xem phòng"
+    "confirmAttendance": "Xác nhận đã tham gia xem phòng",
+    "durationHint": "Mỗi buổi xem phòng dự kiến kéo dài khoảng 15-30 phút."
   },
   "roomList": {
     "badge": "Danh Sách Phòng Trọ Sẵn Có",
