@@ -4,6 +4,18 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-25 — Sửa vỡ layout khi thông báo có nội dung dài
+
+**Vì sao:** Người dùng báo thông báo dài làm "UI không đáp ứng được" trên cả 3 trang web. Điều tra sống (seed thông báo thật ~800 ký tự kèm 1 chuỗi liên tục không khoảng trắng bên `bff-for-pimi`, kiểm tra trên Web-Pimi-for-owner trước — cấu trúc component giống hệt bên này) cho thấy: nội dung không có `overflow-wrap: break-word` (Tailwind `break-words`) nên chuỗi dài không khoảng trắng làm `<p>` tràn ngang, kéo theo tràn ngang toàn trang. `Navbar.tsx` và `Notifications.tsx` dùng đúng cấu trúc class y hệt (`line-clamp-2`/`truncate` không kèm `break-words`) nên áp cùng cách sửa mà không cần seed dữ liệu riêng.
+
+**Thay đổi:**
+- `src/pages/Notifications.tsx`: thêm `break-words` vào đoạn nội dung; thêm `min-w-0` vào wrapper + tiêu đề `truncate`.
+- `src/components/common/Navbar.tsx`: thêm `break-words` vào đoạn nội dung trong dropdown chuông thông báo; thêm `min-w-0` vào tiêu đề `truncate`.
+
+**Đã kiểm tra:** Đã verify cơ chế tràn ngang + cách sửa trực tiếp trên Web-Pimi-for-owner (xem dev log bên đó) bằng đo `scrollWidth`/`clientWidth` trước/sau qua trình duyệt thật. Bên này áp cùng thay đổi do cấu trúc JSX/class giống hệt (đã đối chiếu qua grep) — `npx tsc --noEmit` sạch, chưa test lại sống qua UI của web này (không có gì khác biệt về logic để cần test riêng).
+
+---
+
 ## 2026-08-25 — Đặt lịch xem phòng: bỏ hiển thị giờ kết thúc, thêm ghi chú thời lượng
 
 **Vì sao:** Nối UI cho thay đổi bên bff-for-pimi — khung giờ chủ nhà đề xuất giờ chỉ còn giờ bắt đầu (`endTime` sẽ là `null`), người thuê cần được báo trước buổi xem phòng dự kiến mất khoảng 15-30 phút thay vì thấy khung giờ chính xác.

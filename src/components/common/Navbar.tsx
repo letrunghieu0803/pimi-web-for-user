@@ -134,11 +134,11 @@ const NotificationBell: React.FC = () => {
                 >
                   <div className="flex items-center gap-2 mb-1">
                     {!n.isRead && <span className="w-2 h-2 rounded-full bg-indigo-600 flex-shrink-0"></span>}
-                    <span className={`font-bold truncate ${!n.isRead ? 'text-slate-900' : 'text-slate-700'}`}>
+                    <span className={`font-bold truncate min-w-0 ${!n.isRead ? 'text-slate-900' : 'text-slate-700'}`}>
                       {n.title}
                     </span>
                   </div>
-                  <p className="text-slate-600 line-clamp-2 leading-relaxed">{n.content}</p>
+                  <p className="text-slate-600 line-clamp-2 leading-relaxed break-words">{n.content}</p>
                 </div>
               ))
             )}
