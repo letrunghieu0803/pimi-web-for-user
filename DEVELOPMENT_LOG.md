@@ -4,6 +4,20 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-24 — Gắn header `X-Client-App` — sửa lỗi đăng nhập đè cookie với 2 web kia
+
+**Vì sao:** bff-for-pimi tách tên cookie theo từng web (`pimi_at_user` thay vì `pimi_at` chung) để 3 web (người thuê/chủ nhà/admin) không còn ghi đè cookie đăng nhập của nhau khi mở cùng lúc trên 1 trình duyệt — xem DEVELOPMENT_LOG.md bên `bff-for-pimi` để hiểu đầy đủ nguyên nhân. Web này cần tự gắn header định danh để backend biết đọc/ghi đúng cookie `..._user`.
+
+**Thay đổi:**
+- `src/services/axiosClient.ts`: thêm hằng số `CLIENT_APP = 'user'`, gắn header `X-Client-App` mặc định cho mọi request; đổi cookie CSRF đọc từ `pimi_csrf` sang `pimi_csrf_user`.
+- `src/context/SocketContext.tsx`: thêm `auth: { clientApp: 'user' }` khi kết nối socket (không dùng header tuỳ chỉnh được vì đây là upgrade request thuần WebSocket).
+
+**Ảnh hưởng:** phiên đăng nhập cũ (cookie `pimi_at` không hậu tố) sẽ không còn hợp lệ sau khi deploy — cần đăng nhập lại 1 lần.
+
+**Đã kiểm tra:** `npx tsc --noEmit` sạch. Cơ chế tách cookie đã verify ở tầng backend (xem dev log bff-for-pimi) bằng JWT mint trực tiếp, không qua UI — chưa test lại round-trip đăng nhập thật qua UI của web này (cần người dùng tự đăng nhập, không tự động hoá được bước nhập mật khẩu).
+
+---
+
 ## 2026-08-23 — Đánh giá phòng sau khi ở (điểm sao + bình luận)
 
 **Vì sao:** Người thuê muốn đánh giá phòng đã ở, người thuê khác xem được trước khi quyết định thuê.
