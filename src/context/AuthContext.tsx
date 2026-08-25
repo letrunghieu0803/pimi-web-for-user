@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { axiosClient } from '@/services/axiosClient';
+import { axiosClient, setCsrfToken } from '@/services/axiosClient';
 import { getApiErrorMessage } from '@/utils/apiError';
 
 // ERR_MSG_NEED_VERIFY_EMAIL in bff-for-pimi's error constants.
@@ -81,6 +81,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Token giờ do backend tự set qua cookie httpOnly (kèm theo response nhờ
       // `withCredentials: true` ở axiosClient) — không tự đọc/lưu accessToken vào localStorage
       // nữa như trước.
+      setCsrfToken(response?.csrfToken);
 
       // Response của /v1/auth/login KHÔNG có object "user" (chỉ {accessToken, refreshToken,
       // role}) — phải tự gọi /v1/users/me để lấy hồ sơ thật (trước đây code này âm thầm dùng

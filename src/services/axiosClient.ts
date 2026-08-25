@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getCookie } from '@/utils/cookies';
 
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT || 'http://localhost:3333/api';
 
@@ -10,7 +9,40 @@ const MUTATING_METHODS = ['post', 'put', 'patch', 'delete'];
 // biết đọc/ghi đúng cookie của web nào (`pimi_at_user` thay vì `pimi_at` chung) — không mang ý
 // nghĩa bảo mật, chỉ để tách cookie giữa 3 web, xem auth-cookies.util.ts bên bff-for-pimi.
 const CLIENT_APP = 'user';
-const CSRF_COOKIE_NAME = `pimi_csrf_${CLIENT_APP}`;
+
+// Double-submit CSRF: trước đây đọc lại cookie `pimi_csrf_user` qua document.cookie — SAI, vì
+// web này deploy khác domain hoàn toàn với API (vd *.vercel.app vs piminest.com). Cookie dù
+// không httpOnly vẫn thuộc "ngăn" cookie của domain BE — JS chạy trên domain FE không đọc được
+// qua document.cookie (giới hạn same-origin của trình duyệt), dù trình duyệt vẫn tự gửi kèm
+// cookie đó lên mọi request tới BE. Backend giờ trả token qua JSON body (login) — lưu vào biến
+// nhớ ở đây; nếu mất (reload trang) thì tự gọi lại GET /auth/csrf-token 1 lần để nạp lại (cookie
+// phiên vẫn còn nên server đọc lại được, chỉ JS phía FE là không đọc trực tiếp được).
+let csrfTokenMemory: string | null = null;
+let csrfTokenFetchPromise: Promise<string | null> | null = null;
+
+export const setCsrfToken = (token: string | null | undefined) => {
+  csrfTokenMemory = token || null;
+};
+
+const ensureCsrfToken = async (): Promise<string | null> => {
+  if (csrfTokenMemory) return csrfTokenMemory;
+  if (!csrfTokenFetchPromise) {
+    csrfTokenFetchPromise = axios
+      .get(`${API_BASE_URL}/v1/auth/csrf-token`, {
+        withCredentials: true,
+        headers: { 'X-Client-App': CLIENT_APP }
+      })
+      .then(res => {
+        csrfTokenMemory = res.data?.data?.csrfToken || null;
+        return csrfTokenMemory;
+      })
+      .catch(() => null)
+      .finally(() => {
+        csrfTokenFetchPromise = null;
+      });
+  }
+  return csrfTokenFetchPromise;
+};
 
 export const axiosClient = axios.create({
   baseURL: API_BASE_URL,
@@ -30,9 +62,9 @@ export const axiosClient = axios.create({
 // cookie `pimi_csrf_user` (không httpOnly, JS đọc được) qua header `X-CSRF-Token` — backend đối
 // chiếu 2 giá trị phải khớp nhau (xem CsrfGuard ở bff-for-pimi).
 axiosClient.interceptors.request.use(
-  (config) => {
+  async (config) => {
     if (config.method && MUTATING_METHODS.includes(config.method.toLowerCase())) {
-      const csrfToken = getCookie(CSRF_COOKIE_NAME);
+      const csrfToken = await ensureCsrfToken();
       if (csrfToken) {
         config.headers['X-CSRF-Token'] = csrfToken;
       }
