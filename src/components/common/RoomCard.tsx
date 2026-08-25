@@ -1,8 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Room } from '@/types';
-import { MapPin, Maximize2, Users, CalendarCheck, ShieldCheck, Layers, Navigation, Star, Sparkles } from 'lucide-react';
+import { MapPin, Maximize2, Users, CalendarCheck, ShieldCheck, Layers, Navigation, Star, Sparkles, Heart } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useFavorites } from '@/context/FavoritesContext';
+import { useToast } from '@/context/ToastContext';
 
 interface RoomCardProps {
   room: Room;
@@ -11,6 +14,28 @@ interface RoomCardProps {
 
 export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { isAuthenticated } = useAuth();
+  const { isFavorited, toggleFavorite } = useFavorites();
+  const favorited = isFavorited(room.id);
+
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      toast.warning(t('roomDetail.toastNeedLogin'));
+      navigate('/login');
+      return;
+    }
+
+    try {
+      await toggleFavorite(room.id);
+    } catch (err) {
+      toast.error(t('roomCard.favoriteError'));
+    }
+  };
   const formatPrice = (price: number) => {
     if (price >= 1000000) {
       return `${(price / 1000000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${t('roomCard.million')}`;
@@ -99,6 +124,17 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
             </>
           )}
         </div>
+
+        {/* Favorite Button */}
+        <button
+          onClick={handleToggleFavorite}
+          aria-label={favorited ? t('roomCard.unfavorite') : t('roomCard.favorite')}
+          className={`absolute bottom-3 right-3 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg transition-colors ${
+            favorited ? 'bg-rose-500 text-white' : 'bg-white/90 text-slate-600 hover:text-rose-500'
+          }`}
+        >
+          <Heart className={`w-4.5 h-4.5 ${favorited ? 'fill-white' : ''}`} />
+        </button>
       </div>
 
       {/* Content */}

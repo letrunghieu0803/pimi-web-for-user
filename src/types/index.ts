@@ -24,12 +24,6 @@ export interface Room {
   images: string[];
   amenities: string[];
   description: string;
-  // Chủ nhà: backend không còn trả về thông tin liên hệ của chủ nhà cho người thuê (khách
-  // liên hệ qua cộng tác viên hoặc đặt lịch/đặt phòng trong app) — để optional, UI ẩn hẳn
-  // khối "Chủ nhà" khi thiếu thay vì hiển thị tên/SĐT giả.
-  landlordName?: string;
-  landlordPhone?: string;
-  landlordAvatar?: string;
   latitude?: number;
   longitude?: number;
   hasMezzanine: boolean;

@@ -8,18 +8,21 @@ import { RequestTourModal } from '@/components/common/RequestTourModal';
 import { HotLocationsSlider } from '@/components/home/HotLocationsSlider';
 import { BannerSlider } from '@/components/home/BannerSlider';
 import { NewsArticlesSlider } from '@/components/home/NewsArticlesSlider';
-import { Search, ShieldCheck, Zap, PhoneCall, Sparkles, Building2, ChevronRight, HeartHandshake, MapPin } from 'lucide-react';
+import { Search, ShieldCheck, Zap, PhoneCall, Sparkles, Building2, ChevronRight, HeartHandshake, MapPin, History } from 'lucide-react';
 import { DISTRICTS } from '@/data/mockData';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
 import { Seo } from '@/components/common/Seo';
 import { JsonLd } from '@/components/common/JsonLd';
 import { SITE_URL, SITE_NAME, DEFAULT_SEO } from '@/config/seo';
+import { recentlyViewedApi } from '@/utils/recentlyViewed';
 
 export const Home: React.FC = () => {
   const { t } = useTranslation();
   const [featuredRooms, setFeaturedRooms] = useState<Room[]>([]);
   const [selectedRoomForTour, setSelectedRoomForTour] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
+  // Đọc thẳng từ localStorage lúc mount — không qua API nào, xem src/utils/recentlyViewed.ts.
+  const [recentlyViewed] = useState(() => recentlyViewedApi.getAll());
 
   const [searchDistrict, setSearchDistrict] = useState('Tất cả quận/huyện');
   const [searchPrice, setSearchPrice] = useState('ALL');
@@ -160,6 +163,38 @@ export const Home: React.FC = () => {
 
       {/* Hot Locations Horizontal Slider Section */}
       <HotLocationsSlider />
+
+      {/* Recently Viewed — hoàn toàn từ localStorage (xem utils/recentlyViewed.ts), tự ẩn nếu
+          chưa từng xem phòng nào. Đặt lên trước "Phòng nổi bật" vì đây là nội dung cá nhân hoá,
+          có giá trị gợi nhớ cao hơn với người dùng quay lại. */}
+      {recentlyViewed.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">
+                <History className="w-4 h-4" />
+                <span>{t('home.recentlyViewedTag')}</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
+                {t('home.recentlyViewedTitle')}
+              </h2>
+            </div>
+            <Link
+              to="/recently-viewed"
+              className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 group"
+            >
+              <span>{t('home.viewAllRooms')}</span>
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recentlyViewed.slice(0, 6).map(({ room }) => (
+              <RoomCard key={room.id} room={room} onRequestTour={(r) => setSelectedRoomForTour(r)} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Featured Rooms Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

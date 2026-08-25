@@ -7,21 +7,28 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3333';
 const SocketContext = createContext<Socket | null>(null);
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const socketRef = useRef<Socket | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated || !token) {
+    if (!isAuthenticated) {
       socketRef.current?.disconnect();
       socketRef.current = null;
       setSocket(null);
       return;
     }
 
+    // accessToken giờ nằm trong cookie httpOnly — JS không đọc được để gắn vào `auth.token`
+    // như trước nữa. Trình duyệt tự gửi kèm cookie (tên tách theo web, `pimi_at_user`) trong
+    // request handshake (HTTP upgrade) khi bật `withCredentials`, backend (NotificationsGateway)
+    // đọc thẳng từ đó nếu không thấy `auth.token`/header Authorization. `auth.clientApp` báo cho
+    // gateway biết đọc đúng cookie `pimi_at_user` — không gửi qua header tuỳ chỉnh vì trình
+    // duyệt không cho set header thường trên upgrade request thuần WebSocket.
     const instance = io(`${SOCKET_URL}/notifications`, {
-      auth: { token },
+      withCredentials: true,
       transports: ['websocket'],
+      auth: { clientApp: 'user' },
     });
     socketRef.current = instance;
     setSocket(instance);
@@ -30,7 +37,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       instance.disconnect();
       socketRef.current = null;
     };
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated]);
 
   return <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>;
 };

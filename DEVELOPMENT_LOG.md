@@ -4,6 +4,175 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-25 — Sửa mã lỗi 000065 dịch sai thành "SĐT không hợp lệ"
+
+**Vì sao:** Phát hiện khi điều tra báo cáo "đăng nhập bằng email nhưng báo lỗi SĐT" bên phongtroapp — `errors.json` map `000065` → "Số điện thoại Việt Nam không hợp lệ", nhưng bên `bff-for-pimi` mã này giờ là `ERR_MSG_INTERNAL_SERVER_ERROR` (fallback chung cho lỗi server không xác định, đã đổi ý nghĩa từ lúc nào đó, client chưa cập nhật). Xác nhận cả 4 app (kể cả web này) đều dính y hệt.
+
+**Thay đổi:** `src/i18n/locales/{vi,en}/errors.json` — `000065` đổi thành thông báo lỗi server chung, khớp đồng bộ với 3 app còn lại.
+
+**Đã kiểm tra:** JSON hợp lệ (`python3 -m json.tool`). Xem dev log bên phongtroapp để biết đầy đủ quá trình điều tra.
+
+---
+
+## 2026-08-25 — Sửa vỡ layout khi thông báo có nội dung dài
+
+**Vì sao:** Người dùng báo thông báo dài làm "UI không đáp ứng được" trên cả 3 trang web. Điều tra sống (seed thông báo thật ~800 ký tự kèm 1 chuỗi liên tục không khoảng trắng bên `bff-for-pimi`, kiểm tra trên Web-Pimi-for-owner trước — cấu trúc component giống hệt bên này) cho thấy: nội dung không có `overflow-wrap: break-word` (Tailwind `break-words`) nên chuỗi dài không khoảng trắng làm `<p>` tràn ngang, kéo theo tràn ngang toàn trang. `Navbar.tsx` và `Notifications.tsx` dùng đúng cấu trúc class y hệt (`line-clamp-2`/`truncate` không kèm `break-words`) nên áp cùng cách sửa mà không cần seed dữ liệu riêng.
+
+**Thay đổi:**
+- `src/pages/Notifications.tsx`: thêm `break-words` vào đoạn nội dung; thêm `min-w-0` vào wrapper + tiêu đề `truncate`.
+- `src/components/common/Navbar.tsx`: thêm `break-words` vào đoạn nội dung trong dropdown chuông thông báo; thêm `min-w-0` vào tiêu đề `truncate`.
+
+**Đã kiểm tra:** Đã verify cơ chế tràn ngang + cách sửa trực tiếp trên Web-Pimi-for-owner (xem dev log bên đó) bằng đo `scrollWidth`/`clientWidth` trước/sau qua trình duyệt thật. Bên này áp cùng thay đổi do cấu trúc JSX/class giống hệt (đã đối chiếu qua grep) — `npx tsc --noEmit` sạch, chưa test lại sống qua UI của web này (không có gì khác biệt về logic để cần test riêng).
+
+---
+
+## 2026-08-25 — Đặt lịch xem phòng: bỏ hiển thị giờ kết thúc, thêm ghi chú thời lượng
+
+**Vì sao:** Nối UI cho thay đổi bên bff-for-pimi — khung giờ chủ nhà đề xuất giờ chỉ còn giờ bắt đầu (`endTime` sẽ là `null`), người thuê cần được báo trước buổi xem phòng dự kiến mất khoảng 15-30 phút thay vì thấy khung giờ chính xác.
+
+**Thay đổi:**
+- `src/pages/TenantAppointments.tsx`: bỏ hiển thị `endTime` ở khung giờ đã chốt lẫn danh sách khung giờ chủ nhà đề xuất; thêm dòng ghi chú thời lượng ngay trên danh sách khung giờ để chọn.
+- `src/services/appointmentApi.ts`: `TimeSlot.endTime` chuyển optional/nullable.
+- `src/i18n/locales/{vi,en}/common.json`: thêm `tenantAppointments.durationHint`, đối chiếu vi/en đủ.
+
+**Đã kiểm tra:** `npx tsc --noEmit` sạch. Logic khung giờ đã verify ở tầng backend (xem dev log bff-for-pimi) — chưa test sống qua trình duyệt (cần tài khoản người thuê thao tác trên 1 lịch hẹn thật).
+
+---
+
+## 2026-08-24 — Gắn header `X-Client-App` — sửa lỗi đăng nhập đè cookie với 2 web kia
+
+**Vì sao:** bff-for-pimi tách tên cookie theo từng web (`pimi_at_user` thay vì `pimi_at` chung) để 3 web (người thuê/chủ nhà/admin) không còn ghi đè cookie đăng nhập của nhau khi mở cùng lúc trên 1 trình duyệt — xem DEVELOPMENT_LOG.md bên `bff-for-pimi` để hiểu đầy đủ nguyên nhân. Web này cần tự gắn header định danh để backend biết đọc/ghi đúng cookie `..._user`.
+
+**Thay đổi:**
+- `src/services/axiosClient.ts`: thêm hằng số `CLIENT_APP = 'user'`, gắn header `X-Client-App` mặc định cho mọi request; đổi cookie CSRF đọc từ `pimi_csrf` sang `pimi_csrf_user`.
+- `src/context/SocketContext.tsx`: thêm `auth: { clientApp: 'user' }` khi kết nối socket (không dùng header tuỳ chỉnh được vì đây là upgrade request thuần WebSocket).
+
+**Ảnh hưởng:** phiên đăng nhập cũ (cookie `pimi_at` không hậu tố) sẽ không còn hợp lệ sau khi deploy — cần đăng nhập lại 1 lần.
+
+**Đã kiểm tra:** `npx tsc --noEmit` sạch. Cơ chế tách cookie đã verify ở tầng backend (xem dev log bff-for-pimi) bằng JWT mint trực tiếp, không qua UI — chưa test lại round-trip đăng nhập thật qua UI của web này (cần người dùng tự đăng nhập, không tự động hoá được bước nhập mật khẩu).
+
+---
+
+## 2026-08-23 — Đánh giá phòng sau khi ở (điểm sao + bình luận)
+
+**Vì sao:** Người thuê muốn đánh giá phòng đã ở, người thuê khác xem được trước khi quyết định thuê.
+
+**Thay đổi:**
+- `src/services/reviewApi.ts` (mới): `getRoomReviews`, `getEligibility`, `upsertMyReview`, `deleteMyReview`.
+- `src/components/room/RoomReviews.tsx` (mới): khối hiển thị trên trang chi tiết phòng — điểm trung bình + số lượng, danh sách đánh giá (điểm/bình luận bị admin ẩn hiện đúng dấu hiệu "đã ẩn" thay vì trống trơn khó hiểu), nút "Viết đánh giá"/"Sửa đánh giá" chỉ hiện khi đủ điều kiện (gọi `/eligibility` 1 lần), form chọn sao + textarea, "Xem thêm" phân trang.
+- `src/pages/RoomDetail.tsx`: gắn `<RoomReviews roomId={room.id} />` vào cuối trang.
+
+**Đã kiểm tra:** `npm run build` sạch, đối chiếu i18n vi/en. Test sống qua trình duyệt thật: viết đánh giá 4 sao → hiện đúng ngay trong danh sách + điểm trung bình cập nhật; admin ẩn bình luận ở phía backend → tải lại trang hiện đúng "Bình luận đã bị ẩn bởi quản trị viên" thay vì nội dung thật.
+
+---
+
+## 2026-08-21 — Đồng bộ khối "trống dữ liệu" dùng chung (EmptyState)
+
+**Vì sao:** 3 trang (Phòng yêu thích, Đã xem gần đây, Danh sách phòng khi lọc ra 0 kết quả) mỗi trang tự viết lại y hệt cấu trúc "icon tròn + tiêu đề + mô tả + nút hành động" — 2 trang mới (yêu thích/đã xem) giống nhau nhưng trang danh sách phòng (có từ trước) lại lệch hẳn: khung vuông bo góc thay vì tròn, tông màu/đệm khác, nút không có shadow/hover-scale như 2 trang kia.
+
+**Thay đổi:**
+- `src/components/common/EmptyState.tsx` (mới): component dùng chung — icon trong vòng tròn màu (`tone`: rose/indigo/amber/emerald), tiêu đề, mô tả, nút hành động (điều hướng qua `actionTo` hoặc chạy hàm qua `onAction`).
+- `src/pages/FavoriteRooms.tsx`, `src/pages/RecentlyViewed.tsx`: thay khối tự viết tay bằng `<EmptyState />`.
+- `src/pages/RoomList.tsx`: khối "Không tìm thấy phòng phù hợp" (khi lọc ra 0 kết quả) đổi sang dùng chung `<EmptyState />` (tone amber, nút "Reset filters" gọi `onAction`) — đồng bộ giao diện với 2 trang trên thay vì kiểu cũ.
+
+**Đã kiểm tra:** `npm run build` sạch. Test sống qua trình duyệt thật: trang Yêu thích/Đã xem gần đây hiện đúng như trước khi tách; lọc phòng ra 0 kết quả hiện đúng khối mới (vòng tròn hổ phách + icon Info), bấm "Reset filters" trả lại đúng danh sách đầy đủ.
+
+---
+
+## 2026-08-21 — Đã xem gần đây — hoàn toàn phía trình duyệt, không gọi API
+
+**Vì sao:** Người thuê muốn xem lại các phòng mình từng mở xem, khác "yêu thích" ở chỗ không cần chủ động lưu và không cần đăng nhập — chỉ đơn thuần là vết xem theo thiết bị. Yêu cầu rõ ràng từ đầu: không thêm bất kỳ API/bảng dữ liệu nào ở backend.
+
+**Thay đổi:**
+- `src/utils/recentlyViewed.ts` (mới): đọc/ghi thẳng `localStorage` (key theo **thiết bị**, không theo tài khoản — dùng chung cho khách lẫn mọi tài khoản đăng nhập, giống cách các sàn TMĐT vẫn làm). Giữ tối đa 24 phòng gần nhất kiểu LRU (xem lại 1 phòng đã có thì đẩy lên đầu thay vì trùng lặp); mỗi bản ghi chỉ giữ 1 ảnh đầu + bỏ `description`/`services` để không phình dữ liệu vô ích. Bọc try/catch quanh mọi thao tác `localStorage` (Safari riêng tư/hết quota không được phép làm gãy luồng xem phòng chính).
+- `src/pages/RoomDetail.tsx`: gọi `recentlyViewedApi.add(room)` ngay sau khi fetch chi tiết phòng thành công (không ghi lúc đang loading/lỗi).
+- `src/pages/Home.tsx`: thêm khối "Phòng đã xem gần đây" (đọc 1 lần lúc mount, không qua API), đặt trước "Phòng nổi bật" vì là nội dung cá nhân hoá; tự ẩn hoàn toàn nếu chưa từng xem phòng nào.
+- `src/pages/RecentlyViewed.tsx` (mới): trang `/recently-viewed` — lưới đầy đủ + nút "Xoá lịch sử"; không yêu cầu đăng nhập.
+- `src/components/common/Navbar.tsx`: thêm link "Đã xem gần đây" vào menu tài khoản (desktop dropdown + mobile drawer).
+
+**Đã kiểm tra:** `npm run build` sạch, đối chiếu i18n vi/en. Test sống qua trình duyệt thật: mở 1 phòng → xác nhận đúng bản ghi (1 ảnh, không mô tả) xuất hiện trong `localStorage`; trang chủ hiện đúng khối "Phòng đã xem gần đây"; vào `/recently-viewed` thấy đúng phòng; bấm "Xoá lịch sử" → danh sách về rỗng, hiện đúng trạng thái trống.
+
+---
+
+## 2026-08-20 — Phòng yêu thích cho người thuê
+
+**Vì sao:** Người thuê muốn bấm tim lưu lại các phòng đang quan tâm để xem lại sau, thay vì phải tìm kiếm lại từ đầu mỗi lần.
+
+**Thay đổi:**
+- `src/services/favoriteApi.ts` (mới): `getFavoriteIds`, `getMyFavorites`, `addFavorite`, `removeFavorite`.
+- `src/context/FavoritesContext.tsx` (mới): fetch id yêu thích 1 lần ngay sau khi biết đã đăng nhập, giữ trong `Set` cục bộ; `toggleFavorite` cập nhật lạc quan trên UI trước, gọi API nền, tự revert nếu lỗi.
+- `src/components/common/RoomCard.tsx`: thêm nút tim overlay góc dưới-phải ảnh (thẻ trước đây chưa có nút yêu thích nào) — bấm khi chưa đăng nhập thì báo + điều hướng `/login`, giống hệt pattern gate đăng nhập đã có ở `RoomDetail.tsx`.
+- `src/pages/RoomDetail.tsx`: nút tim sẵn có ở trang chi tiết (trước đây chỉ là `useState` cục bộ giả, không gọi API nào) nay nối vào `FavoritesContext` thật.
+- `src/pages/FavoriteRooms.tsx` (mới): trang "Phòng yêu thích" tại `/favorites` — lưới `RoomCard`, trạng thái rỗng có nút "Khám phá phòng trọ".
+- `src/components/common/Navbar.tsx`: thêm link "Phòng yêu thích" vào menu tài khoản (cả bản desktop dropdown lẫn mobile drawer).
+
+**Đã kiểm tra:** `npm run build` sạch, đối chiếu i18n vi/en. Test sống qua trình duyệt thật với tài khoản RENT_USER thật: bấm tim trên thẻ danh sách → API `POST` 201 → vào trang Phòng yêu thích thấy đúng phòng vừa lưu; bấm tim ở trang chi tiết phòng → đổi trạng thái đúng; bỏ tim tại trang Phòng yêu thích → API `DELETE` 200 → trang tự cập nhật về trạng thái rỗng.
+
+---
+
+## 2026-08-20 — Lịch sử thuê phòng dùng dữ liệu thật (thay 100% mock)
+
+**Vì sao:** Trang "Lịch sử thuê phòng" trước đó toàn bộ là dữ liệu giả tĩnh (`INITIAL_RENTAL_HISTORY`), chưa từng gọi API thật dù backend đã có sẵn cả hợp đồng dài hạn lẫn đặt phòng ngắn hạn cho người thuê.
+
+**Thay đổi:**
+- `src/services/contractApi.ts` (mới): `getMyContracts(params)` → `GET /v1/contracts/mine`.
+- `src/pages/BookingHistory.tsx`: viết lại hoàn toàn — gộp hợp đồng dài hạn (`contractApi.getMyContracts`) + đặt phòng ngắn hạn đã thanh toán (`bookingApi.getTenantBookings`, hàm đã có sẵn nhưng chưa từng được gọi), sắp theo ngày mới nhất. Bỏ khái niệm "xác nhận trực tiếp với chủ nhà" (mock cũ tự bịa, hệ thống thật không có luồng này). Nút liên hệ đổi thành "Nhắn Zalo" (mở `ContactCollaboratorModal`), modal chi tiết hợp đồng không còn hiển thị tên/SĐT chủ nhà (khớp chính sách chung — xem đợt dưới).
+- `src/components/common/ContactCollaboratorModal.tsx`: thêm trạng thái rỗng khi toà nhà chưa có cộng tác viên nào.
+
+**Đã kiểm tra:** `npm run build` sạch, đối chiếu i18n vi/en. Test sống qua trình duyệt thật: đăng nhập tài khoản có booking thật → hiện đúng thẻ "Đã thanh toán"/"Đã hoàn tất", bấm "Nhắn Zalo" mở đúng modal liên hệ cộng tác viên của toà nhà đó, bấm "Xem Đơn Đặt Phòng" điều hướng đúng sang trang trạng thái thanh toán.
+
+---
+
+## 2026-08-20 — Ẩn hoàn toàn thông tin liên hệ chủ nhà, chuyển sang liên hệ Zalo qua cộng tác viên
+
+**Vì sao:** Người thuê không được liên hệ trực tiếp chủ nhà — mọi liên hệ đi qua cộng tác viên phụ trách toà nhà, kênh chính thức là Zalo (backend đã chặn từ trước, nhưng frontend còn sót code chết/mock hiển thị tên-SĐT chủ nhà nếu API từng đổi lại).
+
+**Thay đổi:**
+- `src/pages/RoomDetail.tsx`, `src/pages/TenantAppointments.tsx`: xoá hẳn khối "Chủ nhà"/nút gọi điện (`tel:`) — dữ liệu vốn luôn rỗng vì backend không trả `houseOwner` cho endpoint công khai/người thuê, nhưng vẫn dọn sạch để tránh sống lại nếu API đổi.
+- `src/services/roomApi.ts`, `src/services/appointmentApi.ts`, `src/types/index.ts`, `src/data/mockData.ts`: bỏ hẳn field `landlordName`/`landlordPhone`/`landlordAvatar`/`houseOwner` khỏi type + mapping + mock data.
+- `src/services/collaboratorApi.ts`: `HouseCollaborator` thêm `zaloLink` — kênh liên lạc chính thức admin cài đặt cho từng cộng tác viên.
+- `src/components/common/ContactCollaboratorModal.tsx`: nút "Gọi điện" (`tel:`) đổi thành "Nhắn Zalo" (mở `zaloLink`), tự ẩn nếu admin chưa cài đặt link.
+- Sửa vài chuỗi text còn nhắc "chủ nhà" như điểm liên hệ (`roomDetail.contactOwner`, `roomDetail.trustNote1`, `bookingPayment.paidText`) sang trung lập/cộng tác viên.
+
+**Đã kiểm tra:** `npm run build` sạch, đối chiếu i18n vi/en.
+
+---
+
+## 2026-08-20 — Chuyển token sang cookie httpOnly, gắn CSRF
+
+**Vì sao:** Backend (bff-for-pimi) vừa chuyển sang set token qua cookie `httpOnly` thay vì trả JSON để FE tự lưu `localStorage`. FE phải ngưng đọc/ghi token thủ công và để trình duyệt tự gửi cookie kèm request.
+
+**Thay đổi:**
+- `src/services/axiosClient.ts`: thêm `withCredentials: true`; bỏ hẳn việc tự gắn header `Authorization` (trình duyệt tự gửi cookie); gắn header `X-CSRF-Token` (đọc từ cookie `pimi_csrf`, không httpOnly) cho mọi request đổi dữ liệu — bắt buộc từ khi cookie xác thực bật `SameSite=None`.
+- `src/context/AuthContext.tsx`: bỏ hẳn việc đọc/ghi `accessToken`/`refreshToken` vào `localStorage` (token giờ chỉ nằm trong cookie httpOnly); `token` bỏ khỏi context type (không còn nơi nào đọc được giá trị thật, chỉ 1 nơi dùng trước đây là socket — xem dưới); `logout()` giờ gọi thêm `POST /v1/auth/logout` (best-effort) để backend xoá cookie — trước đây chỉ xoá `localStorage` phía FE, với cookie httpOnly thì làm vậy KHÔNG đăng xuất thật.
+- `src/context/SocketContext.tsx`: kết nối socket.io không còn tự gắn `auth.token` (đọc từ context, giờ luôn rỗng vì token httpOnly) — chuyển sang `withCredentials: true`, để cookie tự gửi kèm trong request handshake; kích hoạt kết nối theo `isAuthenticated` thay vì theo token.
+- `src/utils/cookies.ts` (mới): helper đọc cookie `pimi_csrf`.
+- Backend liên quan (bff-for-pimi, cùng đợt): `NotificationsGateway` giờ cũng đọc token từ cookie `pimi_at` trong handshake socket.io nếu không có `auth.token`/header.
+
+**Đã kiểm tra:** `npx tsc -b` + `npm run build` sạch.
+
+---
+
+## 2026-08-20 — Audit bảo mật: bỏ log có thể lộ mật khẩu khi lỗi mạng
+
+**Vì sao:** Rà soát bảo mật phát hiện `console.warn` ở luồng đăng nhập/đăng ký in nguyên object lỗi — khi request thất bại do lỗi mạng (không có response từ server), interceptor axios trả thẳng lỗi axios gốc, mà `err.config.data` chính là body request gốc chứa **mật khẩu dạng plaintext** vừa nhập.
+
+**Thay đổi:** `src/context/AuthContext.tsx` — 2 chỗ `console.warn` (đăng nhập, đăng ký) chỉ log `{code, message}` thay vì nguyên `err`.
+
+**Đã kiểm tra:** `tsc -b` sạch.
+
+---
+
+## 2026-08-20 — Sửa lỗi đăng nhập nhận sai vai trò cho tài khoản 2 vai trò
+
+**Vì sao:** 1 tài khoản thông thường có thể vừa đăng nhập với vai trò khách thuê (ở web này) vừa với vai trò chủ nhà (ở web chủ nhà) — trước đó trang này không khai báo rõ đang xin vai trò nào khi đăng nhập, backend có thể trả nhầm JWT theo role thật trong DB (vd tài khoản có role thật `HOUSE_OWNER` đăng nhập ở đây sẽ nhận JWT role chủ nhà, khiến các API dành cho khách thuê như đặt lịch xem phòng/đặt phòng bị chặn 403 sai).
+
+**Thay đổi:** `src/context/AuthContext.tsx` — `login()` gửi kèm `loginAs: 'RENT_USER'`; đồng thời sửa lỗi có sẵn: response đăng nhập của backend không có object `user` (chỉ `{accessToken, refreshToken, role}`), code trước đó âm thầm dùng object rỗng khiến hồ sơ hiển thị sau đăng nhập luôn thiếu id/email thật — nay gọi thêm `GET /v1/users/me` để lấy đúng hồ sơ. Nhân tiện sửa message mã lỗi `000065` (`errors.json` vi/en) cho đúng nội dung "Số điện thoại Việt Nam không hợp lệ" (trước đó bị đặt nhầm thành thông báo lỗi chung).
+
+**Đã kiểm tra:** `tsc -b` sạch, đối chiếu i18n vi/en parity. Live browser test: đăng nhập bằng tài khoản có role thật `HOUSE_OWNER` ở web này → xác nhận JWT/role phiên đúng `RENT_USER`, hồ sơ hiển thị đúng tên/email thật thay vì rỗng.
+
+---
+
 ## 2026-08-18 — Nút "Xem thêm" ở khối Tin tức trang chủ phản ánh đúng số bài còn lại
 
 **Vì sao:** Nút trước đó hardcode "Xem thêm 10+ bài viết" bất kể thực tế còn bao nhiêu bài — sai khi tổng số bài ít hơn 10 (không nên hiện nút) hoặc nhiều hơn (con số "10+" không chính xác).

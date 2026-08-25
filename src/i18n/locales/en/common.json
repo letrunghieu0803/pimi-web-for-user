@@ -29,7 +29,9 @@
     "feature3Desc": "Tenants never pay any broker fee. Work with and sign your contract directly with the owner.",
     "ctaTitle": "Haven't Found The Right Room Yet?",
     "ctaDesc": "Call Pimi's customer care hotline now and our team will help you find the newest available rooms that match what you need.",
-    "ctaCallHotline": "Call Hotline 0987.654.321"
+    "ctaCallHotline": "Call Hotline 0987.654.321",
+    "recentlyViewedTag": "For you",
+    "recentlyViewedTitle": "Recently viewed rooms"
   },
   "login": {
     "title": "Sign In To Your Account",
@@ -95,7 +97,9 @@
     "newNotifications": "New notifications",
     "markAllRead": "Mark all read",
     "noNotifications": "No notifications yet",
-    "viewAllNotifications": "View all notifications"
+    "viewAllNotifications": "View all notifications",
+    "favoriteRooms": "Favorites",
+    "recentlyViewed": "Recently viewed"
   },
   "footer": {
     "brandDesc": "A platform to search for and book room viewings, mini-apartments directly from verified owners. A transparent, fast, and completely safe experience.",
@@ -127,7 +131,10 @@
     "maxPeople": "Up to {{count}} people",
     "more": "more",
     "viewDetails": "View details",
-    "bookViewing": "Book a viewing"
+    "bookViewing": "Book a viewing",
+    "favorite": "Save to favorites",
+    "unfavorite": "Remove from favorites",
+    "favoriteError": "Couldn't update favorites, please try again"
   },
   "contact": {
     "badge": "Contact Support",
@@ -257,20 +264,17 @@
     "amenitiesTitle": "Amenities & Facilities",
     "servicesTitle": "Services & Additional Fees",
     "currency": "VND",
-    "contactOwner": "Contact owner",
+    "contactOwner": "Contact for pricing",
     "descriptionTitle": "Room Description",
     "listedPrice": "Listed rent price",
     "perMonthLong": "/ month",
     "priceIncludesFee": "Building management fee included",
-    "postedByOwner": "Posted by Owner",
-    "identityVerified": "Identity verified",
     "statusPending": "Viewing Requested (Awaiting Owner)",
     "statusOffered": "Owner Proposed Time Slots - Pick A Time Now",
     "statusConfirmed": "Viewing Appointment Confirmed",
     "sending": "Sending...",
     "requestViewingButton": "Request A Viewing",
-    "callOwner": "Call Owner: {{phone}}",
-    "trustNote1": "Book quickly, owner support available 24/7",
+    "trustNote1": "Book quickly, the Pimi team supports 24/7",
     "trustNote2": "100% free viewing service for tenants",
     "similarRoomsTitle": "Similar Rooms",
     "exploreMore": "Explore more",
@@ -280,7 +284,9 @@
   },
   "contactCollaboratorModal": {
     "title": "Contact collaborator",
-    "subtitle": "The collaborator assigned to this building can help you rent this room."
+    "subtitle": "The collaborator assigned to this building can help you rent this room.",
+    "zaloButton": "Chat on Zalo",
+    "emptyText": "No collaborator has been assigned to this building yet."
   },
   "bookingPayment": {
     "title": "Booking Payment",
@@ -292,7 +298,7 @@
     "referenceLabel": "Transfer note",
     "waitingForPayment": "Waiting for payment confirmation...",
     "paidTitle": "Payment successful!",
-    "paidText": "Please contact the landlord to complete your check-in.",
+    "paidText": "Please contact the building's collaborator to complete your check-in.",
     "expiredTitle": "Booking expired",
     "expiredText": "The QR code has expired without receiving payment. Go back and book again if you still want this room.",
     "backToRoomButton": "Back to room"
@@ -319,14 +325,14 @@
     "emptyTitle": "You don't have any viewing appointments yet",
     "emptyDesc": "Search for a room and tap \"Book a viewing\" to get started.",
     "sentAt": "Sent: {{date}}",
-    "ownerLabel": "Owner",
     "confirmedSlotLabel": "Confirmed viewing time:",
     "offeredSlotsIntro": "The owner has proposed the time slots below. Please pick one that works for you:",
     "rejectAll": "Decline all",
     "confirming": "Confirming...",
     "confirmSlot": "Confirm slot",
     "rejectReasonLabel": "Rejection reason:",
-    "confirmAttendance": "Confirm I attended the viewing"
+    "confirmAttendance": "Confirm I attended the viewing",
+    "durationHint": "Each viewing is expected to take about 15-30 minutes."
   },
   "roomList": {
     "badge": "Available Room Listings",
@@ -412,34 +418,42 @@
   "bookingHistory": {
     "badge": "Successful Rental History",
     "title": "Your Rented Rooms & Apartments",
-    "subtitle": "Track detailed information for rooms you've successfully rented (including official e-contracts or direct confirmation with the owner).",
+    "subtitle": "Track the rooms you've successfully rented — including long-term contracts and short-term bookings paid in the app.",
     "totalRented": "Total rooms rented",
     "roomCount": "{{count}} rooms",
-    "withContract": "With e-contract",
-    "directConfirm": "Direct confirmation",
-    "filterAll": "All successful rentals",
-    "filterWithContract": "With e-contract",
-    "filterDirect": "Direct confirmation",
+    "withContract": "Long-term contracts",
+    "shortTermBookings": "Short-term bookings",
+    "filterAll": "All",
+    "filterContract": "Long-term contracts",
+    "filterBooking": "Short-term bookings",
     "emptyTitle": "No rental history yet",
     "emptyDesc": "You don't have any successful rentals in this category yet.",
     "exploreRooms": "Explore available rooms",
-    "officialContract": "Official e-contract ({{code}})",
+    "loadError": "Couldn't load your rental history. Please try again later.",
+    "contractActive": "Contract active",
+    "contractEnded": "Contract ended",
+    "bookingStatus": {
+      "PAID": "Paid",
+      "CHECKED_IN": "Checked in",
+      "PAYOUT_COMPLETED": "Completed"
+    },
     "monthlyRent": "Monthly rent",
-    "contractDuration": "Contract / Rental duration",
-    "ownerContact": "Owner contact",
+    "totalPaid": "Amount paid",
+    "contractDuration": "Contract duration",
+    "monthsValue": "{{count}} months",
+    "bookingDate": "Booking date",
+    "startDate": "Start date",
     "viewRoomDetails": "View room details",
-    "callOwner": "Call Owner",
+    "zaloButton": "Chat on Zalo",
     "viewContract": "View Contract",
+    "viewBooking": "View Booking",
     "contractModalTitle": "Rental Contract Details",
     "modalRoom": "Room:",
-    "modalAddress": "Address:",
-    "modalOwner": "Owner:",
+    "modalHouse": "Building:",
     "modalAgreedPrice": "Agreed rent price:",
-    "modalDeposit": "Deposit:",
     "modalPaymentDay": "Monthly payment day:",
     "modalPaymentDayValue": "Day {{day}} of every month",
-    "modalValidity": "Contract validity:",
-    "modalValidityValue": "12 months",
+    "modalValidity": "Contract duration:",
     "modalLegalNote": "This contract is signed electronically and 100% legally protected on the Pimi platform.",
     "modalClose": "Close"
   },
@@ -512,5 +526,39 @@
     "contactDescription": "Get in touch with the Pimi support team for rental guidance, contract questions, and other assistance.",
     "privacyTitle": "Privacy Policy",
     "privacyDescription": "Pimi's privacy policy and personal data protection practices for platform users."
+  },
+  "favoriteRooms": {
+    "title": "Favorite rooms",
+    "subtitle": "Rooms you have saved to revisit later",
+    "emptyTitle": "No favorite rooms yet",
+    "emptyDesc": "Tap the heart icon on a room card or its detail page to save rooms you are interested in.",
+    "browseRooms": "Browse rooms"
+  },
+  "recentlyViewed": {
+    "title": "Recently viewed",
+    "subtitle": "Rooms you have viewed on this device",
+    "clearButton": "Clear history",
+    "emptyTitle": "No rooms yet",
+    "emptyDesc": "Rooms you view will automatically show up here so you can revisit them later.",
+    "browseRooms": "Browse rooms"
+  },
+  "roomReviews": {
+    "title": "Reviews from tenants",
+    "reviewCount": "{{count}} reviews",
+    "noReviewsYet": "No reviews yet",
+    "emptyList": "Be the first to review this room.",
+    "writeButton": "Write a review",
+    "editButton": "Edit review",
+    "notEligibleHint": "You need to have stayed at this room to review it.",
+    "commentPlaceholder": "Share your experience with this room...",
+    "submitButton": "Submit review",
+    "submitting": "Submitting...",
+    "cancelButton": "Cancel",
+    "scoreRequired": "Please select a star rating",
+    "submitSuccess": "Thanks for your review!",
+    "scoreHidden": "Score hidden by admin",
+    "commentHidden": "Comment hidden by admin",
+    "anonymousTenant": "Pimi tenant",
+    "loadMore": "Load more reviews"
   }
 }

@@ -7,9 +7,12 @@ import { appointmentApi, Appointment } from '@/services/appointmentApi';
 import { bookingApi } from '@/services/bookingApi';
 import { collaboratorApi, HouseCollaborator } from '@/services/collaboratorApi';
 import { useAuth } from '@/context/AuthContext';
+import { useFavorites } from '@/context/FavoritesContext';
+import { recentlyViewedApi } from '@/utils/recentlyViewed';
+import { RoomReviews } from '@/components/room/RoomReviews';
 import { RoomCard } from '@/components/common/RoomCard';
 import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
-import { MapPin, Maximize2, Users, ShieldCheck, PhoneCall, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2 } from 'lucide-react';
+import { MapPin, Maximize2, Users, ShieldCheck, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2 } from 'lucide-react';
 import { VietMapViewer } from '@/components/common/VietMapViewer';
 import { useToast } from '@/context/ToastContext';
 import { RoomDetailSkeleton } from '@/components/ui/Skeleton';
@@ -26,11 +29,11 @@ export const RoomDetail: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const { user, isAuthenticated } = useAuth();
+  const { isFavorited, toggleFavorite } = useFavorites();
 
   const [room, setRoom] = useState<Room | null>(null);
   const [similarRooms, setSimilarRooms] = useState<Room[]>([]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
@@ -66,6 +69,9 @@ export const RoomDetail: React.FC = () => {
           setRoom(data);
           setActiveImageIndex(0);
           fetchActiveAppointment(data);
+          if (data) {
+            recentlyViewedApi.add(data);
+          }
           if (data?.houseId) {
             collaboratorApi
               .getHouseCollaborators(data.houseId)
@@ -236,16 +242,25 @@ export const RoomDetail: React.FC = () => {
             <span className="hidden sm:inline">{t('roomDetail.share')}</span>
           </button>
           <button
-            onClick={() => {
-              setSaved(!saved);
-              toast.success(saved ? t('roomDetail.toastUnsaved') : t('roomDetail.toastSaved'));
+            onClick={async () => {
+              if (!isAuthenticated) {
+                toast.warning(t('roomDetail.toastNeedLogin'));
+                navigate(`/login?redirect=${detailPath}`);
+                return;
+              }
+              try {
+                const nowFavorited = await toggleFavorite(room.id);
+                toast.success(nowFavorited ? t('roomDetail.toastSaved') : t('roomDetail.toastUnsaved'));
+              } catch (err) {
+                toast.error(getApiErrorMessage(err));
+              }
             }}
             className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-              saved ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              isFavorited(room.id) ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            <Heart className={`w-4 h-4 ${saved ? 'fill-rose-600' : ''}`} />
-            <span className="hidden sm:inline">{saved ? t('roomDetail.savedLabel') : t('roomDetail.saveRoom')}</span>
+            <Heart className={`w-4 h-4 ${isFavorited(room.id) ? 'fill-rose-600' : ''}`} />
+            <span className="hidden sm:inline">{isFavorited(room.id) ? t('roomDetail.savedLabel') : t('roomDetail.saveRoom')}</span>
           </button>
         </div>
       </div>
@@ -446,26 +461,6 @@ export const RoomDetail: React.FC = () => {
               <p className="text-[11px] text-slate-400">{t('roomDetail.priceIncludesFee')}</p>
             </div>
 
-            {/* Landlord Profile — ẩn hẳn khi backend không trả thông tin chủ nhà (mặc định với
-                người thuê: liên hệ qua cộng tác viên hoặc đặt lịch/đặt phòng trong app). */}
-            {room.landlordName && (
-              <div className="flex items-center gap-3.5 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
-                <img
-                  src={room.landlordAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'}
-                  alt={room.landlordName}
-                  className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-indigo-200"
-                />
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.postedByOwner')}</span>
-                  <h4 className="text-sm font-bold text-slate-900 truncate">{room.landlordName}</h4>
-                  <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    {t('roomDetail.identityVerified')}
-                  </span>
-                </div>
-              </div>
-            )}
-
             {/* Direct Primary Actions */}
             <div className="space-y-3">
               {canBookShortTerm ? (
@@ -511,16 +506,6 @@ export const RoomDetail: React.FC = () => {
                 </button>
               )}
 
-              {room.landlordPhone && (
-                <a
-                  href={`tel:${room.landlordPhone}`}
-                  className="w-full py-3.5 rounded-2xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-sm border border-indigo-200 transition-colors flex items-center justify-center gap-2"
-                >
-                  <PhoneCall className="w-4 h-4 text-indigo-600" />
-                  <span>{t('roomDetail.callOwner', { phone: room.landlordPhone })}</span>
-                </a>
-              )}
-
               {hasCollaborators && (
                 <button
                   onClick={() => setShowCollaboratorModal(true)}
@@ -547,6 +532,9 @@ export const RoomDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Đánh giá sau khi ở — công khai, chỉ RENT_USER từng thuê phòng này mới viết được */}
+      <RoomReviews roomId={room.id} />
 
       {/* Similar Rooms Recommendation */}
       {similarRooms.length > 0 && (

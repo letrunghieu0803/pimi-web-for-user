@@ -3,7 +3,10 @@ import { axiosClient } from './axiosClient';
 export interface TimeSlot {
   id?: string;
   startTime: string;
-  endTime: string;
+  // Không còn bắt buộc — chủ nhà chỉ chọn giờ bắt đầu, buổi xem phòng báo trước sẽ mất khoảng
+  // 15-30 phút thay vì 1 khung giờ chính xác. Khung giờ cũ (tạo trước đợt đổi) vẫn có thể có
+  // giá trị, khung giờ mới luôn null.
+  endTime?: string | null;
   isSelected?: boolean;
 }
 
@@ -27,16 +30,13 @@ export interface Appointment {
     roomGroupId?: string | null;
     images?: Array<{ image?: { link?: string } }>;
   };
+  // Không có houseOwner — GET /v1/appointments/tenant (getTenantAppointments) không trả thông
+  // tin liên hệ chủ nhà cho người thuê (xem appointments.service.ts ở backend). Người thuê liên
+  // hệ qua cộng tác viên (nút "Liên hệ cộng tác viên"), không liên hệ trực tiếp chủ nhà.
   rentHouse?: {
     id: string;
     name: string;
     address?: string;
-    houseOwner?: {
-      firstName?: string;
-      lastName?: string;
-      phoneNumber?: string;
-      email?: string;
-    };
   };
   timeSlots?: TimeSlot[];
 }

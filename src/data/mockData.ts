@@ -38,9 +38,6 @@ export const MOCK_ROOMS: Room[] = [
 - Ban công riêng phơi đồ cực kỳ thoáng.
 - An ninh đảm bảo 24/7 với camera theo dõi và hệ thống khóa cửa vân tay thông minh.
 - Vị trí đắc địa gần Đại học Quốc Gia, ĐH Sư Phạm, Báo Chí & Tuyên Truyền.`,
-    landlordName: 'Nguyễn Văn Minh (Chủ nhà)',
-    landlordPhone: '0987654321',
-    landlordAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
     latitude: 21.0341,
     longitude: 105.7876,
     hasMezzanine: false,
@@ -81,8 +78,6 @@ export const MOCK_ROOMS: Room[] = [
 - Tầng dưới làm phòng khách & bếp riêng biệt.
 - Gần BigC Thăng Long, Vincom Trần Duy Hưng, đường giao thông thuận tiện.
 - Giờ giấc hoàn toàn tự do 24/24.`,
-    landlordName: 'Trần Thị Thanh',
-    landlordPhone: '0912345678',
     hasMezzanine: true,
     isFeatured: true,
     createdAt: '2026-07-22T08:30:00Z',
@@ -117,8 +112,6 @@ export const MOCK_ROOMS: Room[] = [
 - Cách trường ĐH Bách Khoa chỉ 300m đi bộ.
 - Nhà ăn, chợ dân sinh ngay đầu ngõ cực tiện lợi.
 - Điện nước công tơ riêng tính theo giá nhà nước chia đầu người.`,
-    landlordName: 'Lê Hoàng Anh',
-    landlordPhone: '0977112233',
     hasMezzanine: false,
     isFeatured: false,
     createdAt: '2026-07-24T14:15:00Z',
@@ -156,8 +149,6 @@ export const MOCK_ROOMS: Room[] = [
 - Nội thất sang trọng tone màu Bắc Âu Scandinavia.
 - Đã bao gồm chi phí dọn dẹp vệ sinh và nước sinh hoạt.
 - Phù hợp người đi làm, chuyên gia hoặc cặp đôi sinh sống.`,
-    landlordName: 'Phạm Đức Thắng',
-    landlordPhone: '0909123999',
     hasMezzanine: false,
     isFeatured: true,
     createdAt: '2026-07-25T09:00:00Z',
@@ -192,8 +183,6 @@ export const MOCK_ROOMS: Room[] = [
     description: `Phòng mới sửa 100% cực xinh tại Bình Thạnh, đi Quận 1 chỉ 10 phút.
 - Gần Gigamall Phạm Văn Đồng, Bến xe Miền Đông.
 - Không chung chủ, bạn bè đến chơi thoải mái.`,
-    landlordName: 'Bùi Mỹ Duyên',
-    landlordPhone: '0938887766',
     hasMezzanine: true,
     isFeatured: false,
     createdAt: '2026-07-25T16:20:00Z',
@@ -228,8 +217,6 @@ export const MOCK_ROOMS: Room[] = [
     description: `Căn phòng đáng sống nhất Tây Hồ với góc ban công chill tuyệt đẹp.
 - Đi bộ 2 phút ra Hồ Tây hóng mát.
 - Khu dân trí cao, an ninh tốt, gần chợ & siêu thị.`,
-    landlordName: 'Đặng Quốc Bảo',
-    landlordPhone: '0945678901',
     hasMezzanine: false,
     isFeatured: true,
     createdAt: '2026-07-26T07:10:00Z',

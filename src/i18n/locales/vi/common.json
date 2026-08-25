@@ -29,7 +29,9 @@
     "feature3Desc": "Người đi thuê nhà không phải trả bất kỳ khoản phí môi giới nào. Làm việc & ký hợp đồng trực tiếp với chủ nhà.",
     "ctaTitle": "Bạn Chưa Tìm Được Phòng Trọ Phù Hợp?",
     "ctaDesc": "Gọi ngay Hotline chăm sóc khách hàng của Pimi để được trợ lý hỗ trợ tư vấn và gợi ý danh sách phòng trống mới nhất theo yêu cầu.",
-    "ctaCallHotline": "Gọi Hotline 0987.654.321"
+    "ctaCallHotline": "Gọi Hotline 0987.654.321",
+    "recentlyViewedTag": "Dành cho bạn",
+    "recentlyViewedTitle": "Phòng đã xem gần đây"
   },
   "login": {
     "title": "Đăng Nhập Tài Khoản",
@@ -95,7 +97,9 @@
     "newNotifications": "Thông báo mới",
     "markAllRead": "Đọc tất cả",
     "noNotifications": "Không có thông báo nào",
-    "viewAllNotifications": "Xem tất cả thông báo"
+    "viewAllNotifications": "Xem tất cả thông báo",
+    "favoriteRooms": "Phòng yêu thích",
+    "recentlyViewed": "Đã xem gần đây"
   },
   "footer": {
     "brandDesc": "Nền tảng tìm kiếm và đặt lịch xem phòng trọ, căn hộ mini trực tiếp từ chủ nhà xác thực. Trải nghiệm minh bạch, nhanh chóng và an toàn tuyệt đối.",
@@ -127,7 +131,10 @@
     "maxPeople": "Tối đa {{count}} người",
     "more": "khác",
     "viewDetails": "Xem chi tiết",
-    "bookViewing": "Hẹn xem phòng"
+    "bookViewing": "Hẹn xem phòng",
+    "favorite": "Lưu vào yêu thích",
+    "unfavorite": "Bỏ khỏi yêu thích",
+    "favoriteError": "Không thể cập nhật yêu thích, vui lòng thử lại"
   },
   "contact": {
     "badge": "Liên Hệ Hỗ Trợ",
@@ -257,20 +264,17 @@
     "amenitiesTitle": "Tiện Ích & Trang Thiết Bị",
     "servicesTitle": "Dịch Vụ & Phí Đi Kèm",
     "currency": "đ",
-    "contactOwner": "Liên hệ chủ nhà",
+    "contactOwner": "Liên hệ để biết giá",
     "descriptionTitle": "Mô Tả Chi Tiết Phòng",
     "listedPrice": "Giá thuê niêm yết",
     "perMonthLong": "/ tháng",
     "priceIncludesFee": "Đã bao gồm tiền phí quản lý tòa nhà",
-    "postedByOwner": "Đăng bởi Chủ nhà",
-    "identityVerified": "Đã xác minh danh tính",
     "statusPending": "Đã Yêu Cầu Xem Phòng (Chờ Chủ Nhà)",
     "statusOffered": "Chủ Nhà Đã Đề Xuất Khung Giờ - Chọn Lịch Ngay",
     "statusConfirmed": "Đã Chốt Lịch Xem Phòng",
     "sending": "Đang gửi...",
     "requestViewingButton": "Yêu Cầu Xem Phòng Trực Tiếp",
-    "callOwner": "Gọi Chủ Nhà: {{phone}}",
-    "trustNote1": "Đặt hẹn nhanh chóng, chủ nhà hỗ trợ 24/7",
+    "trustNote1": "Đặt hẹn nhanh chóng, đội ngũ Pimi hỗ trợ 24/7",
     "trustNote2": "Miễn phí 100% dịch vụ xem phòng cho người thuê",
     "similarRoomsTitle": "Phòng Trọ Tương Tự",
     "exploreMore": "Khám phá thêm",
@@ -280,7 +284,9 @@
   },
   "contactCollaboratorModal": {
     "title": "Liên hệ cộng tác viên",
-    "subtitle": "Cộng tác viên phụ trách toà nhà này sẽ hỗ trợ bạn thuê phòng."
+    "subtitle": "Cộng tác viên phụ trách toà nhà này sẽ hỗ trợ bạn thuê phòng.",
+    "zaloButton": "Nhắn Zalo",
+    "emptyText": "Toà nhà này chưa có cộng tác viên phụ trách."
   },
   "bookingPayment": {
     "title": "Thanh toán đặt phòng",
@@ -292,7 +298,7 @@
     "referenceLabel": "Nội dung chuyển khoản",
     "waitingForPayment": "Đang chờ xác nhận thanh toán...",
     "paidTitle": "Thanh toán thành công!",
-    "paidText": "Vui lòng liên hệ chủ nhà để hoàn tất nhận phòng.",
+    "paidText": "Vui lòng liên hệ cộng tác viên phụ trách toà nhà để hoàn tất nhận phòng.",
     "expiredTitle": "Đơn đặt phòng đã hết hạn",
     "expiredText": "Mã QR đã hết hạn do chưa nhận được thanh toán. Vui lòng quay lại và đặt phòng lại nếu vẫn muốn thuê.",
     "backToRoomButton": "Quay lại trang phòng"
@@ -319,14 +325,14 @@
     "emptyTitle": "Bạn chưa có lịch hẹn xem phòng nào",
     "emptyDesc": "Hãy tìm kiếm phòng trọ và bấm \"Đặt lịch xem phòng\" để bắt đầu.",
     "sentAt": "Gửi lúc: {{date}}",
-    "ownerLabel": "Chủ nhà",
     "confirmedSlotLabel": "Thời gian xem phòng đã chốt:",
     "offeredSlotsIntro": "Chủ nhà đã đề xuất các khung giờ dưới đây. Vui lòng chọn 1 khung giờ phù hợp:",
     "rejectAll": "Từ chối tất cả",
     "confirming": "Đang chốt...",
     "confirmSlot": "Xác nhận chốt lịch",
     "rejectReasonLabel": "Lý do từ chối:",
-    "confirmAttendance": "Xác nhận đã tham gia xem phòng"
+    "confirmAttendance": "Xác nhận đã tham gia xem phòng",
+    "durationHint": "Mỗi buổi xem phòng dự kiến kéo dài khoảng 15-30 phút."
   },
   "roomList": {
     "badge": "Danh Sách Phòng Trọ Sẵn Có",
@@ -412,34 +418,42 @@
   "bookingHistory": {
     "badge": "Lịch Sử Thuê Nhà Thành Công",
     "title": "Danh Sách Căn Hộ & Phòng Trọ Đã Thuê",
-    "subtitle": "Theo dõi thông tin chi tiết các phòng trọ bạn đã thuê thành công (Bao gồm hợp đồng điện tử chính thức hoặc xác nhận thuê trực tiếp với chủ nhà).",
+    "subtitle": "Theo dõi các phòng trọ bạn đã thuê thành công — gồm hợp đồng dài hạn và các lượt đặt phòng ngắn hạn đã thanh toán trong app.",
     "totalRented": "Tổng số phòng đã thuê",
     "roomCount": "{{count}} phòng",
-    "withContract": "Có hợp đồng điện tử",
-    "directConfirm": "Xác nhận trực tiếp",
-    "filterAll": "Tất cả thuê thành công",
-    "filterWithContract": "Có Hợp đồng điện tử",
-    "filterDirect": "Xác nhận thuê trực tiếp",
+    "withContract": "Hợp đồng dài hạn",
+    "shortTermBookings": "Đặt phòng ngắn hạn",
+    "filterAll": "Tất cả",
+    "filterContract": "Hợp đồng dài hạn",
+    "filterBooking": "Đặt phòng ngắn hạn",
     "emptyTitle": "Chưa có lịch sử thuê",
     "emptyDesc": "Bạn chưa có dữ liệu thuê nhà thành công thuộc danh mục này.",
     "exploreRooms": "Khám phá phòng trọ khả dụng",
-    "officialContract": "Hợp đồng điện tử chính thức ({{code}})",
+    "loadError": "Không tải được lịch sử thuê nhà. Vui lòng thử lại sau.",
+    "contractActive": "Hợp đồng đang hiệu lực",
+    "contractEnded": "Hợp đồng đã kết thúc",
+    "bookingStatus": {
+      "PAID": "Đã thanh toán",
+      "CHECKED_IN": "Đã nhận phòng",
+      "PAYOUT_COMPLETED": "Đã hoàn tất"
+    },
     "monthlyRent": "Giá thuê hàng tháng",
-    "contractDuration": "Thời hạn hợp đồng / Thuê",
-    "ownerContact": "Chủ nhà liên hệ",
+    "totalPaid": "Số tiền đã thanh toán",
+    "contractDuration": "Thời hạn hợp đồng",
+    "monthsValue": "{{count}} tháng",
+    "bookingDate": "Ngày đặt phòng",
+    "startDate": "Ngày bắt đầu",
     "viewRoomDetails": "Xem chi tiết thông tin phòng trọ",
-    "callOwner": "Gọi Chủ Nhà",
+    "zaloButton": "Nhắn Zalo",
     "viewContract": "Xem Hợp Đồng",
+    "viewBooking": "Xem Đơn Đặt Phòng",
     "contractModalTitle": "Chi Tiết Hợp Đồng Thuê Nhà",
     "modalRoom": "Phòng trọ:",
-    "modalAddress": "Địa chỉ:",
-    "modalOwner": "Chủ nhà cho thuê:",
+    "modalHouse": "Toà nhà:",
     "modalAgreedPrice": "Giá thuê thỏa thuận:",
-    "modalDeposit": "Tiền đặt cọc:",
     "modalPaymentDay": "Ngày thanh toán hàng tháng:",
     "modalPaymentDayValue": "Ngày {{day}} hàng tháng",
-    "modalValidity": "Hiệu lực hợp đồng:",
-    "modalValidityValue": "12 tháng",
+    "modalValidity": "Thời hạn hợp đồng:",
     "modalLegalNote": "Hợp đồng được ký kết điện tử và bảo hộ tính pháp lý 100% trên hệ thống Pimi.",
     "modalClose": "Đóng thông tin"
   },
@@ -512,5 +526,39 @@
     "contactDescription": "Liên hệ đội ngũ hỗ trợ Pimi để được tư vấn thuê phòng trọ, giải đáp thắc mắc hợp đồng và các vấn đề khác.",
     "privacyTitle": "Chính sách bảo mật",
     "privacyDescription": "Chính sách bảo mật và quyền riêng tư dữ liệu cá nhân của người dùng khi sử dụng nền tảng Pimi."
+  },
+  "favoriteRooms": {
+    "title": "Phòng yêu thích",
+    "subtitle": "Danh sách các phòng bạn đã lưu để xem lại sau",
+    "emptyTitle": "Chưa có phòng yêu thích nào",
+    "emptyDesc": "Bấm vào biểu tượng trái tim trên thẻ phòng hoặc trang chi tiết phòng để lưu lại phòng bạn quan tâm.",
+    "browseRooms": "Khám phá phòng trọ"
+  },
+  "recentlyViewed": {
+    "title": "Đã xem gần đây",
+    "subtitle": "Danh sách phòng bạn từng xem trên thiết bị này",
+    "clearButton": "Xoá lịch sử",
+    "emptyTitle": "Chưa có phòng nào",
+    "emptyDesc": "Các phòng bạn xem qua sẽ tự động xuất hiện ở đây để xem lại sau.",
+    "browseRooms": "Khám phá phòng trọ"
+  },
+  "roomReviews": {
+    "title": "Đánh giá từ người thuê",
+    "reviewCount": "{{count}} đánh giá",
+    "noReviewsYet": "Chưa có đánh giá nào",
+    "emptyList": "Hãy là người đầu tiên đánh giá phòng này.",
+    "writeButton": "Viết đánh giá",
+    "editButton": "Sửa đánh giá",
+    "notEligibleHint": "Bạn cần từng thuê phòng này mới có thể đánh giá.",
+    "commentPlaceholder": "Chia sẻ cảm nhận của bạn về phòng này...",
+    "submitButton": "Gửi đánh giá",
+    "submitting": "Đang gửi...",
+    "cancelButton": "Huỷ",
+    "scoreRequired": "Vui lòng chọn số sao đánh giá",
+    "submitSuccess": "Cảm ơn bạn đã đánh giá!",
+    "scoreHidden": "Điểm đã bị ẩn bởi quản trị viên",
+    "commentHidden": "Bình luận đã bị ẩn bởi quản trị viên",
+    "anonymousTenant": "Người thuê Pimi",
+    "loadMore": "Xem thêm đánh giá"
   }
 }

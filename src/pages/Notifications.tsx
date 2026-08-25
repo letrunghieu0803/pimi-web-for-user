@@ -207,9 +207,9 @@ export const NotificationsPage: React.FC = () => {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         {isUnread && <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 flex-shrink-0"></span>}
-                        <h4 className={`text-base font-bold truncate ${isUnread ? 'text-slate-900' : 'text-slate-700'}`}>
+                        <h4 className={`text-base font-bold truncate min-w-0 ${isUnread ? 'text-slate-900' : 'text-slate-700'}`}>
                           {item.title}
                         </h4>
                       </div>
@@ -219,7 +219,7 @@ export const NotificationsPage: React.FC = () => {
                       </span>
                     </div>
 
-                    <p className="text-sm font-medium text-slate-600 leading-relaxed">
+                    <p className="text-sm font-medium text-slate-600 leading-relaxed break-words">
                       {item.content}
                     </p>
                   </div>
