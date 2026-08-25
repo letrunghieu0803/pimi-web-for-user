@@ -4,6 +4,16 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-25 — Sửa CSRF token luôn thiếu do đọc cookie cross-domain
+
+**Vì sao:** Phát hiện khi điều tra "Missing or invalid CSRF token" bên ADMIN-Pimi — cùng pattern `getCookie(CSRF_COOKIE_NAME)` đọc `document.cookie`, nhưng web này deploy khác domain hoàn toàn với API (cross-site), nên JS không bao giờ đọc được cookie CSRF do BE set (dù không httpOnly) — `X-CSRF-Token` không bao giờ được gắn, mọi request ghi dữ liệu (POST/PUT/DELETE) bị chặn 1 khi có phiên đăng nhập. Web này chưa có cơ chế tự refresh token (không có handler `handleRefreshToken`), nên chỉ cần vá điểm login.
+
+**Thay đổi (`src/services/axiosClient.ts`, `src/context/AuthContext.tsx`):** Bỏ `getCookie(CSRF_COOKIE_NAME)`, lưu CSRF token vào biến nhớ (`csrfTokenMemory`) — lấy từ response body lúc đăng nhập (backend giờ trả `csrfToken` trong JSON body), tự gọi `GET /v1/auth/csrf-token` (endpoint mới bên `bff-for-pimi`) khi thiếu (lần đầu load hoặc sau reload trang).
+
+**Đã kiểm tra:** `npx tsc --noEmit` sạch. Xem dev log bên ADMIN-Pimi/bff-for-pimi để biết đầy đủ quá trình điều tra + verify backend.
+
+---
+
 ## 2026-08-25 — Sửa mã lỗi 000065 dịch sai thành "SĐT không hợp lệ"
 
 **Vì sao:** Phát hiện khi điều tra báo cáo "đăng nhập bằng email nhưng báo lỗi SĐT" bên phongtroapp — `errors.json` map `000065` → "Số điện thoại Việt Nam không hợp lệ", nhưng bên `bff-for-pimi` mã này giờ là `ERR_MSG_INTERNAL_SERVER_ERROR` (fallback chung cho lỗi server không xác định, đã đổi ý nghĩa từ lúc nào đó, client chưa cập nhật). Xác nhận cả 4 app (kể cả web này) đều dính y hệt.
