@@ -4,6 +4,16 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-25 — Sửa mã lỗi 000065 dịch sai thành "SĐT không hợp lệ"
+
+**Vì sao:** Phát hiện khi điều tra báo cáo "đăng nhập bằng email nhưng báo lỗi SĐT" bên phongtroapp — `errors.json` map `000065` → "Số điện thoại Việt Nam không hợp lệ", nhưng bên `bff-for-pimi` mã này giờ là `ERR_MSG_INTERNAL_SERVER_ERROR` (fallback chung cho lỗi server không xác định, đã đổi ý nghĩa từ lúc nào đó, client chưa cập nhật). Xác nhận cả 4 app (kể cả web này) đều dính y hệt.
+
+**Thay đổi:** `src/i18n/locales/{vi,en}/errors.json` — `000065` đổi thành thông báo lỗi server chung, khớp đồng bộ với 3 app còn lại.
+
+**Đã kiểm tra:** JSON hợp lệ (`python3 -m json.tool`). Xem dev log bên phongtroapp để biết đầy đủ quá trình điều tra.
+
+---
+
 ## 2026-08-25 — Sửa vỡ layout khi thông báo có nội dung dài
 
 **Vì sao:** Người dùng báo thông báo dài làm "UI không đáp ứng được" trên cả 3 trang web. Điều tra sống (seed thông báo thật ~800 ký tự kèm 1 chuỗi liên tục không khoảng trắng bên `bff-for-pimi`, kiểm tra trên Web-Pimi-for-owner trước — cấu trúc component giống hệt bên này) cho thấy: nội dung không có `overflow-wrap: break-word` (Tailwind `break-words`) nên chuỗi dài không khoảng trắng làm `<p>` tràn ngang, kéo theo tràn ngang toàn trang. `Navbar.tsx` và `Notifications.tsx` dùng đúng cấu trúc class y hệt (`line-clamp-2`/`truncate` không kèm `break-words`) nên áp cùng cách sửa mà không cần seed dữ liệu riêng.

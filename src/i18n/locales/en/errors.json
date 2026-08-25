@@ -63,7 +63,7 @@
   "000062": "Furniture not found",
   "000063": "Service not found",
   "000064": "Furniture update failed on the server",
-  "000065": "Not valid vietnamese phone number",
+  "000065": "An unexpected server error occurred, please try again later",
   "000066": "This house doesn't belong to you",
   "000067": "Only a Type 1 house manager can do this",
   "000068": "Some images in the list are not valid",
