@@ -4,6 +4,16 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-25 — Sửa vỡ layout Navbar ở khoảng 768-1024px
+
+**Vì sao:** Người dùng báo màn đăng nhập vỡ layout ở khoảng 770-1000px (nút "Đăng ký" hình vuông tím bị đẩy tràn ra ngoài màn hình). Root cause: menu điều hướng desktop (`nav`, 4 mục "Tìm phòng trọ/Tin tức/Về Pimi/Hỏi đáp") bật ở breakpoint `md` (768px, `hidden md:flex`), đồng thời nút mở menu mobile ẩn CÙNG breakpoint đó (`md:hidden`) — nhưng tổng bề rộng logo + menu 4 mục + khối đăng nhập/đăng ký thực tế cần tới `lg` (1024px) mới đủ chỗ trên 1 hàng. Khoảng 768-1024px vì vậy bị kẹt giữa 2 layout: menu desktop đã hiện nhưng chưa đủ chỗ, nút mobile-menu đã ẩn nên không có gì thay thế.
+
+**Thay đổi (`src/components/common/Navbar.tsx`):** Đổi breakpoint của nav menu, nút mobile-menu, và mobile drawer từ `md` sang `lg` — khớp nhau cả 3, không còn khoảng hở giữa 2 layout.
+
+**Đã kiểm tra:** `npx tsc --noEmit` sạch. Live trên trình duyệt: resize 850px (đúng khoảng bị báo lỗi) — header gọn gàng (logo + bell + avatar + hamburger), không còn gì tràn; resize 1100px (≥1024px) — menu desktop đầy đủ hiện đúng, vẫn vừa khít không tràn.
+
+---
+
 ## 2026-08-25 — Sửa CSRF token luôn thiếu do đọc cookie cross-domain
 
 **Vì sao:** Phát hiện khi điều tra "Missing or invalid CSRF token" bên ADMIN-Pimi — cùng pattern `getCookie(CSRF_COOKIE_NAME)` đọc `document.cookie`, nhưng web này deploy khác domain hoàn toàn với API (cross-site), nên JS không bao giờ đọc được cookie CSRF do BE set (dù không httpOnly) — `X-CSRF-Token` không bao giờ được gắn, mọi request ghi dữ liệu (POST/PUT/DELETE) bị chặn 1 khi có phiên đăng nhập. Web này chưa có cơ chế tự refresh token (không có handler `handleRefreshToken`), nên chỉ cần vá điểm login.
