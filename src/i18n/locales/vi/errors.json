@@ -47,7 +47,7 @@
   "000046": "Bạn không phải là chủ sở hữu nhà trọ trong hợp đồng này",
   "000047": "Bạn không có quyền thực hiện thao tác này",
   "000048": "Truy cập bị từ chối do không đúng vai trò người dùng",
-  "000049": "Không tìm thấy người dùng",
+  "000049": "Tài khoản này không được phép đăng nhập với vai trò được yêu cầu ở ứng dụng này",
   "000050": "Không tìm thấy người dùng với email này",
   "000051": "Không tìm thấy người dùng với email này cần xác thực",
   "000052": "Không tìm thấy hợp đồng",
@@ -128,5 +128,7 @@
   "000127": "Thiếu token xác thực",
   "000128": "Token xác thực không hợp lệ",
   "000129": "Token không hợp lệ",
-  "000130": "Truy cập bị từ chối do không đúng vai trò người dùng"
+  "000130": "Truy cập bị từ chối do không đúng vai trò người dùng",
+  "000196": "Tài khoản quản trị/cộng tác viên chỉ được đăng nhập tại trang quản trị",
+  "000197": "Tài khoản này không có quyền truy cập trang quản trị"
 }

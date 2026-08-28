@@ -4,6 +4,16 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-28 — Đồng bộ mã lỗi mới cho việc chặn đăng nhập ngoài phạm vi + sửa dịch sai 000049
+
+**Vì sao:** Đi kèm thay đổi backend chặn `PIMI_ADMIN`/`HOUSE_PARTNER` chỉ được đăng nhập ở trang quản trị (xem dev log `bff-for-pimi` cùng ngày) — web này cần bản dịch cho 2 mã lỗi mới (000196/000197) để hiện đúng tiếng Việt nếu 1 tài khoản admin/cộng tác viên thử đăng nhập nhầm ở đây.
+
+Lúc sửa phát hiện thêm mã `000049` (`src/i18n/locales/{vi,en}/errors.json`) bị dịch sai thành "Không tìm thấy người dùng"/"User not found" (trùng nghĩa `000050`), trong khi ý nghĩa thật của BE là "tài khoản không được phép đăng nhập với role yêu cầu ở app này" — sửa lại cho đúng.
+
+**Đã kiểm tra:** JSON hợp lệ (parse bằng Python). `Login.tsx` của web này đã gọi đúng `getApiErrorMessage(err)` từ trước (không cần sửa code, chỉ cần bản dịch).
+
+---
+
 ## 2026-08-25 — Sửa vỡ layout Navbar ở khoảng 768-1024px
 
 **Vì sao:** Người dùng báo màn đăng nhập vỡ layout ở khoảng 770-1000px (nút "Đăng ký" hình vuông tím bị đẩy tràn ra ngoài màn hình). Root cause: menu điều hướng desktop (`nav`, 4 mục "Tìm phòng trọ/Tin tức/Về Pimi/Hỏi đáp") bật ở breakpoint `md` (768px, `hidden md:flex`), đồng thời nút mở menu mobile ẩn CÙNG breakpoint đó (`md:hidden`) — nhưng tổng bề rộng logo + menu 4 mục + khối đăng nhập/đăng ký thực tế cần tới `lg` (1024px) mới đủ chỗ trên 1 hàng. Khoảng 768-1024px vì vậy bị kẹt giữa 2 layout: menu desktop đã hiện nhưng chưa đủ chỗ, nút mobile-menu đã ẩn nên không có gì thay thế.
