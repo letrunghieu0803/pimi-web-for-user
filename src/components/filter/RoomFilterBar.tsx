@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FilterState } from '@/types';
 import { DISTRICTS, AMENITIES_LIST } from '@/data/mockData';
@@ -10,10 +10,40 @@ interface RoomFilterBarProps {
   onReset: () => void;
 }
 
+const SEARCH_DEBOUNCE_MS = 350;
+
 export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange, onReset }) => {
   const { t } = useTranslation();
+
+  // Gõ tự do vào ô tìm kiếm trước đây bắn thẳng vào `filters.keyword` -> RoomList's useEffect
+  // gọi API ngay lập tức mỗi ký tự (gõ 1 từ 10 ký tự = ~10 request). Giờ ô input giữ state riêng
+  // để gõ mượt (không delay hiển thị), chỉ đẩy lên `onChange` sau khi ngừng gõ
+  // SEARCH_DEBOUNCE_MS — các filter khác (quận/huyện, giá, loại phòng...) vẫn cập nhật ngay,
+  // không bị debounce.
+  const [keywordInput, setKeywordInput] = useState(filters.keyword);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  // Đọc `filters` MỚI NHẤT lúc timer bắn, không phải bản đã đóng băng lúc effect chạy — tránh
+  // ghi đè mất các filter khác (quận/huyện, giá...) nếu người dùng đổi chúng trong lúc timer
+  // debounce của ô tìm kiếm còn đang chờ.
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+
+  // Đồng bộ lại khi keyword đổi từ bên ngoài (vd bấm "Đặt lại bộ lọc" ở RoomList).
+  useEffect(() => {
+    setKeywordInput(filters.keyword);
+  }, [filters.keyword]);
+
+  useEffect(() => {
+    if (keywordInput === filtersRef.current.keyword) return;
+    const timer = setTimeout(() => {
+      onChangeRef.current({ ...filtersRef.current, keyword: keywordInput });
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [keywordInput]);
+
   const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...filters, keyword: e.target.value });
+    setKeywordInput(e.target.value);
   };
 
   const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -84,7 +114,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
         <input
           type="text"
           placeholder={t('roomFilterBar.searchPlaceholder')}
-          value={filters.keyword}
+          value={keywordInput}
           onChange={handleKeywordChange}
           className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 font-medium"
         />

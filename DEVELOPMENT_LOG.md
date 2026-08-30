@@ -4,6 +4,37 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-30 — Tối ưu hiệu suất Giai đoạn 2: dùng ảnh thumbnail cho card lưới phòng
+
+**Vì sao:** Backend vừa thêm tính năng tự sinh bản resize ~480px lúc upload ảnh (`sharp`, xem dev log bff-for-pimi cùng ngày) — nối ảnh thẻ phòng trong lưới/carousel vào bản thumbnail đó thay vì luôn tải ảnh gốc full-res.
+
+**Thay đổi:**
+- `src/types/index.ts`: thêm `imageThumbnails: string[]` song song với `images` trên type `Room`.
+- `src/services/roomApi.ts` (`mapBackendRoomToRoom`): map thêm `imageThumbnails` ưu tiên `image.thumbnailLink`, rơi về `image.link` khi ảnh chưa có thumbnail (upload trước khi có tính năng này).
+- `src/components/common/RoomCard.tsx`: ảnh thẻ dùng `room.imageThumbnails[0]` thay vì `room.images[0]`.
+- `src/data/mockData.ts`: 6 phòng demo (không dùng ở đâu trong code — có thể là data sót lại từ lúc scaffold, chưa xoá vì ngoài phạm vi đợt này) cần thêm field `imageThumbnails` để khớp type `Room`, gán tạm bằng đúng `images` (ảnh Unsplash tĩnh, không có khái niệm thumbnail thật).
+
+**Đã kiểm tra:** `npx tsc -b && vite build` sạch (bao gồm cả bước gọi API thật lúc build sitemap, xác nhận local backend đang chạy phản hồi đúng).
+
+---
+
+## 2026-08-30 — Tối ưu hiệu suất Giai đoạn 1: code-split theo route, debounce tìm kiếm, lazy ảnh
+
+**Vì sao:** Rà soát hiệu suất phát hiện app public (traffic cao nhất, ảnh hưởng SEO/LCP trực tiếp) build thành 1 bundle 935KB/268KB-gzip duy nhất — khách vãng lai ghé "/" phải tải cả code booking/profile/admin-tool trước khi thấy phòng nào. Ô tìm kiếm cũng gọi API mỗi lần gõ phím (không debounce), và banner/gallery ảnh không lazy-load.
+
+**Thay đổi:**
+- `src/App.tsx`: toàn bộ ~20 trang chuyển từ import tĩnh sang `React.lazy` + `<Suspense>`, mỗi route giờ là 1 chunk riêng chỉ tải khi điều hướng tới.
+- `src/components/common/PageLoadingFallback.tsx` (mới): spinner fallback cho `Suspense`, mirror style đã dùng ở `BookingHistory.tsx`/`VerifyEmail.tsx`.
+- `src/components/filter/RoomFilterBar.tsx`: ô tìm kiếm tách state cục bộ (`keywordInput`) khỏi `filters.keyword` — gõ vẫn mượt ngay lập tức, chỉ đẩy lên `onChange` (kích hoạt gọi API ở `RoomList.tsx`) sau khi ngừng gõ 350ms. Dùng `filtersRef`/`onChangeRef` để tránh bug đè mất các filter khác (quận/huyện, giá...) nếu người dùng đổi chúng trong lúc timer debounce còn đang chờ.
+- `src/components/home/BannerSlider.tsx`: chỉ slide đầu tải `eager`, các slide còn lại `loading="lazy"` + `fetchPriority` ưu tiên đúng slide đang active — trước đây mọi slide (kể cả đang ẩn opacity-0) đều tải full ảnh cùng lúc, tranh băng thông với ảnh LCP thật.
+- `src/pages/RoomDetail.tsx`: ảnh gallery chính giữ `eager`+`fetchPriority="high"` (là LCP của trang), các ảnh thumbnail chuyển `loading="lazy"`.
+
+**Đã kiểm tra:** `npx tsc --noEmit` sạch. `npm run build`: bundle chính giảm từ 935KB → **386KB** (gzip 268KB → **120KB**) — `vietmapService` (thư viện bản đồ) tự động tách thành chunk riêng nhờ code-splitting theo route (trước đây bị cuốn vào bundle chính vì không có điểm chia nào).
+
+**Chưa làm (Giai đoạn 2/3):** ảnh vẫn chưa qua CDN resize/srcset (ảnh gốc); Home/RoomList vẫn dùng `useEffect` tay thay vì `useQuery` (React Query đã setup nhưng chưa dùng ở 2 trang này); RoomDetail/Home vẫn fetch 100 phòng chỉ để lọc lấy vài phòng gợi ý/nổi bật; Firebase Messaging vẫn load cho khách ẩn danh.
+
+---
+
 ## 2026-08-28 — Đồng bộ mã lỗi mới cho việc chặn đăng nhập ngoài phạm vi + sửa dịch sai 000049
 
 **Vì sao:** Đi kèm thay đổi backend chặn `PIMI_ADMIN`/`HOUSE_PARTNER` chỉ được đăng nhập ở trang quản trị (xem dev log `bff-for-pimi` cùng ngày) — web này cần bản dịch cho 2 mã lỗi mới (000196/000197) để hiện đúng tiếng Việt nếu 1 tài khoản admin/cộng tác viên thử đăng nhập nhầm ở đây.

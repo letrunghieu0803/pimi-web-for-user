@@ -51,10 +51,11 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
       {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
         <img
-          src={room.images[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'}
+          src={room.imageThumbnails[0] || room.images[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'}
           alt={room.name}
           className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
           loading="lazy"
+          decoding="async"
         />
         
         {/* Top Badges */}

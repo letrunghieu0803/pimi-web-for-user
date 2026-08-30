@@ -277,6 +277,11 @@ export const RoomDetail: React.FC = () => {
               <img
                 src={room.images[activeImageIndex] || room.images[0]}
                 alt={room.name}
+                // Ảnh chính là nội dung LCP của trang chi tiết phòng — tải ngay + ưu tiên cao,
+                // KHÔNG lazy (khác các ảnh thumbnail bên dưới).
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-4 left-4 bg-emerald-500/90 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md flex items-center gap-1 shadow-md">
@@ -302,7 +307,13 @@ export const RoomDetail: React.FC = () => {
                         : 'border-transparent opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img
+                      src={img}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                    />
                   </button>
                 ))}
               </div>
