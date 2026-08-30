@@ -347,7 +347,10 @@
     "sortPriceDesc": "Giá: Cao đến Thấp",
     "emptyTitle": "Không tìm thấy phòng phù hợp",
     "emptyDesc": "Thử thay đổi khu vực, khoảng giá hoặc đặt lại tất cả bộ lọc để tìm được nhiều kết quả hơn.",
-    "resetFilters": "Đặt lại bộ lọc"
+    "resetFilters": "Đặt lại bộ lọc",
+    "errorTitle": "Không tải được danh sách phòng",
+    "errorDesc": "Đã có lỗi xảy ra khi kết nối tới máy chủ, vui lòng kiểm tra kết nối mạng và thử lại.",
+    "retryButton": "Thử lại"
   },
   "notifications": {
     "title": "Thông báo của bạn",

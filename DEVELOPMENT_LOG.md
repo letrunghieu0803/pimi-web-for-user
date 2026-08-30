@@ -4,6 +4,19 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-08-31 — UI/UX Giai đoạn 1: phân biệt lỗi mạng/API với "không tìm thấy kết quả" ở danh sách phòng
+
+**Vì sao:** Kết quả audit UI/UX đọc code phát hiện `roomApi.ts` (`fetchPublicFeed`) bắt MỌI lỗi gọi API — mất mạng, lỗi server 500, timeout... — và trả về y hệt kết quả "không có phòng nào khớp" (`{ rooms: [], totalItems: 0, totalPages: 0 }`). `RoomList.tsx` không có cách nào phân biệt 2 trường hợp này, nên khi mất mạng/backend sập, người dùng thấy đúng khối "Không tìm thấy phòng phù hợp, thử đổi bộ lọc" — sai bản chất, khiến người dùng loay hoay đổi bộ lọc thay vì thử lại kết nối.
+
+**Thay đổi:**
+- `src/services/roomApi.ts`: **không** đổi `fetchPublicFeed` sang throw thẳng — hàm này còn được gọi gián tiếp qua `roomApi.getRooms()`/`getRoomsPaginated()` ở `Home.tsx` (phòng nổi bật) và `RoomDetail.tsx` (phòng tương tự), cả 2 nơi đều `.then()` không kèm `.catch()` riêng, throw thẳng ở tầng này sẽ tạo unhandled rejection ở 2 trang đó (ngoài phạm vi Giai đoạn 1). Thay vào đó, thêm field `hadError?: boolean` vào `PublicFeedResult` — `true` khi request thất bại, giữ nguyên hành vi trả mảng rỗng cho caller cũ (không đổi gì ở `Home.tsx`/`RoomDetail.tsx`, vì `getRooms()` chỉ trả `result.rooms`, không lộ field mới).
+- `src/pages/RoomList.tsx`: chuyển việc gọi `getRoomsPaginated` từ `useEffect` + `useState` tay sang `useQuery` (React Query đã setup ở `App.tsx` từ trước nhưng chưa dùng ở trang này — đúng như mục "chưa làm" ghi ở log Giai đoạn 2 hiệu suất). Trong `queryFn`, tự `throw` khi `result.hadError` để react-query bắt đúng qua `isError`/`refetch` (giới hạn hành vi throw chỉ trong phạm vi trang này). Khi `isError`, hiện 1 khối `EmptyState` riêng — cùng cấu trúc/kích thước với khối "không tìm thấy" cũ nhưng đổi icon (`WifiOff`), tone màu (`rose` thay vì `amber`), nội dung ("Không tải được danh sách phòng...") và nút hành động gọi `refetch()` thay vì reset bộ lọc.
+- `src/i18n/locales/{vi,en}/common.json`: thêm 3 khoá `roomList.errorTitle`/`errorDesc`/`retryButton`.
+
+**Đã kiểm tra:** `npm run build` (`tsc -b && vite build && npm run sitemap`) sạch. Live-test bằng `npm run dev`: backend cục bộ (`localhost:3333`) vốn không chạy sẵn trong môi trường này nên `/rooms` tự nhiên rơi vào nhánh lỗi thật (không cần giả lập) — xác nhận hiện đúng khối "Couldn't load rooms" (icon wifi-off, tone đỏ) thay vì khối "không tìm thấy phòng", và bấm "Try again" gọi lại `refetch()` đúng, không kẹt loading, không crash.
+
+---
+
 ## 2026-08-30 — Tối ưu hiệu suất Giai đoạn 2: dùng ảnh thumbnail cho card lưới phòng
 
 **Vì sao:** Backend vừa thêm tính năng tự sinh bản resize ~480px lúc upload ảnh (`sharp`, xem dev log bff-for-pimi cùng ngày) — nối ảnh thẻ phòng trong lưới/carousel vào bản thumbnail đó thay vì luôn tải ảnh gốc full-res.

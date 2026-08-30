@@ -129,6 +129,10 @@ interface PublicFeedResult {
   rooms: Room[];
   totalItems: number;
   totalPages: number;
+  // true nếu request thất bại (mất mạng, lỗi server...) và kết quả rỗng ở trên chỉ là giá trị
+  // fallback — KHÔNG phải nghĩa "không có phòng nào khớp bộ lọc". Caller (vd RoomList.tsx) cần
+  // check field này để phân biệt 2 trạng thái, thay vì coi mọi mảng rỗng là "không tìm thấy".
+  hadError?: boolean;
 }
 
 const priceRangeToMinMax = (priceRange?: string): { minPrice?: number; maxPrice?: number } => {
@@ -190,11 +194,17 @@ const fetchPublicFeed = (params: PublicFeedParams): Promise<PublicFeedResult> =>
         rooms: Array.isArray(items) ? items.map(mapBackendRoomToRoom) : [],
         totalItems: metadata.totalItems ?? 0,
         totalPages: metadata.totalPages ?? 0,
+        hadError: false,
       };
     })
     .catch((error) => {
+      // Vẫn KHÔNG throw lên trên — nhiều nơi gọi gián tiếp hàm này (Home.tsx phòng nổi bật,
+      // RoomDetail.tsx phòng tương tự...) qua roomApi.getRooms()/getRoomsPaginated() mà không có
+      // .catch() riêng, throw thẳng ở đây sẽ tạo unhandled rejection ở những chỗ đó. Thay vào đó
+      // đánh dấu hadError:true để caller nào cần phân biệt (RoomList.tsx) tự throw lại đúng lúc
+      // họ cần (trong queryFn của react-query) — xem RoomList.tsx.
       console.warn('Failed to fetch rooms from backend API:', error);
-      return { rooms: [], totalItems: 0, totalPages: 0 };
+      return { rooms: [], totalItems: 0, totalPages: 0, hadError: true };
     })
     .finally(() => {
       setTimeout(() => {
