@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { FilterState } from '@/types';
@@ -6,75 +6,70 @@ import { DISTRICTS, AMENITIES_LIST } from '@/data/mockData';
 import { Search, MapPin, DollarSign, Home, SlidersHorizontal, RotateCcw, Layers, Check, Sparkles, Zap, Calendar, X } from 'lucide-react';
 
 interface RoomFilterBarProps {
-  filters: FilterState;
-  onChange: (newFilters: FilterState) => void;
+  /** Bộ lọc ĐANG ÁP DỤNG thật sự (đã submit, đang dùng để gọi API) — dùng để khởi tạo/đồng bộ
+   * lại bản nháp bên dưới khi có thay đổi từ bên ngoài (bấm "Đặt lại bộ lọc", back/forward trình
+   * duyệt...). KHÔNG dùng trực tiếp để hiển thị input — xem `draft`. */
+  appliedFilters: FilterState;
+  /** Gọi khi người dùng bấm "Tìm kiếm" (hoặc Enter trong ô từ khoá) — nhận toàn bộ bản nháp hiện
+   * tại, nơi gọi (RoomList) chịu trách nhiệm áp dụng + cập nhật URL + gọi API. */
+  onSubmit: (newFilters: FilterState) => void;
   onReset: () => void;
 }
 
-const SEARCH_DEBOUNCE_MS = 350;
-
-export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange, onReset }) => {
+export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, onSubmit, onReset }) => {
   const { t } = useTranslation();
 
-  // Gõ tự do vào ô tìm kiếm trước đây bắn thẳng vào `filters.keyword` -> RoomList's useEffect
-  // gọi API ngay lập tức mỗi ký tự (gõ 1 từ 10 ký tự = ~10 request). Giờ ô input giữ state riêng
-  // để gõ mượt (không delay hiển thị), chỉ đẩy lên `onChange` sau khi ngừng gõ
-  // SEARCH_DEBOUNCE_MS — các filter khác (quận/huyện, giá, loại phòng...) vẫn cập nhật ngay,
-  // không bị debounce.
-  const [keywordInput, setKeywordInput] = useState(filters.keyword);
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-  // Đọc `filters` MỚI NHẤT lúc timer bắn, không phải bản đã đóng băng lúc effect chạy — tránh
-  // ghi đè mất các filter khác (quận/huyện, giá...) nếu người dùng đổi chúng trong lúc timer
-  // debounce của ô tìm kiếm còn đang chờ.
-  const filtersRef = useRef(filters);
-  filtersRef.current = filters;
+  // Trước đây MỌI thay đổi (gõ ô tìm kiếm, đổi quận/huyện, bấm tiện ích...) đều gọi thẳng
+  // onChange -> RoomList refetch API NGAY LẬP TỨC — tự động tìm kiếm liên tục, không lưu lại
+  // được trạng thái tìm kiếm vào URL để chia sẻ/SEO. Giờ mọi control chỉ cập nhật `draft` (state
+  // nháp cục bộ) — chỉ khi bấm nút "Tìm kiếm" (hoặc Enter trong ô từ khoá) mới gọi `onSubmit`,
+  // lúc đó RoomList mới thật sự áp dụng + ghi vào URL + gọi API.
+  const [draft, setDraft] = useState<FilterState>(appliedFilters);
 
-  // Đồng bộ lại khi keyword đổi từ bên ngoài (vd bấm "Đặt lại bộ lọc" ở RoomList).
+  // Đồng bộ lại nháp khi bộ lọc ĐANG ÁP DỤNG đổi từ bên ngoài (Đặt lại bộ lọc, hoặc URL đổi do
+  // back/forward trình duyệt) — không phải do chính component này gọi onSubmit (lúc đó
+  // appliedFilters đổi thành ĐÚNG NHỮNG GÌ vừa submit, resync về là vô hại/idempotent).
   useEffect(() => {
-    setKeywordInput(filters.keyword);
-  }, [filters.keyword]);
+    setDraft(appliedFilters);
+  }, [appliedFilters]);
 
-  useEffect(() => {
-    if (keywordInput === filtersRef.current.keyword) return;
-    const timer = setTimeout(() => {
-      onChangeRef.current({ ...filtersRef.current, keyword: keywordInput });
-    }, SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [keywordInput]);
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    onSubmit(draft);
+  };
 
   const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setKeywordInput(e.target.value);
+    setDraft((prev) => ({ ...prev, keyword: e.target.value }));
   };
 
   const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onChange({ ...filters, district: e.target.value });
+    setDraft((prev) => ({ ...prev, district: e.target.value }));
   };
 
   const handlePriceRangeChange = (priceRange: string) => {
-    onChange({ ...filters, priceRange });
+    setDraft((prev) => ({ ...prev, priceRange }));
   };
 
   const handleRoomTypeChange = (roomType: string) => {
-    onChange({ ...filters, roomType });
+    setDraft((prev) => ({ ...prev, roomType }));
   };
 
   const handleMezzanineToggle = () => {
-    const nextVal = filters.hasMezzanine === true ? null : true;
-    onChange({ ...filters, hasMezzanine: nextVal });
+    setDraft((prev) => ({ ...prev, hasMezzanine: prev.hasMezzanine === true ? null : true }));
   };
 
   const handleRecommendedToggle = () => {
-    const nextVal = filters.isRecommended === true ? null : true;
-    onChange({ ...filters, isRecommended: nextVal });
+    setDraft((prev) => ({ ...prev, isRecommended: prev.isRecommended === true ? null : true }));
   };
 
   const handleAmenityToggle = (amenity: string) => {
-    const exists = filters.amenities.includes(amenity);
-    const newAmts = exists
-      ? filters.amenities.filter((a) => a !== amenity)
-      : [...filters.amenities, amenity];
-    onChange({ ...filters, amenities: newAmts });
+    setDraft((prev) => {
+      const exists = prev.amenities.includes(amenity);
+      const amenities = exists
+        ? prev.amenities.filter((a) => a !== amenity)
+        : [...prev.amenities, amenity];
+      return { ...prev, amenities };
+    });
   };
 
   // Trên mobile (< lg), khối lọc nâng cao (4 mục lọc, GPS, dải giá, tiện ích, reset) đẩy
@@ -83,14 +78,27 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
   // đổi hành vi). Từ lg trở lên vẫn hiện đầy đủ inline như cũ.
   const [showMobileFilterModal, setShowMobileFilterModal] = useState(false);
 
+  // Badge số lượng filter — phản ánh bộ lọc ĐANG ÁP DỤNG THẬT (đã submit), không phải bản nháp
+  // đang gõ dở, để khớp đúng với kết quả đang hiển thị trên trang.
   const activeFilterCount =
-    (filters.district && filters.district !== DISTRICTS[0] ? 1 : 0) +
-    (filters.roomType !== 'ALL' ? 1 : 0) +
-    (filters.hasMezzanine === true ? 1 : 0) +
-    (filters.isRecommended === true ? 1 : 0) +
-    (filters.priceRange !== 'ALL' ? 1 : 0) +
-    filters.amenities.length +
-    (filters.userLat && filters.userLng ? 1 : 0);
+    (appliedFilters.district && appliedFilters.district !== DISTRICTS[0] ? 1 : 0) +
+    (appliedFilters.roomType !== 'ALL' ? 1 : 0) +
+    (appliedFilters.hasMezzanine === true ? 1 : 0) +
+    (appliedFilters.isRecommended === true ? 1 : 0) +
+    (appliedFilters.priceRange !== 'ALL' ? 1 : 0) +
+    appliedFilters.amenities.length +
+    (appliedFilters.userLat && appliedFilters.userLng ? 1 : 0);
+
+  // Nút submit dùng lại NGUYÊN VẸN cả inline (>= lg) lẫn trong modal mobile (< lg) — modal mobile
+  // render qua createPortal ra document.body nên KHÔNG nằm trong cây DOM thật của <form>, phải
+  // gọi handleSubmit() bằng tay thay vì dựa vào type="submit" (chỉ hoạt động tự nhiên ở bản inline
+  // desktop, nơi advancedFilters vẫn là con thật sự của <form>).
+  const SearchSubmitButton = ({ className }: { className?: string }) => (
+    <button type="submit" className={className}>
+      <Search className="w-4 h-4" />
+      <span>{t('roomFilterBar.searchButton', { defaultValue: 'Tìm kiếm' })}</span>
+    </button>
+  );
 
   // Khối lọc nâng cao — dùng lại NGUYÊN VẸN cả inline (>= lg) lẫn trong modal mobile (< lg).
   const advancedFilters = (
@@ -105,7 +113,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
             <span>{t('roomFilterBar.districtLabel')}</span>
           </label>
           <select
-            value={filters.district}
+            value={draft.district}
             onChange={handleDistrictChange}
             className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
           >
@@ -124,7 +132,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
             <span>{t('roomFilterBar.roomTypeLabel')}</span>
           </label>
           <select
-            value={filters.roomType}
+            value={draft.roomType}
             onChange={(e) => handleRoomTypeChange(e.target.value)}
             className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
           >
@@ -145,13 +153,13 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
             type="button"
             onClick={handleMezzanineToggle}
             className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all border flex items-center justify-between ${
-              filters.hasMezzanine === true
+              draft.hasMezzanine === true
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20'
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
             }`}
           >
             <span>{t('roomFilterBar.mezzanineToggle')}</span>
-            {filters.hasMezzanine === true && <Check className="w-4 h-4" />}
+            {draft.hasMezzanine === true && <Check className="w-4 h-4" />}
           </button>
         </div>
 
@@ -165,13 +173,13 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
             type="button"
             onClick={handleRecommendedToggle}
             className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all border flex items-center justify-between ${
-              filters.isRecommended === true
+              draft.isRecommended === true
                 ? 'bg-amber-400 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
             }`}
           >
             <span>⭐ Phòng Đề Cử</span>
-            {filters.isRecommended === true && <Check className="w-4 h-4" />}
+            {draft.isRecommended === true && <Check className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -188,12 +196,12 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
               }
               navigator.geolocation.getCurrentPosition(
                 (pos) => {
-                  onChange({
-                    ...filters,
+                  setDraft((prev) => ({
+                    ...prev,
                     userLat: pos.coords.latitude,
                     userLng: pos.coords.longitude,
-                    radiusInKm: filters.radiusInKm || 5,
-                  });
+                    radiusInKm: prev.radiusInKm || 5,
+                  }));
                 },
                 (err) => {
                   console.warn('Geolocation error:', err);
@@ -203,29 +211,29 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
               );
             }}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm ${
-              filters.userLat && filters.userLng
+              draft.userLat && draft.userLng
                 ? 'bg-emerald-600 text-white shadow-emerald-500/20'
                 : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/20'
             }`}
           >
             <MapPin className="w-4 h-4 animate-bounce" />
             <span>
-              {filters.userLat && filters.userLng
+              {draft.userLat && draft.userLng
                 ? 'Đã chọn vị trí của tôi 📍'
                 : 'Dùng vị trí hiện tại của tôi'}
             </span>
           </button>
 
-          {filters.userLat && filters.userLng && (
+          {draft.userLat && draft.userLng && (
             <button
               type="button"
               onClick={() =>
-                onChange({
-                  ...filters,
+                setDraft((prev) => ({
+                  ...prev,
                   userLat: null,
                   userLng: null,
                   radiusInKm: null,
-                })
+                }))
               }
               className="text-xs text-rose-600 hover:underline font-semibold"
             >
@@ -235,19 +243,19 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
         </div>
 
         {/* Radius dropdown */}
-        {filters.userLat && filters.userLng && (
+        {draft.userLat && draft.userLng && (
           <div className="flex items-center gap-2 w-full md:w-auto">
             <span className="text-xs font-bold text-slate-700 whitespace-nowrap">
               Bán kính:
             </span>
             <select
-              value={filters.radiusInKm || 'ALL'}
+              value={draft.radiusInKm || 'ALL'}
               onChange={(e) => {
                 const val = e.target.value;
-                onChange({
-                  ...filters,
+                setDraft((prev) => ({
+                  ...prev,
                   radiusInKm: val === 'ALL' ? null : Number(val),
-                });
+                }));
               }}
               className="bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
             >
@@ -278,9 +286,10 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
           ].map((item) => (
             <button
               key={item.id}
+              type="button"
               onClick={() => handlePriceRangeChange(item.id)}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-                filters.priceRange === item.id
+                draft.priceRange === item.id
                   ? 'gradient-bg text-white border-transparent shadow-md shadow-indigo-500/20'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
@@ -299,10 +308,11 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
         </label>
         <div className="flex flex-wrap gap-2">
           {AMENITIES_LIST.map((amt) => {
-            const active = filters.amenities.includes(amt);
+            const active = draft.amenities.includes(amt);
             return (
               <button
                 key={amt}
+                type="button"
                 onClick={() => handleAmenityToggle(amt)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border flex items-center gap-1.5 ${
                   active
@@ -318,9 +328,12 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
         </div>
       </div>
 
-      {/* Filter Reset Button */}
+      {/* Reset áp dụng ngay (không qua nháp) — nút "Tìm kiếm" đặt ở NGOÀI khối này (xem bên dưới
+          return), vì advancedFilters được dùng lại cả trong modal mobile (portal ra document.body,
+          không còn là con thật của <form> nên type="submit" đặt ở đây sẽ không hoạt động ở đó). */}
       <div className="pt-2 flex justify-end">
         <button
+          type="button"
           onClick={onReset}
           className="text-xs font-bold text-slate-500 hover:text-rose-600 transition-colors flex items-center gap-1.5"
         >
@@ -332,15 +345,18 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
   );
 
   return (
-    <div className="glass-panel rounded-3xl p-6 shadow-xl border border-slate-200/80 space-y-6">
+    // onSubmit bắt cả nút "Tìm kiếm" LẪN phím Enter khi đang gõ trong ô từ khoá (hành vi submit
+    // form chuẩn của trình duyệt) — đây là nơi DUY NHẤT thật sự gọi search, mọi thay đổi filter ở
+    // trên chỉ cập nhật `draft`.
+    <form onSubmit={handleSubmit} className="glass-panel rounded-3xl p-6 shadow-xl border border-slate-200/80 space-y-6">
 
       {/* Rental Term Type Segmented Toggle Tab (Ngắn hạn vs Dài hạn) */}
       <div className="flex items-center justify-center p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/80">
         <button
           type="button"
-          onClick={() => onChange({ ...filters, rentalTermType: 'SHORT_TERM' })}
+          onClick={() => setDraft((prev) => ({ ...prev, rentalTermType: 'SHORT_TERM' }))}
           className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-            filters.rentalTermType === 'SHORT_TERM'
+            draft.rentalTermType === 'SHORT_TERM'
               ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
               : 'text-slate-600 hover:text-slate-900 font-semibold'
           }`}
@@ -351,9 +367,9 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
 
         <button
           type="button"
-          onClick={() => onChange({ ...filters, rentalTermType: 'LONG_TERM' })}
+          onClick={() => setDraft((prev) => ({ ...prev, rentalTermType: 'LONG_TERM' }))}
           className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-            filters.rentalTermType === 'LONG_TERM'
+            draft.rentalTermType === 'LONG_TERM'
               ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
               : 'text-slate-600 hover:text-slate-900 font-semibold'
           }`}
@@ -363,16 +379,20 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
         </button>
       </div>
 
-      {/* Top Search Input */}
-      <div className="relative">
-        <Search className="w-5 h-5 text-slate-400 absolute left-4 top-3.5" />
-        <input
-          type="text"
-          placeholder={t('roomFilterBar.searchPlaceholder')}
-          value={keywordInput}
-          onChange={handleKeywordChange}
-          className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 font-medium"
-        />
+      {/* Top Search Input + nút Tìm kiếm — gõ xong bấm nút này hoặc Enter để submit, KHÔNG còn
+          tự động tìm kiếm sau khi ngừng gõ như trước. */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="w-5 h-5 text-slate-400 absolute left-4 top-3.5" />
+          <input
+            type="text"
+            placeholder={t('roomFilterBar.searchPlaceholder')}
+            value={draft.keyword}
+            onChange={handleKeywordChange}
+            className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 font-medium"
+          />
+        </div>
+        <SearchSubmitButton className="shrink-0 flex items-center justify-center gap-2 px-6 py-3 rounded-2xl gradient-bg text-white font-bold text-sm shadow-lg shadow-indigo-500/25 hover:opacity-95 transition-opacity" />
       </div>
 
       {/* >= lg: hiện đầy đủ khối lọc nâng cao inline như cũ, không đổi gì. */}
@@ -424,17 +444,24 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ filters, onChange,
               <RotateCcw className="w-4 h-4" />
               <span>{t('roomList.resetFilters')}</span>
             </button>
+            {/* Portal ra document.body -> KHÔNG phải con thật của <form>, type="submit" sẽ
+                không làm gì cả (native browser bỏ qua submit button không có form cha thật sự)
+                -> gọi handleSubmit() bằng tay rồi mới đóng modal. */}
             <button
               type="button"
-              onClick={() => setShowMobileFilterModal(false)}
-              className="flex-1 py-3 rounded-2xl gradient-bg text-white font-bold text-sm shadow-lg shadow-indigo-500/25 transition-all"
+              onClick={() => {
+                handleSubmit();
+                setShowMobileFilterModal(false);
+              }}
+              className="flex-1 py-3 rounded-2xl gradient-bg text-white font-bold text-sm shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2"
             >
-              {t('roomFilterBar.applyFiltersButton', { defaultValue: 'Áp dụng' })}
+              <Search className="w-4 h-4" />
+              <span>{t('roomFilterBar.searchButton', { defaultValue: 'Tìm kiếm' })}</span>
             </button>
           </div>
         </div>,
         document.body
       )}
-    </div>
+    </form>
   );
 };

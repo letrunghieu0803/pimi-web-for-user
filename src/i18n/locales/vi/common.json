@@ -506,7 +506,7 @@
     "priceOver8": "Trên 8 triệu",
     "amenitiesLabel": "Tiện Ích Đi Kèm",
     "moreFiltersButton": "Bộ lọc",
-    "applyFiltersButton": "Áp dụng"
+    "searchButton": "Tìm kiếm"
   },
   "pagination": {
     "showingRange": "Hiển thị {{start}}–{{end}} trong {{total}}"

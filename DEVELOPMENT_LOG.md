@@ -4,6 +4,25 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-01 — Tìm kiếm: bỏ tự động tìm kiếm, lưu trạng thái vào URL (share/SEO)
+
+**Vì sao:** Trước đây MỌI thay đổi ở `RoomFilterBar` (gõ từ khoá, đổi quận/huyện, bấm tiện ích, bật GPS...) gọi thẳng `onChange` khiến `RoomList` refetch API ngay lập tức — tự động tìm kiếm liên tục, tốn request. Đồng thời `filters` chỉ đọc từ URL 1 LẦN lúc mount rồi không bao giờ ghi ngược lại — URL luôn đứng yên dù người dùng đổi bộ lọc, không thể copy link chia sẻ đúng kết quả đang xem, cũng không có ngữ cảnh cho SEO.
+
+**Thay đổi:**
+- `src/components/filter/RoomFilterBar.tsx`: chuyển từ "gọi API ngay khi đổi filter" sang "form + nút Tìm kiếm". Component tự giữ state `draft` (mọi thao tác — gõ, chọn, bấm tiện ích, bật GPS, đổi loại thuê — chỉ cập nhật `draft`, không gọi API). Bọc toàn bộ trong `<form onSubmit>` — bấm nút "Tìm kiếm" (đặt cạnh ô từ khoá + trong `advancedFilters`) hoặc nhấn Enter trong ô từ khoá mới thật sự submit. Bỏ hẳn cơ chế debounce-tự-động-tìm-kiếm cũ (`SEARCH_DEBOUNCE_MS`) — không cần nữa vì gõ không còn tự bắn request. Props đổi từ `filters`/`onChange` sang `appliedFilters`/`onSubmit` (đúng ngữ nghĩa: 1 bên là trạng thái ĐANG ÁP DỤNG THẬT, 1 bên là hành động submit). Riêng modal bộ lọc mobile (render qua `createPortal` ra `document.body`) không nằm trong cây DOM thật của `<form>` nên nút "Tìm kiếm" ở đó gọi `handleSubmit()` bằng tay thay vì dựa vào `type="submit"`. Nhân tiện thêm `type="button"` cho các nút lọc trước đây thiếu (price pill, tiện ích, nút Đặt lại) — nếu không, khi nằm trong `<form>` mới, các nút này sẽ MẶC ĐỊNH `type="submit"` và vô tình submit ngay khi bấm.
+- `src/pages/RoomList.tsx`: thêm `filtersFromSearchParams`/`sortFromSearchParams`/`pageFromSearchParams` (đọc toàn bộ trạng thái tìm kiếm — filter, sort, trang — từ URL, không chỉ vài field như trước) và `buildSearchParams` (chiều ngược lại, bỏ qua field đang ở giá trị mặc định để URL gọn). Thêm effect ghi `filters`/`sortBy`/`pageNumber` vào URL qua `setSearchParams(..., { replace: true })` mỗi khi đổi — `replace: true` để tránh spam lịch sử trình duyệt mỗi lần đổi trang/sắp xếp. Effect reset về trang 1 khi đổi filter/sort được thêm cờ bỏ qua lần chạy đầu (`isFirstRender` ref) để không xoá mất `?page=N` của 1 link chia sẻ vừa mở.
+- Giữ nguyên hành vi canonical URL trong `<Seo>` (luôn trỏ `/rooms` không kèm query) — đã đúng từ trước, tránh Google index trùng lặp các tổ hợp filter khác nhau, không phải sửa gì thêm ở phần này.
+- `src/i18n/locales/{vi,en}/common.json`: đổi khoá `applyFiltersButton` (không còn dùng) thành `searchButton`.
+
+**Đã kiểm tra:** `npx tsc -b` sạch, `npm run build` sạch. Test trực tiếp qua browser (dev server, không có backend cục bộ nên phần kết quả luôn ở trạng thái lỗi tải — không ảnh hưởng test hành vi filter/URL):
+- Gõ vào ô từ khoá + bấm 1 price pill → xác nhận URL KHÔNG đổi trong lúc thao tác.
+- Bấm nút "Tìm kiếm" → URL đổi thành `?search=...&priceRange=...` đúng cả 2 giá trị cùng lúc.
+- Mở lại chính URL đó ở tab mới (giả lập mở link chia sẻ) → ô từ khoá và price pill tự động hiện đúng trạng thái đã lưu.
+- Bấm "Đặt lại bộ lọc" → URL về lại `/rooms` trần, áp dụng ngay (không cần bấm Tìm kiếm) — đúng thiết kế (Reset là hành động tức thời, khác với đang soạn 1 lượt tìm kiếm mới).
+- Luồng modal mobile: mở "Bộ lọc" → chọn 1 pill (không đổi URL) → bấm "Tìm kiếm" ở footer modal → URL cập nhật đúng + modal tự đóng.
+
+---
+
 ## 2026-08-31 — UI/UX Giai đoạn 3: sticky CTA đặt lịch xem phòng + thu gọn bộ lọc trên mobile
 
 **Vì sao:** Tiếp tục audit UI/UX (sau Giai đoạn 1 `62f6ade` và Giai đoạn 2 cùng ngày) phát hiện 2 vấn đề riêng cho mobile: (1) `RoomDetail.tsx` dùng `grid grid-cols-1 lg:grid-cols-3` — dưới `lg`, sidebar chứa giá + nút "Đặt lịch xem phòng" nằm SAU toàn bộ gallery/thông số/tiện ích/mô tả/bản đồ khi xếp chồng 1 cột, người dùng phải cuộn rất xa mới thấy nút hành động chính; (2) `RoomFilterBar.tsx` luôn hiển thị TOÀN BỘ khối lọc (toggle ngắn/dài hạn, tìm kiếm, 4 mục lọc, GPS/bán kính, dải giá, 10 chip tiện ích, nút reset) ở mọi kích thước màn hình — trên mobile khối này đẩy danh sách phòng xuống rất xa trước khi người dùng thấy kết quả nào.

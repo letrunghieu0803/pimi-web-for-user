@@ -17,17 +17,75 @@ import { vietmapService } from '@/services/vietmapService';
 import { Seo } from '@/components/common/Seo';
 import { JsonLd } from '@/components/common/JsonLd';
 import { absoluteUrl } from '@/config/seo';
+import { DISTRICTS } from '@/data/mockData';
 
 const PAGE_SIZE = 10;
 
-const SORT_TO_BACKEND: Record<
-  'NEWEST' | 'PRICE_ASC' | 'PRICE_DESC' | 'DISTANCE',
-  'newest' | 'price_asc' | 'price_desc' | 'distance'
-> = {
+type SortKey = 'NEWEST' | 'PRICE_ASC' | 'PRICE_DESC' | 'DISTANCE';
+
+const SORT_TO_BACKEND: Record<SortKey, 'newest' | 'price_asc' | 'price_desc' | 'distance'> = {
   NEWEST: 'newest',
   PRICE_ASC: 'price_asc',
   PRICE_DESC: 'price_desc',
   DISTANCE: 'distance',
+};
+
+const DEFAULT_DISTRICT = DISTRICTS[0];
+
+// Đọc toàn bộ trạng thái tìm kiếm (filter + sort + trang) từ query string — cho phép 1 URL đại
+// diện chính xác cho 1 lượt tìm kiếm cụ thể, dùng để: (1) chia sẻ link kèm đúng kết quả đang xem,
+// (2) vào thẳng URL đã lưu/bookmark ra đúng kết quả đó, (3) Google index/hiển thị link có ngữ
+// cảnh (kèm ?search=... khi phù hợp) thay vì luôn chỉ mỗi "/rooms" trần.
+const filtersFromSearchParams = (sp: URLSearchParams): FilterState => ({
+  district: sp.get('district') || DEFAULT_DISTRICT,
+  priceRange: sp.get('priceRange') || 'ALL',
+  roomType: sp.get('roomType') || 'ALL',
+  hasMezzanine: sp.get('hasMezzanine') === 'true' ? true : null,
+  isRecommended: sp.get('isRecommended') === 'true' ? true : null,
+  rentalTermType: (sp.get('rentalTermType') as FilterState['rentalTermType']) || 'SHORT_TERM',
+  amenities: sp.get('amenities') ? sp.get('amenities')!.split(',').filter(Boolean) : [],
+  // ?search= (không phải ?keyword=) giữ nguyên tên cũ — Google "Sitelinks Search Box"
+  // (JSON-LD SearchAction ở Home.tsx) đã trỏ vào đúng tên param này từ trước.
+  keyword: sp.get('search') || '',
+  userLat: sp.get('lat') ? Number(sp.get('lat')) : null,
+  userLng: sp.get('lng') ? Number(sp.get('lng')) : null,
+  radiusInKm: sp.get('radius') ? Number(sp.get('radius')) : null,
+});
+
+const sortFromSearchParams = (sp: URLSearchParams, fallback: SortKey): SortKey => {
+  const raw = sp.get('sort');
+  return raw && raw in SORT_TO_BACKEND ? (raw as SortKey) : fallback;
+};
+
+const pageFromSearchParams = (sp: URLSearchParams): number => {
+  const raw = Number(sp.get('page'));
+  return Number.isInteger(raw) && raw > 0 ? raw : 1;
+};
+
+// Chiều ngược lại: state hiện tại -> query string. Bỏ qua field đang ở giá trị mặc định để URL
+// gọn, dễ đọc (không lộ ?district=Tất+cả...&roomType=ALL&page=1... cho 1 lượt tìm kiếm trống).
+const buildSearchParams = (
+  filters: FilterState,
+  sortBy: SortKey,
+  pageNumber: number
+): Record<string, string> => {
+  const params: Record<string, string> = {};
+  if (filters.district && filters.district !== DEFAULT_DISTRICT) params.district = filters.district;
+  if (filters.priceRange !== 'ALL') params.priceRange = filters.priceRange;
+  if (filters.roomType !== 'ALL') params.roomType = filters.roomType;
+  if (filters.hasMezzanine === true) params.hasMezzanine = 'true';
+  if (filters.isRecommended === true) params.isRecommended = 'true';
+  if (filters.rentalTermType !== 'SHORT_TERM') params.rentalTermType = filters.rentalTermType;
+  if (filters.amenities.length > 0) params.amenities = filters.amenities.join(',');
+  if (filters.keyword.trim()) params.search = filters.keyword.trim();
+  if (filters.userLat != null && filters.userLng != null) {
+    params.lat = String(filters.userLat);
+    params.lng = String(filters.userLng);
+    if (filters.radiusInKm != null) params.radius = String(filters.radiusInKm);
+  }
+  if (sortBy !== 'NEWEST') params.sort = sortBy;
+  if (pageNumber > 1) params.page = String(pageNumber);
+  return params;
 };
 
 interface RoomsMapViewProps {
@@ -153,31 +211,27 @@ const RoomsMapView: React.FC<RoomsMapViewProps> = ({ rooms, userLat, userLng }) 
 
 export const RoomList: React.FC = () => {
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const isNearbyQuery = searchParams.get('nearby') === 'true';
 
-  const [filters, setFilters] = useState<FilterState>({
-    district: searchParams.get('district') || 'Tất cả quận/huyện',
-    priceRange: searchParams.get('priceRange') || 'ALL',
-    roomType: 'ALL',
-    hasMezzanine: null,
-    rentalTermType: (searchParams.get('rentalTermType') as any) || 'SHORT_TERM',
-    amenities: [],
-    // Đọc từ ?search= — cho phép Google "Sitelinks Search Box" (JSON-LD SearchAction ở
-    // Home.tsx) điều hướng thẳng tới đây với từ khoá, kể cả khi UI chưa có ô tìm kiếm riêng.
-    keyword: searchParams.get('search') || '',
-    userLat: searchParams.get('lat') ? Number(searchParams.get('lat')) : null,
-    userLng: searchParams.get('lng') ? Number(searchParams.get('lng')) : null,
-    radiusInKm: searchParams.get('radius') ? Number(searchParams.get('radius')) : null,
-  });
+  // Đây là bộ lọc ĐANG ÁP DỤNG THẬT (đã submit, dùng để gọi API) — khởi tạo từ URL nên vào thẳng
+  // 1 link đã chia sẻ ra đúng kết quả đó. RoomFilterBar tự quản lý bản NHÁP riêng, chỉ gọi
+  // `handleSearchSubmit` khi người dùng bấm "Tìm kiếm" — filters ở đây chỉ đổi lúc đó (hoặc lúc
+  // Đặt lại bộ lọc / tự động lấy vị trí GPS ban đầu bên dưới), không đổi theo từng thao tác gõ/
+  // chọn dở dang trong filter bar nữa.
+  const [filters, setFilters] = useState<FilterState>(() => filtersFromSearchParams(searchParams));
 
-  const [pageNumber, setPageNumber] = useState(1);
-  const [sortBy, setSortBy] = useState<'NEWEST' | 'PRICE_ASC' | 'PRICE_DESC' | 'DISTANCE'>(
-    isNearbyQuery ? 'DISTANCE' : 'NEWEST'
+  const [pageNumber, setPageNumber] = useState(() => pageFromSearchParams(searchParams));
+  const [sortBy, setSortBy] = useState<SortKey>(() =>
+    sortFromSearchParams(searchParams, isNearbyQuery ? 'DISTANCE' : 'NEWEST')
   );
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [selectedRoomForTour, setSelectedRoomForTour] = useState<Room | null>(null);
+
+  const handleSearchSubmit = (newFilters: FilterState) => {
+    setFilters(newFilters);
+  };
 
   // Auto-acquire location if nearby flag is passed in URL
   useEffect(() => {
@@ -199,9 +253,25 @@ export const RoomList: React.FC = () => {
     }
   }, [isNearbyQuery]);
 
+  // Đổi filter/sort (tìm kiếm mới) thì về trang 1 — nhưng KHÔNG chạy ở lần render đầu tiên, nếu
+  // không sẽ xoá mất ?page=N của 1 link đã chia sẻ ngay khi vừa vào trang.
+  const isFirstRender = useRef(true);
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     setPageNumber(1);
   }, [filters, sortBy]);
+
+  // Ghi lại toàn bộ trạng thái tìm kiếm hiện tại vào URL — one-way (state -> URL), chạy sau MỌI
+  // thay đổi filters/sortBy/pageNumber (kể cả lần đầu, để chuẩn hoá URL ban đầu, ví dụ trim bớt
+  // khoảng trắng thừa trong từ khoá). `replace: true` để tránh mỗi lần đổi trang/sort/tìm kiếm lại
+  // đẩy thêm 1 mục vào lịch sử trình duyệt (nút Back sẽ rất khó dùng nếu không).
+  useEffect(() => {
+    setSearchParams(buildSearchParams(filters, sortBy, pageNumber), { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, sortBy, pageNumber]);
 
   // roomApi.getRoomsPaginated() không throw khi API lỗi (mất mạng, lỗi server...) — nó trả về
   // { rooms: [], hadError: true } để không làm vỡ các nơi gọi khác (Home.tsx, RoomDetail.tsx)
@@ -235,7 +305,7 @@ export const RoomList: React.FC = () => {
 
   const handleResetFilters = () => {
     setFilters({
-      district: 'Tất cả quận/huyện',
+      district: DEFAULT_DISTRICT,
       priceRange: 'ALL',
       roomType: 'ALL',
       hasMezzanine: null,
@@ -314,8 +384,8 @@ export const RoomList: React.FC = () => {
 
       {/* Filter Bar */}
       <RoomFilterBar
-        filters={filters}
-        onChange={setFilters}
+        appliedFilters={filters}
+        onSubmit={handleSearchSubmit}
         onReset={handleResetFilters}
       />
 
