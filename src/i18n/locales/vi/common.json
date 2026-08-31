@@ -504,7 +504,9 @@
     "priceRangeLabel": "Mức Giá Thuê (VNĐ / Tháng)",
     "priceAll": "Tất cả giá",
     "priceOver8": "Trên 8 triệu",
-    "amenitiesLabel": "Tiện Ích Đi Kèm"
+    "amenitiesLabel": "Tiện Ích Đi Kèm",
+    "moreFiltersButton": "Bộ lọc",
+    "applyFiltersButton": "Áp dụng"
   },
   "pagination": {
     "showingRange": "Hiển thị {{start}}–{{end}} trong {{total}}"

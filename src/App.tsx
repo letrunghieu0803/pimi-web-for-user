@@ -9,6 +9,7 @@ import { Navbar } from '@/components/common/Navbar';
 import { Footer } from '@/components/common/Footer';
 import { RouteTracker } from '@/components/common/RouteTracker';
 import { PageLoadingFallback } from '@/components/common/PageLoadingFallback';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 // Pages — lazy-loaded per route (React.lazy + Suspense) thay vì import tĩnh: trước đây toàn bộ
 // ~20 trang (kể cả booking/profile/admin-ish tooling ít người dùng) đóng gói chung 1 bundle
@@ -74,33 +75,35 @@ export const App: React.FC = () => {
                 <div className="min-h-screen flex flex-col justify-between bg-slate-50 font-sans text-slate-900 selection:bg-indigo-500 selection:text-white">
                   <Navbar />
                   <main className="flex-1">
-                    <Suspense fallback={<PageLoadingFallback />}>
-                      <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/rooms" element={<RoomList />} />
-                        <Route path="/rooms/:id" element={<RoomDetail />} />
-                        <Route path="/room-groups/:groupId" element={<RoomDetail />} />
-                        <Route path="/about" element={<About />} />
-                        <Route path="/news" element={<NewsList />} />
-                        <Route path="/news/:id" element={<NewsDetail />} />
-                        <Route path="/faq" element={<FAQ />} />
-                        <Route path="/privacy" element={<Privacy />} />
-                        <Route path="/contact" element={<Contact />} />
+                    <ErrorBoundary>
+                      <Suspense fallback={<PageLoadingFallback />}>
+                        <Routes>
+                          <Route path="/" element={<Home />} />
+                          <Route path="/rooms" element={<RoomList />} />
+                          <Route path="/rooms/:id" element={<RoomDetail />} />
+                          <Route path="/room-groups/:groupId" element={<RoomDetail />} />
+                          <Route path="/about" element={<About />} />
+                          <Route path="/news" element={<NewsList />} />
+                          <Route path="/news/:id" element={<NewsDetail />} />
+                          <Route path="/faq" element={<FAQ />} />
+                          <Route path="/privacy" element={<Privacy />} />
+                          <Route path="/contact" element={<Contact />} />
 
-                        {/* Auth Routes */}
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
-                        <Route path="/forgot-password" element={<ForgotPassword />} />
-                        <Route path="/verify-email" element={<VerifyEmail />} />
-                        <Route path="/profile" element={<Profile />} />
-                        <Route path="/bookings" element={<BookingHistory />} />
-                        <Route path="/payment/:bookingId" element={<BookingPayment />} />
-                        <Route path="/appointments" element={<TenantAppointments />} />
-                        <Route path="/notifications" element={<NotificationsPage />} />
-                        <Route path="/favorites" element={<FavoriteRooms />} />
-                        <Route path="/recently-viewed" element={<RecentlyViewed />} />
-                      </Routes>
-                    </Suspense>
+                          {/* Auth Routes */}
+                          <Route path="/login" element={<Login />} />
+                          <Route path="/register" element={<Register />} />
+                          <Route path="/forgot-password" element={<ForgotPassword />} />
+                          <Route path="/verify-email" element={<VerifyEmail />} />
+                          <Route path="/profile" element={<Profile />} />
+                          <Route path="/bookings" element={<BookingHistory />} />
+                          <Route path="/payment/:bookingId" element={<BookingPayment />} />
+                          <Route path="/appointments" element={<TenantAppointments />} />
+                          <Route path="/notifications" element={<NotificationsPage />} />
+                          <Route path="/favorites" element={<FavoriteRooms />} />
+                          <Route path="/recently-viewed" element={<RecentlyViewed />} />
+                        </Routes>
+                      </Suspense>
+                    </ErrorBoundary>
                   </main>
                   <Footer />
                 </div>

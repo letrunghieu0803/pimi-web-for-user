@@ -504,7 +504,9 @@
     "priceRangeLabel": "Rent Price Range (VND / Month)",
     "priceAll": "All prices",
     "priceOver8": "Over 8 million",
-    "amenitiesLabel": "Amenities"
+    "amenitiesLabel": "Amenities",
+    "moreFiltersButton": "Filters",
+    "applyFiltersButton": "Apply"
   },
   "pagination": {
     "showingRange": "Showing {{start}}–{{end}} of {{total}}"

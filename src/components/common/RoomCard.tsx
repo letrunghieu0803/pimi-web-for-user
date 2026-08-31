@@ -127,10 +127,13 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
         </div>
 
         {/* Favorite Button */}
+        {/* w-11 h-11 (44px) để đạt vùng chạm tối thiểu — trước là w-9 h-9 (36px), dưới ngưỡng
+            khuyến nghị. Dịch vị trí absolute vào bottom-2/right-2 (thay vì -3) để tâm nút vẫn
+            cách đều mép ảnh như trước sau khi tăng kích thước, tránh lệch bố cục so với badge giá. */}
         <button
           onClick={handleToggleFavorite}
           aria-label={favorited ? t('roomCard.unfavorite') : t('roomCard.favorite')}
-          className={`absolute bottom-3 right-3 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg transition-colors ${
+          className={`absolute bottom-2 right-2 w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg transition-colors ${
             favorited ? 'bg-rose-500 text-white' : 'bg-white/90 text-slate-600 hover:text-rose-500'
           }`}
         >

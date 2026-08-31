@@ -56,11 +56,14 @@ export const Pagination: React.FC<PaginationProps> = ({
           {t('pagination.showingRange', { start: rangeStart, end: rangeEnd, total: totalItems })}
         </p>
       )}
-      <div className="flex items-center gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl w-fit ml-auto">
+      {/* gap-1 (thay vì gap-1.5) để bù lại phần các nút rộng thêm (32px→44px cho số trang,
+          ~32px→44px cho prev/next) — giữ khối pagination không tràn ngang trên màn hình hẹp
+          khi có nhiều nút (vd totalPages lớn với ellipsis 2 đầu). */}
+      <div className="flex items-center gap-1 bg-slate-200/60 p-1.5 rounded-2xl w-fit ml-auto">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1}
-          className="p-2 rounded-xl text-slate-600 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -73,7 +76,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             <button
               key={p}
               onClick={() => onPageChange(p)}
-              className={`min-w-[32px] h-8 px-2 rounded-xl text-xs font-bold transition-all ${
+              className={`min-w-11 h-11 px-2 rounded-xl text-xs font-bold transition-all ${
                 p === currentPage
                   ? 'bg-white text-indigo-600 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
@@ -86,7 +89,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}
-          className="p-2 rounded-xl text-slate-600 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
