@@ -207,8 +207,11 @@ export const Navbar: React.FC = () => {
             </div>
           </Link>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60">
+          {/* Desktop Nav Links — chờ tới `lg` (1024px) mới hiện, không phải `md` (768px): logo +
+              4 mục menu + khối đăng nhập/đăng ký cộng lại cần ~1024px mới đủ chỗ trên 1 hàng.
+              Bật ở `md` từng khiến khoảng 768-1024px bị kẹt giữa 2 layout (nav menu hiện nhưng
+              nút menu mobile đã ẩn cùng lúc) — nút "Đăng ký" bị đẩy tràn ra ngoài màn hình. */}
+          <nav className="hidden lg:flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60">
             {navLinks.map((link) => {
               const active = isActive(link.path);
               const Icon = link.icon;
@@ -351,19 +354,19 @@ export const Navbar: React.FC = () => {
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile Menu Toggle — ẩn cùng breakpoint `lg` với nav ở trên, khớp nhau */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2.5 rounded-2xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+            className="lg:hidden p-2.5 rounded-2xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer — cùng breakpoint `lg` với nút mở nó */}
       {mobileMenuOpen && (
-        <div className="md:hidden glass-panel border-t border-slate-200 px-4 pt-3 pb-6 space-y-2 animate-fadeIn">
+        <div className="lg:hidden glass-panel border-t border-slate-200 px-4 pt-3 pb-6 space-y-2 animate-fadeIn">
           {navLinks.map((link) => {
             const active = isActive(link.path);
             const Icon = link.icon;

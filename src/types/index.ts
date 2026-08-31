@@ -22,6 +22,10 @@ export interface Room {
   district: string;
   city: string;
   images: string[];
+  // Bản resize nhỏ song song với `images` (cùng thứ tự) — dùng cho card lưới/danh sách thay vì
+  // tải ảnh gốc chỉ để hiển thị thumbnail. Rơi về ảnh gốc khi ảnh đó chưa có thumbnail (upload
+  // trước khi backend có tính năng resize tự động, xem mapBackendRoomToRoom trong roomApi.ts).
+  imageThumbnails: string[];
   amenities: string[];
   description: string;
   latitude?: number;

@@ -40,11 +40,18 @@ export const BannerSlider: React.FC = () => {
 
   const goTo = (index: number) => setActiveIndex((index + banners.length) % banners.length);
 
-  const renderSlideContent = (banner: BannerItem) => (
+  // Trước đây MỌI slide (kể cả các slide đang ẩn bằng opacity-0) đều render <img> cùng lúc,
+  // tranh băng thông với ảnh LCP thật của trang chủ. Giờ chỉ slide đầu tiên tải ngay
+  // (loading="eager" + fetchPriority cho slide đang active) — các slide còn lại "lazy", trình
+  // duyệt tự trì hoãn tải cho tới khi cần.
+  const renderSlideContent = (banner: BannerItem, index: number) => (
     <>
       <img
         src={banner.imageLink}
         alt={banner.title}
+        loading={index === 0 ? 'eager' : 'lazy'}
+        decoding="async"
+        fetchPriority={index === safeActiveIndex ? 'high' : 'auto'}
         className="absolute inset-0 w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -79,20 +86,20 @@ export const BannerSlider: React.FC = () => {
                 rel="noopener noreferrer"
                 className={slideClassName}
               >
-                {renderSlideContent(banner)}
+                {renderSlideContent(banner, index)}
               </a>
             );
           }
           if (isInternal) {
             return (
               <Link key={banner.id} to={banner.linkUrl!} className={slideClassName}>
-                {renderSlideContent(banner)}
+                {renderSlideContent(banner, index)}
               </Link>
             );
           }
           return (
             <div key={banner.id} className={slideClassName}>
-              {renderSlideContent(banner)}
+              {renderSlideContent(banner, index)}
             </div>
           );
         })}

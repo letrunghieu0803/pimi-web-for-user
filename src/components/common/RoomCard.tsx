@@ -51,10 +51,11 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
       {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
         <img
-          src={room.images[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'}
+          src={room.imageThumbnails[0] || room.images[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'}
           alt={room.name}
           className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
           loading="lazy"
+          decoding="async"
         />
         
         {/* Top Badges */}
@@ -126,10 +127,13 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
         </div>
 
         {/* Favorite Button */}
+        {/* w-11 h-11 (44px) để đạt vùng chạm tối thiểu — trước là w-9 h-9 (36px), dưới ngưỡng
+            khuyến nghị. Dịch vị trí absolute vào bottom-2/right-2 (thay vì -3) để tâm nút vẫn
+            cách đều mép ảnh như trước sau khi tăng kích thước, tránh lệch bố cục so với badge giá. */}
         <button
           onClick={handleToggleFavorite}
           aria-label={favorited ? t('roomCard.unfavorite') : t('roomCard.favorite')}
-          className={`absolute bottom-3 right-3 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg transition-colors ${
+          className={`absolute bottom-2 right-2 w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg transition-colors ${
             favorited ? 'bg-rose-500 text-white' : 'bg-white/90 text-slate-600 hover:text-rose-500'
           }`}
         >

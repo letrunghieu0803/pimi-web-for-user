@@ -47,7 +47,7 @@
   "000046": "You're not the house owner for this rent house on this contract",
   "000047": "You don't have permission to do this",
   "000048": "Access denied — your role doesn't have permission",
-  "000049": "User not found",
+  "000049": "This account is not allowed to log in with the requested role on this app",
   "000050": "There's no user with this email",
   "000051": "There's no user with this email that needs email verification",
   "000052": "Contract not found",
@@ -128,5 +128,7 @@
   "000127": "Missing auth token",
   "000128": "This auth token is not valid",
   "000129": "This token is not valid",
-  "000130": "Access denied — your role doesn't have permission"
+  "000130": "Access denied — your role doesn't have permission",
+  "000196": "Admin and partner accounts can only log in on the admin site",
+  "000197": "This account does not have permission to access the admin site"
 }

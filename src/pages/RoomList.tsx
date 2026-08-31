@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Room, FilterState } from '@/types';
 import { roomApi } from '@/services/roomApi';
 import { RoomCard } from '@/components/common/RoomCard';
@@ -8,7 +9,7 @@ import { RoomFilterBar } from '@/components/filter/RoomFilterBar';
 import { RequestTourModal } from '@/components/common/RequestTourModal';
 import { Pagination } from '@/components/common/Pagination';
 import { EmptyState } from '@/components/common/EmptyState';
-import { Building2, ArrowUpDown, Info, Map, LayoutGrid } from 'lucide-react';
+import { Building2, ArrowUpDown, Info, Map, LayoutGrid, WifiOff } from 'lucide-react';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -171,11 +172,7 @@ export const RoomList: React.FC = () => {
     radiusInKm: searchParams.get('radius') ? Number(searchParams.get('radius')) : null,
   });
 
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'NEWEST' | 'PRICE_ASC' | 'PRICE_DESC' | 'DISTANCE'>(
     isNearbyQuery ? 'DISTANCE' : 'NEWEST'
   );
@@ -206,22 +203,35 @@ export const RoomList: React.FC = () => {
     setPageNumber(1);
   }, [filters, sortBy]);
 
-  useEffect(() => {
-    setLoading(true);
-    roomApi
-      .getRoomsPaginated({
+  // roomApi.getRoomsPaginated() không throw khi API lỗi (mất mạng, lỗi server...) — nó trả về
+  // { rooms: [], hadError: true } để không làm vỡ các nơi gọi khác (Home.tsx, RoomDetail.tsx)
+  // vốn không có .catch() riêng. Ở đây, nơi cần phân biệt rõ "lỗi tải" với "không có kết quả",
+  // ta tự throw lại dựa vào hadError để react-query bắt được qua isError/error/refetch.
+  const {
+    data: feedResult,
+    isLoading: loading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ['rooms-paginated', filters, sortBy, pageNumber],
+    queryFn: async () => {
+      const result = await roomApi.getRoomsPaginated({
         ...filters,
         pageNumber,
         pageSize: PAGE_SIZE,
         sortBy: SORT_TO_BACKEND[sortBy],
-      })
-      .then((result) => {
-        setRooms(result.rooms);
-        setTotalItems(result.totalItems);
-        setTotalPages(result.totalPages);
-        setLoading(false);
       });
-  }, [filters, sortBy, pageNumber]);
+      if (result.hadError) {
+        throw new Error('Không tải được danh sách phòng từ máy chủ.');
+      }
+      return result;
+    },
+    retry: 1,
+  });
+
+  const rooms = feedResult?.rooms ?? [];
+  const totalItems = feedResult?.totalItems ?? 0;
+  const totalPages = feedResult?.totalPages ?? 0;
 
   const handleResetFilters = () => {
     setFilters({
@@ -345,6 +355,18 @@ export const RoomList: React.FC = () => {
       {/* Main Content Area: Grid or Map */}
       {loading ? (
         <CardGridSkeleton count={PAGE_SIZE} />
+      ) : isError ? (
+        // Lỗi tải (mất mạng/lỗi server) — cố tình khác EmptyState "không có kết quả" bên dưới:
+        // icon wifi-off, tone đỏ (rose) và nút Thử lại gọi refetch() thay vì đặt lại bộ lọc.
+        <EmptyState
+          icon={WifiOff}
+          tone="rose"
+          title={t('roomList.errorTitle')}
+          description={t('roomList.errorDesc')}
+          actionLabel={t('roomList.retryButton')}
+          onAction={() => refetch()}
+          className="max-w-lg mx-auto"
+        />
       ) : rooms.length === 0 ? (
         <EmptyState
           icon={Info}

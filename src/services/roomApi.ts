@@ -42,6 +42,11 @@ export const mapBackendRoomToRoom = (item: any): Room => {
   const images = (item.images || [])
     .map((img: any) => img.image?.link || img.link)
     .filter(Boolean);
+  // Song song với `images` — cùng nguồn, chỉ khác ưu tiên `thumbnailLink` trước (ảnh cũ upload
+  // trước khi có tính năng resize tự động không có field này, rơi về ảnh gốc).
+  const imageThumbnails = (item.images || [])
+    .map((img: any) => img.image?.thumbnailLink || img.image?.link || img.link)
+    .filter(Boolean);
 
   const amenities = (item.roomFurniture || [])
     .map((f: any) => f.name || f.furniture?.name)
@@ -75,6 +80,9 @@ export const mapBackendRoomToRoom = (item: any): Room => {
     images: images.length > 0 ? images : [
       'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
     ],
+    imageThumbnails: imageThumbnails.length > 0 ? imageThumbnails : (images.length > 0 ? images : [
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+    ]),
     amenities: amenities.length > 0 ? amenities : ['Điều hòa', 'Wifi', 'Nóng lạnh', 'Giờ giấc tự do'],
     description: `Phòng thuộc ${house.name || 'nhà trọ'}, địa chỉ ${house.address || 'Hà Nội'}. Diện tích ${areaNum}m², vị trí thoáng mát, an ninh tốt.`,
     latitude: house.lat !== undefined && house.lat !== null ? Number(house.lat) : undefined,
@@ -121,6 +129,10 @@ interface PublicFeedResult {
   rooms: Room[];
   totalItems: number;
   totalPages: number;
+  // true nếu request thất bại (mất mạng, lỗi server...) và kết quả rỗng ở trên chỉ là giá trị
+  // fallback — KHÔNG phải nghĩa "không có phòng nào khớp bộ lọc". Caller (vd RoomList.tsx) cần
+  // check field này để phân biệt 2 trạng thái, thay vì coi mọi mảng rỗng là "không tìm thấy".
+  hadError?: boolean;
 }
 
 const priceRangeToMinMax = (priceRange?: string): { minPrice?: number; maxPrice?: number } => {
@@ -182,11 +194,17 @@ const fetchPublicFeed = (params: PublicFeedParams): Promise<PublicFeedResult> =>
         rooms: Array.isArray(items) ? items.map(mapBackendRoomToRoom) : [],
         totalItems: metadata.totalItems ?? 0,
         totalPages: metadata.totalPages ?? 0,
+        hadError: false,
       };
     })
     .catch((error) => {
+      // Vẫn KHÔNG throw lên trên — nhiều nơi gọi gián tiếp hàm này (Home.tsx phòng nổi bật,
+      // RoomDetail.tsx phòng tương tự...) qua roomApi.getRooms()/getRoomsPaginated() mà không có
+      // .catch() riêng, throw thẳng ở đây sẽ tạo unhandled rejection ở những chỗ đó. Thay vào đó
+      // đánh dấu hadError:true để caller nào cần phân biệt (RoomList.tsx) tự throw lại đúng lúc
+      // họ cần (trong queryFn của react-query) — xem RoomList.tsx.
       console.warn('Failed to fetch rooms from backend API:', error);
-      return { rooms: [], totalItems: 0, totalPages: 0 };
+      return { rooms: [], totalItems: 0, totalPages: 0, hadError: true };
     })
     .finally(() => {
       setTimeout(() => {

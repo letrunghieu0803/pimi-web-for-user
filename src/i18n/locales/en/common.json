@@ -347,7 +347,10 @@
     "sortPriceDesc": "Price: High to Low",
     "emptyTitle": "No matching rooms found",
     "emptyDesc": "Try changing the area, price range, or reset all filters to see more results.",
-    "resetFilters": "Reset filters"
+    "resetFilters": "Reset filters",
+    "errorTitle": "Couldn't load rooms",
+    "errorDesc": "Something went wrong connecting to the server. Please check your connection and try again.",
+    "retryButton": "Try again"
   },
   "notifications": {
     "title": "Your Notifications",
@@ -501,7 +504,9 @@
     "priceRangeLabel": "Rent Price Range (VND / Month)",
     "priceAll": "All prices",
     "priceOver8": "Over 8 million",
-    "amenitiesLabel": "Amenities"
+    "amenitiesLabel": "Amenities",
+    "moreFiltersButton": "Filters",
+    "applyFiltersButton": "Apply"
   },
   "pagination": {
     "showingRange": "Showing {{start}}–{{end}} of {{total}}"

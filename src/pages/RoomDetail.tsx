@@ -185,8 +185,54 @@ export const RoomDetail: React.FC = () => {
   const roomSeoDescription = (room.description || '').replace(/\s+/g, ' ').trim().slice(0, 160) ||
     t('seo.roomDetailFallbackDescription', { name: room.name, address: room.address });
 
+  // Nút hành động chính (giống hệt logic trong sidebar gốc) — dùng lại nguyên khối này ở cả
+  // sidebar (>= lg) lẫn thanh CTA sticky mobile (< lg) để KHÔNG tạo ra 2 nguồn sự thật cho
+  // cùng 1 hành vi (đặt & thanh toán / đặt lịch xem phòng / trạng thái lịch hẹn hiện tại).
+  const primaryActionButton = canBookShortTerm ? (
+    <button
+      onClick={handleBookAndPay}
+      disabled={bookingSubmitting}
+      className="w-full py-4 rounded-2xl gradient-bg text-white font-bold text-sm shadow-xl shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+    >
+      <Wallet className="w-5 h-5" />
+      <span>{bookingSubmitting ? t('roomDetail.creatingBooking') : t('roomDetail.bookAndPayButton')}</span>
+    </button>
+  ) : activeAppointment ? (
+    activeAppointment.status === 'PENDING_OWNER' ? (
+      <div className="w-full py-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed text-center px-3">
+        <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+        <span>{t('roomDetail.statusPending')}</span>
+      </div>
+    ) : activeAppointment.status === 'OWNER_OFFERED_TIMES' ? (
+      <button
+        onClick={() => navigate('/appointments')}
+        className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xl shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 text-center px-3"
+      >
+        <AlertCircle className="w-4 h-4 text-amber-300 shrink-0" />
+        <span>{t('roomDetail.statusOffered')}</span>
+      </button>
+    ) : (
+      <button
+        onClick={() => navigate('/appointments')}
+        className="w-full py-4 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-xl shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 text-center px-3"
+      >
+        <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+        <span>{t('roomDetail.statusConfirmed')}</span>
+      </button>
+    )
+  ) : (
+    <button
+      onClick={handleRequestViewing}
+      disabled={submitting}
+      className="w-full py-4 rounded-2xl gradient-bg text-white font-bold text-sm shadow-xl shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+    >
+      <CalendarCheck className="w-5 h-5" />
+      <span>{submitting ? t('roomDetail.sending') : t('roomDetail.requestViewingButton')}</span>
+    </button>
+  );
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-28 lg:pb-8 space-y-10">
       <Seo
         title={`${room.name} - ${room.address}`}
         description={roomSeoDescription}
@@ -277,6 +323,11 @@ export const RoomDetail: React.FC = () => {
               <img
                 src={room.images[activeImageIndex] || room.images[0]}
                 alt={room.name}
+                // Ảnh chính là nội dung LCP của trang chi tiết phòng — tải ngay + ưu tiên cao,
+                // KHÔNG lazy (khác các ảnh thumbnail bên dưới).
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-4 left-4 bg-emerald-500/90 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md flex items-center gap-1 shadow-md">
@@ -302,7 +353,13 @@ export const RoomDetail: React.FC = () => {
                         : 'border-transparent opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img
+                      src={img}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                    />
                   </button>
                 ))}
               </div>
@@ -463,48 +520,7 @@ export const RoomDetail: React.FC = () => {
 
             {/* Direct Primary Actions */}
             <div className="space-y-3">
-              {canBookShortTerm ? (
-                <button
-                  onClick={handleBookAndPay}
-                  disabled={bookingSubmitting}
-                  className="w-full py-4 rounded-2xl gradient-bg text-white font-bold text-sm shadow-xl shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                >
-                  <Wallet className="w-5 h-5" />
-                  <span>{bookingSubmitting ? t('roomDetail.creatingBooking') : t('roomDetail.bookAndPayButton')}</span>
-                </button>
-              ) : activeAppointment ? (
-                activeAppointment.status === 'PENDING_OWNER' ? (
-                  <div className="w-full py-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed text-center px-3">
-                    <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>{t('roomDetail.statusPending')}</span>
-                  </div>
-                ) : activeAppointment.status === 'OWNER_OFFERED_TIMES' ? (
-                  <button
-                    onClick={() => navigate('/appointments')}
-                    className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xl shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 text-center px-3"
-                  >
-                    <AlertCircle className="w-4 h-4 text-amber-300 shrink-0" />
-                    <span>{t('roomDetail.statusOffered')}</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => navigate('/appointments')}
-                    className="w-full py-4 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-xl shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 text-center px-3"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
-                    <span>{t('roomDetail.statusConfirmed')}</span>
-                  </button>
-                )
-              ) : (
-                <button
-                  onClick={handleRequestViewing}
-                  disabled={submitting}
-                  className="w-full py-4 rounded-2xl gradient-bg text-white font-bold text-sm shadow-xl shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                >
-                  <CalendarCheck className="w-5 h-5" />
-                  <span>{submitting ? t('roomDetail.sending') : t('roomDetail.requestViewingButton')}</span>
-                </button>
-              )}
+              {primaryActionButton}
 
               {hasCollaborators && (
                 <button
@@ -566,6 +582,24 @@ export const RoomDetail: React.FC = () => {
           onClose={() => setShowCollaboratorModal(false)}
         />
       )}
+
+      {/* Sticky mobile CTA — dưới lg, sidebar gốc (giá + nút hành động) nằm sau toàn bộ
+          gallery/thông số/tiện ích/mô tả/bản đồ trong DOM khi xếp chồng 1 cột, nên người
+          dùng phải cuộn rất xa mới thấy nút hành động chính. Thanh này luôn hiện trên mobile
+          bất kể vị trí cuộn (chấp nhận trùng với sidebar gốc khi đã cuộn tới đó) để tránh
+          logic ẩn/hiện theo scroll phức tạp không cần thiết. Từ lg trở lên ẩn hẳn — sidebar
+          sticky gốc đã đủ tốt. */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-slate-200/80 shadow-[0_-8px_24px_-8px_rgba(15,23,42,0.15)] px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+        <div className="flex items-center gap-3">
+          <div className="shrink-0 leading-tight">
+            <span className="block text-[10px] text-slate-500 font-semibold">{t('roomDetail.listedPrice')}</span>
+            <span className="block text-base font-black text-emerald-600 font-heading whitespace-nowrap">
+              {formatPrice(room.price)}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">{primaryActionButton}</div>
+        </div>
+      </div>
     </div>
   );
 };
