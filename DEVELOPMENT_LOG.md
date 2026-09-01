@@ -4,6 +4,18 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-02 — P1: escape JSON-LD chống XSS, giảm re-render thừa ở FavoritesContext
+
+**Vì sao:** Tiếp nối đợt vá P0 (sanitize HTML tin tức) — 2 hạng mục P1 còn lại của trang này.
+
+**1. `JsonLd.tsx`:** `JSON.stringify(data)` render thẳng vào `<script type="application/ld+json">` qua `dangerouslySetInnerHTML` không escape gì — nếu 1 chuỗi trong `data` (vd tiêu đề bài tin tức, cùng nguồn dữ liệu admin-nhập với lỗi XSS đã vá ở P0) chứa `</script>`, trình duyệt đóng thẻ script ngay tại đó bất kể đang ở trong JS string hay không, cho phép chèn thẻ `<script>` mới thực thi. Thêm `.replace(/</g, '\\u003c')` sau `JSON.stringify` — vẫn là JSON hợp lệ, chỉ không còn ký tự `<` thô nào để trình duyệt hiểu nhầm là thẻ mới.
+
+**2. `FavoritesContext.tsx`:** `value` truyền vào `Provider` là object literal tạo mới MỖI LẦN render (không `useMemo`) — mọi component gọi `useFavorites()` re-render dù giá trị không đổi. `isFavorited`/`toggleFavorite` phụ thuộc `[favoriteIds]` nên cũng bị tạo lại mỗi khi có 1 toggle bất kỳ chạy qua (dù ở phòng nào), khuếch đại vấn đề. Sửa: giữ `favoriteIdsRef` đồng bộ với state, đọc qua ref bên trong 2 hàm này để chúng KHÔNG cần liệt kê `favoriteIds` trong dependency (giữ nguyên reference qua mọi lần render); bọc `value` bằng `useMemo`. `RoomCard.tsx` (render lặp lại nhiều lần trong danh sách) bọc thêm `React.memo`. **Giới hạn đã biết, không giải quyết trong đợt này:** khi `favoriteIds` THẬT SỰ đổi (ai đó toggle 1 phòng), Context API vẫn broadcast cho MỌI consumer đang mounted bất kể có liên quan hay không — cần tách context theo từng `roomId` (kiến trúc khác hẳn) mới giải quyết triệt để, ngoài phạm vi sửa nhanh này.
+
+**Đã kiểm tra:** `npx tsc -b` + `npm run build` sạch cho cả 2 file.
+
+---
+
 ## 2026-09-02 — P0: sanitize HTML tin tức trước khi render (chặn Stored XSS)
 
 **Vì sao:** `NewsDetail.tsx` render `article.content`/`article.excerpt` (nội dung admin nhập ở CMS, dạng rich-text/HTML) thẳng qua `dangerouslySetInnerHTML`, không qua bước sanitize nào. Admin nhập nhầm hoặc tài khoản admin bị chiếm có thể chèn `<script>`/`onerror=...`/... chạy thẳng trên trình duyệt của MỌI người đọc bài viết đó (Stored XSS) — độc lập với việc backend có làm sạch HTML lúc lưu hay không, phía client vẫn nên tự vệ.
