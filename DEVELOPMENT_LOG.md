@@ -4,6 +4,19 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-02 — P0: sanitize HTML tin tức trước khi render (chặn Stored XSS)
+
+**Vì sao:** `NewsDetail.tsx` render `article.content`/`article.excerpt` (nội dung admin nhập ở CMS, dạng rich-text/HTML) thẳng qua `dangerouslySetInnerHTML`, không qua bước sanitize nào. Admin nhập nhầm hoặc tài khoản admin bị chiếm có thể chèn `<script>`/`onerror=...`/... chạy thẳng trên trình duyệt của MỌI người đọc bài viết đó (Stored XSS) — độc lập với việc backend có làm sạch HTML lúc lưu hay không, phía client vẫn nên tự vệ.
+
+**Thay đổi:**
+- Thêm dependency `dompurify` + `@types/dompurify`.
+- `src/pages/NewsDetail.tsx`: thêm `sanitizedContent` (`useMemo`, phụ thuộc `article?.content`/`article?.excerpt`) gọi `DOMPurify.sanitize(...)`, dùng giá trị này thay cho `article.content || article.excerpt` ở `dangerouslySetInnerHTML`.
+- Đã grep lại toàn bộ `src/` — chỗ `dangerouslySetInnerHTML` còn lại duy nhất là `JsonLd.tsx` (`JSON.stringify(data)` cho `<script type="application/ld+json">`, không phải HTML từ CMS — thuộc 1 hạng mục P1 khác trong kế hoạch: escape `</script>` trong chuỗi JSON, chưa xử lý ở đợt này).
+
+**Đã kiểm tra:** `npx tsc -b` sạch, `npm run build` sạch (cảnh báo sitemap fetch-fail chỉ do backend cục bộ không chạy trong môi trường build, không liên quan).
+
+---
+
 ## 2026-09-01 — Tìm kiếm: bỏ tự động tìm kiếm, lưu trạng thái vào URL (share/SEO)
 
 **Vì sao:** Trước đây MỌI thay đổi ở `RoomFilterBar` (gõ từ khoá, đổi quận/huyện, bấm tiện ích, bật GPS...) gọi thẳng `onChange` khiến `RoomList` refetch API ngay lập tức — tự động tìm kiếm liên tục, tốn request. Đồng thời `filters` chỉ đọc từ URL 1 LẦN lúc mount rồi không bao giờ ghi ngược lại — URL luôn đứng yên dù người dùng đổi bộ lọc, không thể copy link chia sẻ đúng kết quả đang xem, cũng không có ngữ cảnh cho SEO.
