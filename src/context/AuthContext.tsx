@@ -30,7 +30,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (usernameOrPhone: string, pass: string) => Promise<AuthResult>;
   register: (fullName: string, phoneNumber: string, email: string, pass: string) => Promise<AuthResult>;
-  markEmailVerified: () => void;
+  completeEmailVerification: (response: any, fallbackFullName?: string) => Promise<void>;
   updateProfile: (updatedData: Partial<UserProfile>) => void;
   logout: () => void;
 }
@@ -65,6 +65,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user]);
 
+  // Dùng chung cho login() VÀ completeEmailVerification() — cả 2 endpoint backend
+  // (/auth/login, /auth/verify-email) giờ trả cùng 1 hình dạng response {accessToken,
+  // refreshToken, role, csrfToken} (không có object "user"), tự set cookie httpOnly + phải tự
+  // gọi /users/me lấy hồ sơ thật (trước đây code cũ âm thầm dùng 1 object rỗng, khiến id/email
+  // luôn rỗng/giả).
+  const applyAuthenticatedProfile = async (
+    response: any,
+    fallback?: { fullName?: string; phoneNumber?: string },
+  ): Promise<void> => {
+    // Token giờ do backend tự set qua cookie httpOnly (kèm theo response nhờ
+    // `withCredentials: true` ở axiosClient) — không tự đọc/lưu accessToken vào localStorage
+    // nữa như trước.
+    setCsrfToken(response?.csrfToken);
+
+    let rawUser: any = {};
+    try {
+      const profileRes: any = await axiosClient.get('/v1/users/me');
+      rawUser = profileRes?.data || profileRes || {};
+    } catch (profileErr) {
+      console.warn('Failed to fetch full profile:', profileErr);
+    }
+
+    const fullName =
+      [rawUser.lastName, rawUser.firstName].filter(Boolean).join(' ') ||
+      rawUser.username ||
+      fallback?.fullName ||
+      rawUser.email ||
+      '';
+
+    const profile: UserProfile = {
+      id: rawUser.id || `tenant-${Date.now()}`,
+      fullName,
+      phoneNumber: rawUser.phoneNumber || fallback?.phoneNumber || '',
+      email: rawUser.email,
+      avatar: rawUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+      role: 'RENT_USER',
+      isVerified: true,
+      createdAt: rawUser.createdAt || new Date().toISOString(),
+    };
+
+    setUser(profile);
+  };
+
   const login = async (usernameOrPhone: string, pass: string): Promise<AuthResult> => {
     try {
       // loginAs='RENT_USER' — web này luôn đăng nhập với vai trò người thuê, kể cả cho tài
@@ -78,37 +121,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loginAs: 'RENT_USER',
       });
 
-      // Token giờ do backend tự set qua cookie httpOnly (kèm theo response nhờ
-      // `withCredentials: true` ở axiosClient) — không tự đọc/lưu accessToken vào localStorage
-      // nữa như trước.
-      setCsrfToken(response?.csrfToken);
-
-      // Response của /v1/auth/login KHÔNG có object "user" (chỉ {accessToken, refreshToken,
-      // role}) — phải tự gọi /v1/users/me để lấy hồ sơ thật (trước đây code này âm thầm dùng
-      // 1 object rỗng, khiến id/email luôn rỗng/giả).
-      let rawUser: any = {};
-      try {
-        const profileRes: any = await axiosClient.get('/v1/users/me');
-        rawUser = profileRes?.data || profileRes || {};
-      } catch (profileErr) {
-        console.warn('Failed to fetch full profile after login:', profileErr);
-      }
-
-      const fullName = [rawUser.lastName, rawUser.firstName].filter(Boolean).join(' ') || rawUser.username || usernameOrPhone;
-
-      // When backend /v1/auth/login succeeds, the user's email is verified
-      const profile: UserProfile = {
-        id: rawUser.id || `tenant-${Date.now()}`,
-        fullName,
-        phoneNumber: rawUser.phoneNumber || usernameOrPhone,
-        email: rawUser.email,
-        avatar: rawUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
-        role: 'RENT_USER',
-        isVerified: true,
-        createdAt: rawUser.createdAt || new Date().toISOString(),
-      };
-
-      setUser(profile);
+      await applyAuthenticatedProfile(response, { fullName: usernameOrPhone, phoneNumber: usernameOrPhone });
 
       return {
         success: true,
@@ -143,7 +156,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const lastName = nameParts[0] || '';
       const firstName = nameParts.slice(1).join(' ') || lastName;
 
-      const response: any = await axiosClient.post('/v1/auth/register', {
+      await axiosClient.post('/v1/auth/register', {
         username: phoneNumber.trim(),
         phoneNumber: phoneNumber.trim(),
         email: email.trim().toLowerCase(),
@@ -153,23 +166,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         userRole: 'RENT_USER',
       });
 
-      const data = response?.data || response;
-      const rawUser = data?.user || {};
-      // Token (nếu backend có trả) giờ do backend tự set qua cookie httpOnly — không tự
-      // đọc/lưu vào localStorage nữa.
-
-      const profile: UserProfile = {
-        id: rawUser.id || `tenant-${Date.now()}`,
-        fullName,
-        phoneNumber,
-        email,
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
-        role: 'RENT_USER',
-        isVerified: false,
-        createdAt: new Date().toISOString(),
-      };
-
-      setUser(profile);
+      // `POST /auth/register` chỉ trả 1 chuỗi thông báo, KHÔNG cấp token/cookie nào (tài khoản
+      // còn NEW_REGISTER, chưa xác thực email) — trước đây ở đây tự đặt `setUser(profile)` LẠC
+      // QUAN dựa thẳng vào dữ liệu form vừa gõ, khiến `isAuthenticated` thành `true` dù chưa hề
+      // có phiên đăng nhập thật nào (không cookie, không token) — mọi API cần xác thực sau đó
+      // (kể cả bấm linh tinh trước khi verify OTP) âm thầm 401. Không set user ở đây nữa — chỉ
+      // thật sự "đăng nhập" sau khi `completeEmailVerification()` xác thực OTP thành công (xem
+      // VerifyEmail.tsx), đúng lúc backend mới cấp token thật.
 
       return {
         success: true,
@@ -187,10 +190,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const markEmailVerified = () => {
-    if (user) {
-      setUser({ ...user, isVerified: true });
-    }
+  // Gọi sau khi POST /v1/auth/verify-email thành công (VerifyEmail.tsx) — backend giờ cấp token
+  // thật + set cookie ngay lúc xác thực OTP đúng, đây là lần đầu tiên user thật sự có phiên đăng
+  // nhập kể từ lúc bắt đầu đăng ký.
+  const completeEmailVerification = async (response: any, fallbackFullName?: string): Promise<void> => {
+    await applyAuthenticatedProfile(response, { fullName: fallbackFullName });
   };
 
   const updateProfile = (updatedData: Partial<UserProfile>) => {
@@ -218,7 +222,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated: !!user,
         login,
         register,
-        markEmailVerified,
+        completeEmailVerification,
         updateProfile,
         logout,
       }}

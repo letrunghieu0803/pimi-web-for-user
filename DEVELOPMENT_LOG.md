@@ -4,6 +4,19 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-02 — Vá lỗi "đăng nhập giả" sau đăng ký — isAuthenticated không dựa trên phiên thật
+
+**Vì sao:** Phát hiện qua live-test đăng ký tài khoản mới thật (xem `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày để biết đầy đủ nguyên nhân + fix backend). Backend trước đây (`register()`/`verifyEmail()`) không hề cấp token/cookie nào, nhưng `AuthContext.tsx` vẫn tự đặt `user` (→ `isAuthenticated: true`) chỉ dựa vào dữ liệu form người dùng gõ — không có phiên đăng nhập thật nào phía sau, mọi API cần xác thực (kể cả badge thông báo hiển thị ngay trên header) âm thầm 401.
+
+**Thay đổi:**
+- `register()`: bỏ hẳn `setUser(profile)` lạc quan — đăng ký thành công KHÔNG còn nghĩa là "đã đăng nhập" (đúng bản chất: tài khoản còn `NEW_REGISTER`, chưa xác thực).
+- Tách logic dùng chung (set csrfToken + gọi `/users/me` lấy hồ sơ thật + `setUser`) thành `applyAuthenticatedProfile()`, dùng lại cho cả `login()` và method mới `completeEmailVerification()` (thay `markEmailVerified()` cũ — chỉ đổi 1 field cục bộ, không có phiên thật).
+- `VerifyEmail.tsx`: gọi `completeEmailVerification(response, email)` với response thật từ `POST /auth/verify-email` (giờ đã có `accessToken`/`refreshToken`/`csrfToken` — xem thay đổi backend) thay vì `markEmailVerified()`.
+
+**Đã kiểm tra:** `npx tsc -b` sạch. Live-test qua Browser pane: đăng ký tài khoản mới → xác thực đúng OTP → `GET /users/me` trả `200` với hồ sơ thật ngay lập tức (trước đây `401`); mở tab mới xác nhận session cookie thật sự tồn tại, không phải chỉ state cục bộ; badge thông báo trên header hết báo lỗi 401.
+
+---
+
 ## 2026-09-02 — P1: escape JSON-LD chống XSS, giảm re-render thừa ở FavoritesContext
 
 **Vì sao:** Tiếp nối đợt vá P0 (sanitize HTML tin tức) — 2 hạng mục P1 còn lại của trang này.

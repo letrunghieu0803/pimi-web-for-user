@@ -13,7 +13,7 @@ export const VerifyEmail: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const { user, markEmailVerified } = useAuth();
+  const { user, completeEmailVerification } = useAuth();
 
   const emailParam = searchParams.get('email') || user?.email || '';
   const [email, setEmail] = useState(emailParam);
@@ -52,12 +52,15 @@ export const VerifyEmail: React.FC = () => {
 
     setLoading(true);
     try {
-      await axiosClient.post('/v1/auth/verify-email', {
+      const response: any = await axiosClient.post('/v1/auth/verify-email', {
         email: email.trim().toLowerCase(),
         otp: otp.trim(),
       });
 
-      markEmailVerified();
+      // Backend giờ cấp token thật + set cookie ngay khi xác thực OTP đúng — thay vì chỉ đặt cờ
+      // "đã xác thực" trên state cục bộ (trước đây không hề có phiên đăng nhập thật nào phía sau,
+      // mọi API cần xác thực sau đó âm thầm 401).
+      await completeEmailVerification(response, email.trim());
       toast.success(t('verifyEmail.toastVerifySuccess'));
       navigate('/', { replace: true });
     } catch (err: any) {
