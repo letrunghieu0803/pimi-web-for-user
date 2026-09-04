@@ -12,7 +12,13 @@ interface RoomCardProps {
   onRequestTour?: (room: Room) => void;
 }
 
-export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
+// React.memo: RoomCard được render lặp lại rất nhiều lần trong 1 danh sách (RoomList/Home/...) —
+// bọc memo để tránh re-render khi component cha (danh sách) re-render vì lý do không liên quan gì
+// đến chính thẻ này (props `room`/`onRequestTour` không đổi). Không giải quyết được trường hợp
+// TOÀN BỘ thẻ đang mounted re-render khi có 1 phòng BẤT KỲ được toggle yêu thích (FavoritesContext
+// broadcast theo Context API, không phân biệt theo từng roomId) — đó là hạn chế kiến trúc sâu hơn,
+// cần tách context theo từng item mới giải quyết triệt để, ngoài phạm vi sửa nhanh này.
+const RoomCardComponent: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const toast = useToast();
@@ -213,3 +219,5 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
     </div>
   );
 };
+
+export const RoomCard = React.memo(RoomCardComponent);

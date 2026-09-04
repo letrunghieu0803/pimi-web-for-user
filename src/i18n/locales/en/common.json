@@ -506,7 +506,7 @@
     "priceOver8": "Over 8 million",
     "amenitiesLabel": "Amenities",
     "moreFiltersButton": "Filters",
-    "applyFiltersButton": "Apply"
+    "searchButton": "Search"
   },
   "pagination": {
     "showingRange": "Showing {{start}}–{{end}} of {{total}}"

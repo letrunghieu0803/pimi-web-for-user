@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { newsApi, NewsItem } from '@/services/newsApi';
 import { ArrowLeft, Calendar, Clock, Share2, Newspaper, Sparkles, BookOpen, Check } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
@@ -16,6 +17,15 @@ export const NewsDetail: React.FC = () => {
   const [relatedNews, setRelatedNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+
+  // Nội dung tin tức lấy từ CMS (admin nhập rich-text) — chưa qua sanitize trước đây thì
+  // dangerouslySetInnerHTML render thẳng, admin (hoặc ai chiếm được tài khoản admin) chèn
+  // <script>/onerror=... là chạy ngay trên trình duyệt của MỌI người đọc bài (Stored XSS).
+  // Sanitize lại ở đây (client) trước khi render, độc lập với việc backend có làm hay chưa.
+  const sanitizedContent = useMemo(() => {
+    const raw = article?.content || article?.excerpt || '';
+    return DOMPurify.sanitize(raw);
+  }, [article?.content, article?.excerpt]);
 
   useEffect(() => {
     if (!id) return;
@@ -159,7 +169,7 @@ export const NewsDetail: React.FC = () => {
         <section className="w-full overflow-hidden">
           <div
             className="prose prose-indigo prose-lg max-w-none text-slate-700 leading-relaxed font-sans space-y-6 break-words overflow-hidden [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-2xl [&_img]:my-6 [&_img]:shadow-lg [&_iframe]:max-w-full [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:max-w-full [&_table]:overflow-x-auto [&>p]:mb-4 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-slate-900 [&>h2]:font-heading [&>h2]:mt-8 [&>h2]:mb-3 [&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-slate-800 [&>ul]:list-disc [&>ul]:pl-6 [&>ol]:list-decimal [&>ol]:pl-6"
-            dangerouslySetInnerHTML={{ __html: article.content || article.excerpt }}
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
         </section>
 

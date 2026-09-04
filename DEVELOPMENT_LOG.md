@@ -4,6 +4,63 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-02 — Vá lỗi "đăng nhập giả" sau đăng ký — isAuthenticated không dựa trên phiên thật
+
+**Vì sao:** Phát hiện qua live-test đăng ký tài khoản mới thật (xem `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày để biết đầy đủ nguyên nhân + fix backend). Backend trước đây (`register()`/`verifyEmail()`) không hề cấp token/cookie nào, nhưng `AuthContext.tsx` vẫn tự đặt `user` (→ `isAuthenticated: true`) chỉ dựa vào dữ liệu form người dùng gõ — không có phiên đăng nhập thật nào phía sau, mọi API cần xác thực (kể cả badge thông báo hiển thị ngay trên header) âm thầm 401.
+
+**Thay đổi:**
+- `register()`: bỏ hẳn `setUser(profile)` lạc quan — đăng ký thành công KHÔNG còn nghĩa là "đã đăng nhập" (đúng bản chất: tài khoản còn `NEW_REGISTER`, chưa xác thực).
+- Tách logic dùng chung (set csrfToken + gọi `/users/me` lấy hồ sơ thật + `setUser`) thành `applyAuthenticatedProfile()`, dùng lại cho cả `login()` và method mới `completeEmailVerification()` (thay `markEmailVerified()` cũ — chỉ đổi 1 field cục bộ, không có phiên thật).
+- `VerifyEmail.tsx`: gọi `completeEmailVerification(response, email)` với response thật từ `POST /auth/verify-email` (giờ đã có `accessToken`/`refreshToken`/`csrfToken` — xem thay đổi backend) thay vì `markEmailVerified()`.
+
+**Đã kiểm tra:** `npx tsc -b` sạch. Live-test qua Browser pane: đăng ký tài khoản mới → xác thực đúng OTP → `GET /users/me` trả `200` với hồ sơ thật ngay lập tức (trước đây `401`); mở tab mới xác nhận session cookie thật sự tồn tại, không phải chỉ state cục bộ; badge thông báo trên header hết báo lỗi 401.
+
+---
+
+## 2026-09-02 — P1: escape JSON-LD chống XSS, giảm re-render thừa ở FavoritesContext
+
+**Vì sao:** Tiếp nối đợt vá P0 (sanitize HTML tin tức) — 2 hạng mục P1 còn lại của trang này.
+
+**1. `JsonLd.tsx`:** `JSON.stringify(data)` render thẳng vào `<script type="application/ld+json">` qua `dangerouslySetInnerHTML` không escape gì — nếu 1 chuỗi trong `data` (vd tiêu đề bài tin tức, cùng nguồn dữ liệu admin-nhập với lỗi XSS đã vá ở P0) chứa `</script>`, trình duyệt đóng thẻ script ngay tại đó bất kể đang ở trong JS string hay không, cho phép chèn thẻ `<script>` mới thực thi. Thêm `.replace(/</g, '\\u003c')` sau `JSON.stringify` — vẫn là JSON hợp lệ, chỉ không còn ký tự `<` thô nào để trình duyệt hiểu nhầm là thẻ mới.
+
+**2. `FavoritesContext.tsx`:** `value` truyền vào `Provider` là object literal tạo mới MỖI LẦN render (không `useMemo`) — mọi component gọi `useFavorites()` re-render dù giá trị không đổi. `isFavorited`/`toggleFavorite` phụ thuộc `[favoriteIds]` nên cũng bị tạo lại mỗi khi có 1 toggle bất kỳ chạy qua (dù ở phòng nào), khuếch đại vấn đề. Sửa: giữ `favoriteIdsRef` đồng bộ với state, đọc qua ref bên trong 2 hàm này để chúng KHÔNG cần liệt kê `favoriteIds` trong dependency (giữ nguyên reference qua mọi lần render); bọc `value` bằng `useMemo`. `RoomCard.tsx` (render lặp lại nhiều lần trong danh sách) bọc thêm `React.memo`. **Giới hạn đã biết, không giải quyết trong đợt này:** khi `favoriteIds` THẬT SỰ đổi (ai đó toggle 1 phòng), Context API vẫn broadcast cho MỌI consumer đang mounted bất kể có liên quan hay không — cần tách context theo từng `roomId` (kiến trúc khác hẳn) mới giải quyết triệt để, ngoài phạm vi sửa nhanh này.
+
+**Đã kiểm tra:** `npx tsc -b` + `npm run build` sạch cho cả 2 file.
+
+---
+
+## 2026-09-02 — P0: sanitize HTML tin tức trước khi render (chặn Stored XSS)
+
+**Vì sao:** `NewsDetail.tsx` render `article.content`/`article.excerpt` (nội dung admin nhập ở CMS, dạng rich-text/HTML) thẳng qua `dangerouslySetInnerHTML`, không qua bước sanitize nào. Admin nhập nhầm hoặc tài khoản admin bị chiếm có thể chèn `<script>`/`onerror=...`/... chạy thẳng trên trình duyệt của MỌI người đọc bài viết đó (Stored XSS) — độc lập với việc backend có làm sạch HTML lúc lưu hay không, phía client vẫn nên tự vệ.
+
+**Thay đổi:**
+- Thêm dependency `dompurify` + `@types/dompurify`.
+- `src/pages/NewsDetail.tsx`: thêm `sanitizedContent` (`useMemo`, phụ thuộc `article?.content`/`article?.excerpt`) gọi `DOMPurify.sanitize(...)`, dùng giá trị này thay cho `article.content || article.excerpt` ở `dangerouslySetInnerHTML`.
+- Đã grep lại toàn bộ `src/` — chỗ `dangerouslySetInnerHTML` còn lại duy nhất là `JsonLd.tsx` (`JSON.stringify(data)` cho `<script type="application/ld+json">`, không phải HTML từ CMS — thuộc 1 hạng mục P1 khác trong kế hoạch: escape `</script>` trong chuỗi JSON, chưa xử lý ở đợt này).
+
+**Đã kiểm tra:** `npx tsc -b` sạch, `npm run build` sạch (cảnh báo sitemap fetch-fail chỉ do backend cục bộ không chạy trong môi trường build, không liên quan).
+
+---
+
+## 2026-09-01 — Tìm kiếm: bỏ tự động tìm kiếm, lưu trạng thái vào URL (share/SEO)
+
+**Vì sao:** Trước đây MỌI thay đổi ở `RoomFilterBar` (gõ từ khoá, đổi quận/huyện, bấm tiện ích, bật GPS...) gọi thẳng `onChange` khiến `RoomList` refetch API ngay lập tức — tự động tìm kiếm liên tục, tốn request. Đồng thời `filters` chỉ đọc từ URL 1 LẦN lúc mount rồi không bao giờ ghi ngược lại — URL luôn đứng yên dù người dùng đổi bộ lọc, không thể copy link chia sẻ đúng kết quả đang xem, cũng không có ngữ cảnh cho SEO.
+
+**Thay đổi:**
+- `src/components/filter/RoomFilterBar.tsx`: chuyển từ "gọi API ngay khi đổi filter" sang "form + nút Tìm kiếm". Component tự giữ state `draft` (mọi thao tác — gõ, chọn, bấm tiện ích, bật GPS, đổi loại thuê — chỉ cập nhật `draft`, không gọi API). Bọc toàn bộ trong `<form onSubmit>` — bấm nút "Tìm kiếm" (đặt cạnh ô từ khoá + trong `advancedFilters`) hoặc nhấn Enter trong ô từ khoá mới thật sự submit. Bỏ hẳn cơ chế debounce-tự-động-tìm-kiếm cũ (`SEARCH_DEBOUNCE_MS`) — không cần nữa vì gõ không còn tự bắn request. Props đổi từ `filters`/`onChange` sang `appliedFilters`/`onSubmit` (đúng ngữ nghĩa: 1 bên là trạng thái ĐANG ÁP DỤNG THẬT, 1 bên là hành động submit). Riêng modal bộ lọc mobile (render qua `createPortal` ra `document.body`) không nằm trong cây DOM thật của `<form>` nên nút "Tìm kiếm" ở đó gọi `handleSubmit()` bằng tay thay vì dựa vào `type="submit"`. Nhân tiện thêm `type="button"` cho các nút lọc trước đây thiếu (price pill, tiện ích, nút Đặt lại) — nếu không, khi nằm trong `<form>` mới, các nút này sẽ MẶC ĐỊNH `type="submit"` và vô tình submit ngay khi bấm.
+- `src/pages/RoomList.tsx`: thêm `filtersFromSearchParams`/`sortFromSearchParams`/`pageFromSearchParams` (đọc toàn bộ trạng thái tìm kiếm — filter, sort, trang — từ URL, không chỉ vài field như trước) và `buildSearchParams` (chiều ngược lại, bỏ qua field đang ở giá trị mặc định để URL gọn). Thêm effect ghi `filters`/`sortBy`/`pageNumber` vào URL qua `setSearchParams(..., { replace: true })` mỗi khi đổi — `replace: true` để tránh spam lịch sử trình duyệt mỗi lần đổi trang/sắp xếp. Effect reset về trang 1 khi đổi filter/sort được thêm cờ bỏ qua lần chạy đầu (`isFirstRender` ref) để không xoá mất `?page=N` của 1 link chia sẻ vừa mở.
+- Giữ nguyên hành vi canonical URL trong `<Seo>` (luôn trỏ `/rooms` không kèm query) — đã đúng từ trước, tránh Google index trùng lặp các tổ hợp filter khác nhau, không phải sửa gì thêm ở phần này.
+- `src/i18n/locales/{vi,en}/common.json`: đổi khoá `applyFiltersButton` (không còn dùng) thành `searchButton`.
+
+**Đã kiểm tra:** `npx tsc -b` sạch, `npm run build` sạch. Test trực tiếp qua browser (dev server, không có backend cục bộ nên phần kết quả luôn ở trạng thái lỗi tải — không ảnh hưởng test hành vi filter/URL):
+- Gõ vào ô từ khoá + bấm 1 price pill → xác nhận URL KHÔNG đổi trong lúc thao tác.
+- Bấm nút "Tìm kiếm" → URL đổi thành `?search=...&priceRange=...` đúng cả 2 giá trị cùng lúc.
+- Mở lại chính URL đó ở tab mới (giả lập mở link chia sẻ) → ô từ khoá và price pill tự động hiện đúng trạng thái đã lưu.
+- Bấm "Đặt lại bộ lọc" → URL về lại `/rooms` trần, áp dụng ngay (không cần bấm Tìm kiếm) — đúng thiết kế (Reset là hành động tức thời, khác với đang soạn 1 lượt tìm kiếm mới).
+- Luồng modal mobile: mở "Bộ lọc" → chọn 1 pill (không đổi URL) → bấm "Tìm kiếm" ở footer modal → URL cập nhật đúng + modal tự đóng.
+
+---
+
 ## 2026-08-31 — UI/UX Giai đoạn 3: sticky CTA đặt lịch xem phòng + thu gọn bộ lọc trên mobile
 
 **Vì sao:** Tiếp tục audit UI/UX (sau Giai đoạn 1 `62f6ade` và Giai đoạn 2 cùng ngày) phát hiện 2 vấn đề riêng cho mobile: (1) `RoomDetail.tsx` dùng `grid grid-cols-1 lg:grid-cols-3` — dưới `lg`, sidebar chứa giá + nút "Đặt lịch xem phòng" nằm SAU toàn bộ gallery/thông số/tiện ích/mô tả/bản đồ khi xếp chồng 1 cột, người dùng phải cuộn rất xa mới thấy nút hành động chính; (2) `RoomFilterBar.tsx` luôn hiển thị TOÀN BỘ khối lọc (toggle ngắn/dài hạn, tìm kiếm, 4 mục lọc, GPS/bán kính, dải giá, 10 chip tiện ích, nút reset) ở mọi kích thước màn hình — trên mobile khối này đẩy danh sách phòng xuống rất xa trước khi người dùng thấy kết quả nào.
