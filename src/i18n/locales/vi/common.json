@@ -565,5 +565,29 @@
     "commentHidden": "Bình luận đã bị ẩn bởi quản trị viên",
     "anonymousTenant": "Người thuê Pimi",
     "loadMore": "Xem thêm đánh giá"
+  },
+  "reportRoomModal": {
+    "triggerButton": "Tố cáo phòng",
+    "badge": "Tố cáo",
+    "title": "Tố cáo phòng này",
+    "reasonLabel": "Lý do",
+    "reasonOption": {
+      "MISLEADING_INFO": "Thông tin sai lệch",
+      "SCAM_FRAUD": "Lừa đảo/gian lận",
+      "ROOM_NOT_AS_DESCRIBED": "Phòng không đúng như mô tả",
+      "CONTRACT_VIOLATION": "Vi phạm hợp đồng",
+      "UNSAFE_CONDITION": "Điều kiện an toàn/vệ sinh kém",
+      "HARASSMENT": "Quấy rối/thái độ không đúng mực",
+      "OTHER": "Khác"
+    },
+    "detailLabel": "Chi tiết",
+    "detailPlaceholder": "Mô tả chi tiết vấn đề bạn gặp phải...",
+    "evidenceLabel": "Ảnh bằng chứng (không bắt buộc)",
+    "evidenceHint": "Tối đa {{max}} ảnh",
+    "cancelButton": "Huỷ",
+    "submitButton": "Gửi tố cáo",
+    "submitting": "Đang gửi...",
+    "toastNeedDetail": "Vui lòng nhập chi tiết tố cáo",
+    "toastSuccess": "Đã gửi tố cáo — đội ngũ Pimi sẽ xem xét sớm nhất"
   }
 }

@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { recentlyViewedApi } from '@/utils/recentlyViewed';
 import { RoomReviews } from '@/components/room/RoomReviews';
+import { ReportRoomButton } from '@/components/room/ReportRoomButton';
 import { RoomCard } from '@/components/common/RoomCard';
 import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
 import { MapPin, Maximize2, Users, ShieldCheck, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2 } from 'lucide-react';
@@ -547,6 +548,12 @@ export const RoomDetail: React.FC = () => {
 
           </div>
         </div>
+      </div>
+
+      {/* Tố cáo phòng — bất kỳ khách đã đăng nhập nào cũng gửi được, không cần từng thuê phòng
+          (khác RoomReviews bên dưới) — ngay lúc xem phòng, đang thuê, hay đã thuê xong. */}
+      <div className="flex justify-end">
+        <ReportRoomButton roomId={room.id} roomName={room.name} />
       </div>
 
       {/* Đánh giá sau khi ở — công khai, chỉ RENT_USER từng thuê phòng này mới viết được */}
