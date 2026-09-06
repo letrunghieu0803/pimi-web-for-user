@@ -4,6 +4,16 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-07 — Đồng bộ mã lỗi Room Report (theo fix bên bff-for-pimi)
+
+**Vì sao:** Rà soát tính năng Tố cáo phòng trước khi đưa lên mobile phát hiện 3 mã lỗi Room Report trùng với 3 mã lỗi cũ khác nghĩa hoàn toàn (xem chi tiết ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) — backend đã đổi sang mã mới (`000202`/`000203`/`000204`), cần đồng bộ `errors.json` ở repo này vì `getApiErrorMessage` tra message hiển thị theo code cục bộ.
+
+**Thay đổi:** Thêm 3 dòng `000202`/`000203`/`000204` vào `src/i18n/locales/{vi,en}/errors.json`, giữ nguyên các dòng cũ.
+
+**Đã kiểm tra:** JSON hợp lệ (parse thử qua `node -e`).
+
+---
+
 ## 2026-09-05 — Nút "Tố cáo phòng" trên trang chi tiết phòng + lịch sử đặt phòng
 
 **Vì sao:** Phần khách thuê của tính năng tố cáo phòng (chi tiết đầy đủ ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) — khách cần tố cáo được ngay lúc xem phòng, hoặc từ trang lịch sử đặt phòng khi đang thuê/đã thuê xong. Bắt buộc đăng nhập mới tố cáo được.
