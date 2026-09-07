@@ -565,5 +565,29 @@
     "commentHidden": "Comment hidden by admin",
     "anonymousTenant": "Pimi tenant",
     "loadMore": "Load more reviews"
+  },
+  "reportRoomModal": {
+    "triggerButton": "Report this room",
+    "badge": "Report",
+    "title": "Report this room",
+    "reasonLabel": "Reason",
+    "reasonOption": {
+      "MISLEADING_INFO": "Misleading information",
+      "SCAM_FRAUD": "Scam/fraud",
+      "ROOM_NOT_AS_DESCRIBED": "Room not as described",
+      "CONTRACT_VIOLATION": "Contract violation",
+      "UNSAFE_CONDITION": "Unsafe/unsanitary condition",
+      "HARASSMENT": "Harassment/misconduct",
+      "OTHER": "Other"
+    },
+    "detailLabel": "Detail",
+    "detailPlaceholder": "Describe the issue in detail...",
+    "evidenceLabel": "Evidence photos (optional)",
+    "evidenceHint": "Up to {{max}} photos",
+    "cancelButton": "Cancel",
+    "submitButton": "Submit report",
+    "submitting": "Submitting...",
+    "toastNeedDetail": "Please enter the report detail",
+    "toastSuccess": "Report submitted — our team will review it shortly"
   }
 }

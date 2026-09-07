@@ -130,5 +130,8 @@
   "000129": "Token không hợp lệ",
   "000130": "Truy cập bị từ chối do không đúng vai trò người dùng",
   "000196": "Tài khoản quản trị/cộng tác viên chỉ được đăng nhập tại trang quản trị",
-  "000197": "Tài khoản này không có quyền truy cập trang quản trị"
+  "000197": "Tài khoản này không có quyền truy cập trang quản trị",
+  "000202": "Một số ảnh bằng chứng không hợp lệ",
+  "000203": "Tố cáo này không ở đúng trạng thái để thực hiện thao tác này",
+  "000204": "Không tìm thấy tố cáo phòng"
 }

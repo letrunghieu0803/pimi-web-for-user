@@ -22,6 +22,7 @@ import { contractApi, Contract } from '@/services/contractApi';
 import { bookingApi, Booking } from '@/services/bookingApi';
 import { collaboratorApi, HouseCollaborator } from '@/services/collaboratorApi';
 import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
+import { ReportRoomButton } from '@/components/room/ReportRoomButton';
 
 // Lịch sử thuê hợp nhất từ 2 nguồn dữ liệu thật, khác hẳn nhau về bản chất — không còn khái
 // niệm "xác nhận trực tiếp với chủ nhà" (mock cũ tự bịa, hệ thống thật không có luồng này):
@@ -319,13 +320,21 @@ export const BookingHistory: React.FC = () => {
 
                   {/* Footer Actions */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-                    <Link
-                      to={`/rooms/${item.roomId}`}
-                      className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
-                    >
-                      <span>{t('bookingHistory.viewRoomDetails')}</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </Link>
+                    <div className="flex items-center gap-4">
+                      <Link
+                        to={`/rooms/${item.roomId}`}
+                        className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
+                      >
+                        <span>{t('bookingHistory.viewRoomDetails')}</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </Link>
+                      {/* Tố cáo phòng đang/đã thuê — cùng modal dùng ở trang chi tiết phòng. */}
+                      <ReportRoomButton
+                        roomId={item.roomId}
+                        roomName={item.roomName}
+                        variant="link"
+                      />
+                    </div>
 
                     <div className="flex items-center gap-2">
                       <button

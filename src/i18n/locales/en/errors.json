@@ -130,5 +130,8 @@
   "000129": "This token is not valid",
   "000130": "Access denied — your role doesn't have permission",
   "000196": "Admin and partner accounts can only log in on the admin site",
-  "000197": "This account does not have permission to access the admin site"
+  "000197": "This account does not have permission to access the admin site",
+  "000202": "Some evidence images are not valid",
+  "000203": "This room report is not in the correct status for this action",
+  "000204": "Room report not found"
 }

@@ -4,6 +4,30 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-07 — Đồng bộ mã lỗi Room Report (theo fix bên bff-for-pimi)
+
+**Vì sao:** Rà soát tính năng Tố cáo phòng trước khi đưa lên mobile phát hiện 3 mã lỗi Room Report trùng với 3 mã lỗi cũ khác nghĩa hoàn toàn (xem chi tiết ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) — backend đã đổi sang mã mới (`000202`/`000203`/`000204`), cần đồng bộ `errors.json` ở repo này vì `getApiErrorMessage` tra message hiển thị theo code cục bộ.
+
+**Thay đổi:** Thêm 3 dòng `000202`/`000203`/`000204` vào `src/i18n/locales/{vi,en}/errors.json`, giữ nguyên các dòng cũ.
+
+**Đã kiểm tra:** JSON hợp lệ (parse thử qua `node -e`).
+
+---
+
+## 2026-09-05 — Nút "Tố cáo phòng" trên trang chi tiết phòng + lịch sử đặt phòng
+
+**Vì sao:** Phần khách thuê của tính năng tố cáo phòng (chi tiết đầy đủ ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) — khách cần tố cáo được ngay lúc xem phòng, hoặc từ trang lịch sử đặt phòng khi đang thuê/đã thuê xong. Bắt buộc đăng nhập mới tố cáo được.
+
+**Thay đổi:**
+- Service mới `src/services/roomReportApi.ts`: `uploadEvidenceImages()` gọi `POST /v1/s3/upload/list` (fileType `ROOM_REPORT_EVIDENCE`) — **cố tình KHÔNG dùng** `POST /v1/images/list` như pattern upload ảnh bên Web-Pimi-for-owner, vì route đó giới hạn role `[HOUSE_OWNER, HOUSE_MANAGER, PIMI_ADMIN]`, khách thuê (`RENT_USER`) gọi sẽ bị 403 — `/s3/upload/list` chỉ yêu cầu đăng nhập, không giới hạn role.
+- `ReportRoomModal.tsx` (mới): dropdown lý do + chi tiết + upload tối đa 5 ảnh, submit qua `roomReportApi.create`.
+- `ReportRoomButton.tsx` (mới): gate đăng nhập theo đúng pattern có sẵn (`toast.warning` + `navigate('/login?redirect=...')` nếu chưa đăng nhập), 2 biến thể hiển thị (nút/link).
+- Gắn vào `RoomDetail.tsx` (trên `RoomReviews`, dùng được ngay khi đang xem phòng — không cần đã từng thuê, khác `RoomReviews` bên dưới) và `BookingHistory.tsx` (theo từng dòng đặt phòng, phủ đúng "đang thuê hoặc đã thuê xong").
+
+**Đã kiểm tra:** `npx tsc -b` + `npx vite build` sạch. Live-test qua Browser pane (tài khoản test tạo riêng, xoá sau khi xong): đăng nhập → mở trang chi tiết 1 phòng thật → bấm "Report this room" → chọn lý do + nhập chi tiết → submit thành công (`POST /room-reports` → 201), xác nhận admin (ADMIN-Pimi) nhận đúng report + notification ngay sau đó.
+
+---
+
 ## 2026-09-02 — Vá lỗi "đăng nhập giả" sau đăng ký — isAuthenticated không dựa trên phiên thật
 
 **Vì sao:** Phát hiện qua live-test đăng ký tài khoản mới thật (xem `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày để biết đầy đủ nguyên nhân + fix backend). Backend trước đây (`register()`/`verifyEmail()`) không hề cấp token/cookie nào, nhưng `AuthContext.tsx` vẫn tự đặt `user` (→ `isAuthenticated: true`) chỉ dựa vào dữ liệu form người dùng gõ — không có phiên đăng nhập thật nào phía sau, mọi API cần xác thực (kể cả badge thông báo hiển thị ngay trên header) âm thầm 401.
