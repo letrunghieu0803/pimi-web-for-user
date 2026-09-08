@@ -582,12 +582,13 @@
     },
     "detailLabel": "Chi tiết",
     "detailPlaceholder": "Mô tả chi tiết vấn đề bạn gặp phải...",
-    "evidenceLabel": "Ảnh bằng chứng (không bắt buộc)",
-    "evidenceHint": "Tối đa {{max}} ảnh",
+    "evidenceLabel": "Ảnh bằng chứng (bắt buộc)",
+    "evidenceHint": "Tối đa {{max}} ảnh, cần ít nhất 1 ảnh",
     "cancelButton": "Huỷ",
     "submitButton": "Gửi tố cáo",
     "submitting": "Đang gửi...",
     "toastNeedDetail": "Vui lòng nhập chi tiết tố cáo",
+    "toastNeedImage": "Vui lòng đính kèm ít nhất 1 ảnh bằng chứng",
     "toastSuccess": "Đã gửi tố cáo — đội ngũ Pimi sẽ xem xét sớm nhất"
   }
 }

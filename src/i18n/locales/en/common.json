@@ -582,12 +582,13 @@
     },
     "detailLabel": "Detail",
     "detailPlaceholder": "Describe the issue in detail...",
-    "evidenceLabel": "Evidence photos (optional)",
-    "evidenceHint": "Up to {{max}} photos",
+    "evidenceLabel": "Evidence photos (required)",
+    "evidenceHint": "Up to {{max}} photos, at least 1 required",
     "cancelButton": "Cancel",
     "submitButton": "Submit report",
     "submitting": "Submitting...",
     "toastNeedDetail": "Please enter the report detail",
+    "toastNeedImage": "Please attach at least 1 evidence photo",
     "toastSuccess": "Report submitted — our team will review it shortly"
   }
 }

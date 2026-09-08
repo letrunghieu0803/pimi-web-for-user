@@ -4,6 +4,19 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-08 — Tố cáo phòng: ảnh bắt buộc ≥1 + đồng bộ fix ảnh không tới admin
+
+**Vì sao:** Backend đổi `imageIds` từ optional sang bắt buộc tối thiểu 1 ảnh, đồng thời sửa bug gốc khiến ảnh tố cáo không bao giờ tới được admin dù trang báo gửi thành công (xem log `bff-for-pimi` cùng ngày) — `POST /s3/upload/list` (endpoint web này cũng dùng, giống mobile) trước đó không tạo dòng `Image`/không trả `id`, khiến `roomReportApi.uploadEvidenceImages()`'s `.map(img => img.id)` luôn ra mảng rỗng.
+
+**Thay đổi:**
+- `ReportRoomModal.tsx`: thêm kiểm tra `files.length === 0` trước khi submit, hiện toast `reportRoomModal.toastNeedImage`.
+- `roomReportApi.ts`: kiểu `create()`'s `imageIds` đổi từ optional sang bắt buộc, khớp đúng ràng buộc backend.
+- i18n (vi/en): `evidenceLabel` đổi "(không bắt buộc)" → "(bắt buộc)", `evidenceHint` ghi rõ "cần ít nhất 1 ảnh", thêm `toastNeedImage`.
+
+**Đã kiểm tra:** `npx tsc -b --noEmit` sạch. Bug ảnh-không-tới-admin đã xác nhận hết qua test trực tiếp phía backend (curl end-to-end + live UI trên mobile, cùng 1 endpoint dùng chung `/s3/upload/list`) — không cần lặp lại test riêng cho web vì lỗi và bản sửa đều nằm hoàn toàn ở backend, web chỉ đổi UI validation.
+
+---
+
 ## 2026-09-07 — Đồng bộ mã lỗi Room Report (theo fix bên bff-for-pimi)
 
 **Vì sao:** Rà soát tính năng Tố cáo phòng trước khi đưa lên mobile phát hiện 3 mã lỗi Room Report trùng với 3 mã lỗi cũ khác nghĩa hoàn toàn (xem chi tiết ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) — backend đã đổi sang mã mới (`000202`/`000203`/`000204`), cần đồng bộ `errors.json` ở repo này vì `getApiErrorMessage` tra message hiển thị theo code cục bộ.

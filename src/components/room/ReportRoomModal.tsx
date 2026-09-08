@@ -47,6 +47,10 @@ export const ReportRoomModal: React.FC<ReportRoomModalProps> = ({ roomId, roomNa
       toast.warning(t('reportRoomModal.toastNeedDetail'));
       return;
     }
+    if (files.length === 0) {
+      toast.warning(t('reportRoomModal.toastNeedImage'));
+      return;
+    }
 
     setSubmitting(true);
     try {
