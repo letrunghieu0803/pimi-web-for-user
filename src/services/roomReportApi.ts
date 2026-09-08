@@ -27,11 +27,14 @@ export const roomReportApi = {
     return uploaded.map((img: any) => img.id).filter(Boolean);
   },
 
+  // imageIds bắt buộc tối thiểu 1 ảnh (backend chặn ở CreateRoomReportDto) — UI (ReportRoomModal)
+  // chặn trước khi gọi tới đây, kiểu ở đây khớp lại đúng ràng buộc đó thay vì để optional gây
+  // hiểu lầm.
   create: async (data: {
     rentRoomId: string;
     reason: RoomReportReason;
     detail: string;
-    imageIds?: string[];
+    imageIds: string[];
   }): Promise<any> => {
     const res: any = await axiosClient.post('/v1/room-reports', data);
     return res?.data || res;
