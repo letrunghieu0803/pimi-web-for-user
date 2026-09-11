@@ -6,7 +6,6 @@ import { Room, FilterState } from '@/types';
 import { roomApi } from '@/services/roomApi';
 import { RoomCard } from '@/components/common/RoomCard';
 import { RoomFilterBar } from '@/components/filter/RoomFilterBar';
-import { RequestTourModal } from '@/components/common/RequestTourModal';
 import { Pagination } from '@/components/common/Pagination';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Building2, ArrowUpDown, Info, Map, LayoutGrid, WifiOff } from 'lucide-react';
@@ -227,7 +226,6 @@ export const RoomList: React.FC = () => {
     sortFromSearchParams(searchParams, isNearbyQuery ? 'DISTANCE' : 'NEWEST')
   );
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
-  const [selectedRoomForTour, setSelectedRoomForTour] = useState<Room | null>(null);
 
   const handleSearchSubmit = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -456,11 +454,7 @@ export const RoomList: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {rooms.map((room) => (
-            <RoomCard
-              key={room.id}
-              room={room}
-              onRequestTour={(r) => setSelectedRoomForTour(r)}
-            />
+            <RoomCard key={room.id} room={room} />
           ))}
         </div>
       )}
@@ -475,13 +469,6 @@ export const RoomList: React.FC = () => {
         />
       )}
 
-      {/* Viewing Tour Modal */}
-      {selectedRoomForTour && (
-        <RequestTourModal
-          room={selectedRoomForTour}
-          onClose={() => setSelectedRoomForTour(null)}
-        />
-      )}
     </div>
   );
 };

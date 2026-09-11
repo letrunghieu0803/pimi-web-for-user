@@ -4,6 +4,23 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-11 — Card phòng bấm thẳng vào chi tiết + gộp nút Báo cáo ngang hàng Chia sẻ/Lưu
+
+**Vì sao:** Card phòng (trang chủ, danh sách tìm kiếm, đã xem gần đây, yêu thích) có 2 nút footer "Xem chi tiết"/"Hẹn xem phòng" — cả 2 đều chỉ dẫn tới cùng 1 nơi (trang chi tiết), thừa thao tác. Yêu cầu: bỏ 2 nút, bấm bất kỳ đâu trên thẻ đều vào thẳng chi tiết, nhưng vẫn phải là `<a href>` thật (không phải điều hướng bằng JS) để giữ giá trị SEO. Ngoài ra, nút "Tố cáo phòng" ở trang chi tiết đang nằm tách biệt phía dưới cùng trang — dời lên ngang hàng với "Chia sẻ"/"Lưu phòng" ở đầu trang.
+
+**Thay đổi:**
+- `RoomCard.tsx`: bỏ khối 2 nút footer. Cả thẻ giờ là 1 `<Link>` thật phủ toàn bộ diện tích (kỹ thuật "stretched link" — `<Link>` bọc tiêu đề, dùng `after:absolute after:inset-0` để vùng bấm phủ hết thẻ) thay vì gắn `onClick` điều hướng bằng tay — giữ nguyên `<a href>` thật cho crawler. Nút tim yêu thích đặt `z-10` để nổi lên trên lớp phủ này, tách bạch khỏi hành vi điều hướng (đã test: bấm tim không bị nhảy trang).
+- `Home.tsx`/`RoomList.tsx`: xoá `onRequestTour`/`selectedRoomForTour`/`<RequestTourModal>` — dây dẫn này chỉ được gọi từ đúng 2 nút vừa bỏ, đã là code chết từ trước (RoomCard chưa từng thực sự gọi `onRequestTour`, cả 2 nút footer cũ đều chỉ là `<Link>` tới trang chi tiết). Xoá luôn file `components/common/RequestTourModal.tsx` (không còn nơi nào import). Trang chi tiết phòng có luồng đặt lịch/đặt phòng riêng, không đụng tới.
+- `RoomDetail.tsx`: dời `<ReportRoomButton>` vào chung hàng nút Share/Save ở đầu trang, cùng kiểu dáng (thu gọn còn icon trên mobile).
+- `ReportRoomButton.tsx`: biến thể `button` bọc thêm nhãn trong `<span className="hidden sm:inline">` để khớp hành vi ẩn chữ trên màn nhỏ của 2 nút cùng hàng (biến thể `link` dùng ở `BookingHistory.tsx` không đổi).
+- Dọn 2 khoá i18n mồ côi `roomCard.viewDetails`/`roomCard.bookViewing` (vi + en).
+
+**Bug tự phát hiện, sửa kèm (chặn thẳng việc kiểm thử thay đổi trên):** `roomApi.getRoomsPaginated()` âm thầm làm rớt 2 field `rentalTermType`/`isRecommended` khi forward xuống `fetchPublicFeed` (không có trong type tham số nên bị bỏ qua khi spread) — khiến nút chuyển "Thuê Ngắn Hạn ⇄ Thuê Dài Hạn" và filter "Đề Cử Admin" ở trang `/rooms` **chưa từng có tác dụng thật**, luôn tìm kiếm ngắn hạn bất kể người dùng chọn gì (phát hiện khi seed dữ liệu test dài hạn để chụp ảnh card nhưng danh sách luôn trống). Bổ sung lại 2 field vào type + lệnh forward.
+
+**Đã kiểm tra:** `npx tsc --noEmit` + `npm run build` sạch. Live-test qua Browser: seed tạm 4 phòng dài hạn (xoá sau khi xong) → xác nhận bấm bất kỳ đâu trên card (không riêng tiêu đề) đều vào đúng trang chi tiết phòng đó; bấm tim yêu thích không bị điều hướng nhầm (đúng ra mở luồng đăng nhập vì chưa login — hành vi cũ, không đổi); trang chi tiết hiện đúng 3 nút Share/Save/Report cùng hàng, cả ở desktop lẫn mobile (375px, chỉ còn icon). Dọn sạch dữ liệu/script seed test sau khi xong.
+
+---
+
 ## 2026-09-08 — Tố cáo phòng: ảnh bắt buộc ≥1 + đồng bộ fix ảnh không tới admin
 
 **Vì sao:** Backend đổi `imageIds` từ optional sang bắt buộc tối thiểu 1 ảnh, đồng thời sửa bug gốc khiến ảnh tố cáo không bao giờ tới được admin dù trang báo gửi thành công (xem log `bff-for-pimi` cùng ngày) — `POST /s3/upload/list` (endpoint web này cũng dùng, giống mobile) trước đó không tạo dòng `Image`/không trả `id`, khiến `roomReportApi.uploadEvidenceImages()`'s `.map(img => img.id)` luôn ra mảng rỗng.

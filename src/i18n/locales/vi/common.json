@@ -130,8 +130,6 @@
     "perMonth": "/tháng",
     "maxPeople": "Tối đa {{count}} người",
     "more": "khác",
-    "viewDetails": "Xem chi tiết",
-    "bookViewing": "Hẹn xem phòng",
     "favorite": "Lưu vào yêu thích",
     "unfavorite": "Bỏ khỏi yêu thích",
     "favoriteError": "Không thể cập nhật yêu thích, vui lòng thử lại"

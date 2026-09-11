@@ -283,6 +283,8 @@ export const roomApi = {
     keyword?: string;
     amenities?: string[];
     hasMezzanine?: boolean | null;
+    isRecommended?: boolean | null;
+    rentalTermType?: 'SHORT_TERM' | 'LONG_TERM';
     userLat?: number | null;
     userLng?: number | null;
     radiusInKm?: number | null;
@@ -298,6 +300,8 @@ export const roomApi = {
       maxPrice,
       roomType: params?.roomType,
       hasMezzanine: params?.hasMezzanine,
+      isRecommended: params?.isRecommended,
+      rentalTermType: params?.rentalTermType,
       amenities: params?.amenities,
       userLat: params?.userLat,
       userLng: params?.userLng,

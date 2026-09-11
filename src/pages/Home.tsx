@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { Room } from '@/types';
 import { roomApi } from '@/services/roomApi';
 import { RoomCard } from '@/components/common/RoomCard';
-import { RequestTourModal } from '@/components/common/RequestTourModal';
 import { HotLocationsSlider } from '@/components/home/HotLocationsSlider';
 import { BannerSlider } from '@/components/home/BannerSlider';
 import { NewsArticlesSlider } from '@/components/home/NewsArticlesSlider';
@@ -19,7 +18,6 @@ import { recentlyViewedApi } from '@/utils/recentlyViewed';
 export const Home: React.FC = () => {
   const { t } = useTranslation();
   const [featuredRooms, setFeaturedRooms] = useState<Room[]>([]);
-  const [selectedRoomForTour, setSelectedRoomForTour] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
   // Đọc thẳng từ localStorage lúc mount — không qua API nào, xem src/utils/recentlyViewed.ts.
   const [recentlyViewed] = useState(() => recentlyViewedApi.getAll());
@@ -190,7 +188,7 @@ export const Home: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {recentlyViewed.slice(0, 6).map(({ room }) => (
-              <RoomCard key={room.id} room={room} onRequestTour={(r) => setSelectedRoomForTour(r)} />
+              <RoomCard key={room.id} room={room} />
             ))}
           </div>
         </section>
@@ -222,11 +220,7 @@ export const Home: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {featuredRooms.map((room) => (
-              <RoomCard
-                key={room.id}
-                room={room}
-                onRequestTour={(r) => setSelectedRoomForTour(r)}
-              />
+              <RoomCard key={room.id} room={room} />
             ))}
           </div>
         )}
@@ -307,13 +301,6 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Viewing Tour Request Modal */}
-      {selectedRoomForTour && (
-        <RequestTourModal
-          room={selectedRoomForTour}
-          onClose={() => setSelectedRoomForTour(null)}
-        />
-      )}
     </div>
   );
 };

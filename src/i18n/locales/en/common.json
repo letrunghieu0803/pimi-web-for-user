@@ -130,8 +130,6 @@
     "perMonth": "/month",
     "maxPeople": "Up to {{count}} people",
     "more": "more",
-    "viewDetails": "View details",
-    "bookViewing": "Book a viewing",
     "favorite": "Save to favorites",
     "unfavorite": "Remove from favorites",
     "favoriteError": "Couldn't update favorites, please try again"

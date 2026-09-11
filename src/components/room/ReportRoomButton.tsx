@@ -56,8 +56,9 @@ export const ReportRoomButton: React.FC<ReportRoomButtonProps> = ({
             'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 text-rose-600 text-xs font-bold hover:bg-rose-50 transition-colors'
           }
         >
-          <Flag className="w-3.5 h-3.5" />
-          {t('reportRoomModal.triggerButton')}
+          <Flag className="w-4 h-4" />
+          {/* Ẩn nhãn trên màn nhỏ để đồng bộ với nút Chia sẻ / Lưu phòng cùng hàng ở trang chi tiết. */}
+          <span className="hidden sm:inline">{t('reportRoomModal.triggerButton')}</span>
         </button>
       )}
 
