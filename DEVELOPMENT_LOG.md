@@ -4,6 +4,16 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-14 — Đồng bộ tách mã lỗi trùng `000049`
+
+**Vì sao:** bff-for-pimi có 2 lỗi khác nhau (user-not-found vs. `loginAs` escalation) dùng chung mã `000049` (chi tiết ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) — `errors.json` ở đây đang gán `000049` cho message sai (loginAs), khiến lỗi đăng nhập sai username/email hiện nhầm nội dung.
+
+**Thay đổi:** `src/i18n/locales/{vi,en}/errors.json`: sửa `000049` về đúng nghĩa "Không tìm thấy người dùng"/"User not found"; thêm mới `000215` cho message "không được phép đăng nhập với vai trò yêu cầu" (khớp mã mới bên backend).
+
+**Đã kiểm tra:** parse JSON hợp lệ, giá trị `000049`/`000215` đúng như mong đợi.
+
+---
+
 ## 2026-09-14 — Xem hướng dẫn xem nhà + khảo sát khi xác nhận đã tham dự
 
 **Vì sao:** Phần người thuê của tính năng "người phụ trách xem nhà" (chi tiết đầy đủ ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày): sau khi chủ nhà/cộng tác viên gửi hướng dẫn xem nhà, người thuê cần xem được nội dung đó; khi xác nhận "đã tham dự", cần điền thêm khảo sát (bộ câu hỏi do admin quản lý).
