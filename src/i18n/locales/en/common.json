@@ -330,7 +330,19 @@
     "confirmSlot": "Confirm slot",
     "rejectReasonLabel": "Rejection reason:",
     "confirmAttendance": "Confirm I attended the viewing",
-    "durationHint": "Each viewing is expected to take about 15-30 minutes."
+    "durationHint": "Each viewing is expected to take about 15-30 minutes.",
+    "guideLabel": "Viewing guide"
+  },
+  "attendanceSurveyModal": {
+    "title": "Post-viewing survey",
+    "subtitle": "Please share your feedback about the viewing you just attended.",
+    "loadError": "Couldn't load the survey questions. Please close and try again.",
+    "textPlaceholder": "Enter your answer...",
+    "validationError": "Please answer all required questions",
+    "skipNote": "Questions without a * are optional.",
+    "cancelButton": "Cancel",
+    "submitButton": "Submit survey",
+    "submitting": "Submitting..."
   },
   "roomList": {
     "badge": "Available Room Listings",

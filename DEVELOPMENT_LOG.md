@@ -4,6 +4,23 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-14 — Xem hướng dẫn xem nhà + khảo sát khi xác nhận đã tham dự
+
+**Vì sao:** Phần người thuê của tính năng "người phụ trách xem nhà" (chi tiết đầy đủ ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày): sau khi chủ nhà/cộng tác viên gửi hướng dẫn xem nhà, người thuê cần xem được nội dung đó; khi xác nhận "đã tham dự", cần điền thêm khảo sát (bộ câu hỏi do admin quản lý).
+
+**Thay đổi:**
+- `TenantAppointments.tsx`: hiện khối "Hướng dẫn xem nhà" khi `app.guideContent` có giá trị — render HTML đã qua `DOMPurify.sanitize()` trước `dangerouslySetInnerHTML`, đúng cách `NewsDetail.tsx` đang làm (nội dung rich-text do người khác soạn, không sanitize là mở đường Stored XSS).
+- `components/appointment/AttendanceSurveyModal.tsx` (mới): render động theo `type` (RATING = sao, SINGLE/MULTIPLE_CHOICE = danh sách, TEXT = ô nhập), thay cho việc gọi thẳng `confirmAttendance(id, true)` như trước — giờ mở modal khảo sát trước, gộp câu trả lời vào cùng 1 lệnh gọi.
+- `services/appointmentSurveyApi.ts` (mới) + `appointmentApi.ts`: `confirmAttendance()` nhận thêm tham số `surveyAnswers`.
+
+**Phát hiện & sửa qua đợt rà soát riêng trước khi commit (`code-review` đa góc nhìn):**
+- Câu TEXT bắt buộc chỉ gõ toàn dấu cách vẫn được coi là "đã trả lời" (so `!== ''` không trim, trong khi backend đã trim) — người dùng tưởng đã điền đủ, bị BE từ chối với lỗi chung chung không rõ trường nào sai. Đã sửa khớp đúng ngữ nghĩa `isAnswerMeaningful` phía backend.
+- `useQuery` tải bộ câu hỏi không kiểm tra `isError` — tải lỗi thì `questions` rơi về `[]`, khiến điều kiện "đủ câu bắt buộc" luôn đúng, cho submit khảo sát rỗng mà không báo gì. Đã thêm kiểm tra + thông báo lỗi + khoá nút Gửi khi tải lỗi.
+
+**Đã kiểm tra:** `npx tsc --noEmit` sạch. Rà soát riêng xác nhận `DOMPurify` đã áp dụng đúng trước khi render, không có nhánh nào render `guideContent` thô.
+
+---
+
 ## 2026-09-11 — Card phòng bấm thẳng vào chi tiết + gộp nút Báo cáo ngang hàng Chia sẻ/Lưu
 
 **Vì sao:** Card phòng (trang chủ, danh sách tìm kiếm, đã xem gần đây, yêu thích) có 2 nút footer "Xem chi tiết"/"Hẹn xem phòng" — cả 2 đều chỉ dẫn tới cùng 1 nơi (trang chi tiết), thừa thao tác. Yêu cầu: bỏ 2 nút, bấm bất kỳ đâu trên thẻ đều vào thẳng chi tiết, nhưng vẫn phải là `<a href>` thật (không phải điều hướng bằng JS) để giữ giá trị SEO. Ngoài ra, nút "Tố cáo phòng" ở trang chi tiết đang nằm tách biệt phía dưới cùng trang — dời lên ngang hàng với "Chia sẻ"/"Lưu phòng" ở đầu trang.
