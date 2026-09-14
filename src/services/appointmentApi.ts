@@ -39,6 +39,10 @@ export interface Appointment {
     address?: string;
   };
   timeSlots?: TimeSlot[];
+  // Snapshot nội dung "hướng dẫn xem nhà" chủ nhà/cộng tác viên đã gửi (HTML, xem
+  // AppointmentsService.sendGuide) — chỉ có sau khi status đã USER_ACCEPTED và đã được gửi.
+  guideContent?: string | null;
+  guideSentAt?: string | null;
 }
 
 export const appointmentApi = {
@@ -54,7 +58,13 @@ export const appointmentApi = {
     return axiosClient.put(`/v1/appointments/${id}/user-confirm`, payload);
   },
 
-  confirmAttendance: (id: string, attended: boolean) => {
-    return axiosClient.put(`/v1/appointments/${id}/attendance`, { attended });
+  // surveyAnswers chỉ được BE xử lý khi attended=true (xem AppointmentsService.confirmAttendance)
+  // — bắt buộc kèm đủ câu trả lời cho các câu hỏi isRequired đang hoạt động.
+  confirmAttendance: (
+    id: string,
+    attended: boolean,
+    surveyAnswers?: Array<{ questionId: string; value: string | string[] }>,
+  ) => {
+    return axiosClient.put(`/v1/appointments/${id}/attendance`, { attended, surveyAnswers });
   },
 };

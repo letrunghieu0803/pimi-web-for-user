@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import DOMPurify from 'dompurify';
 import {
   Calendar,
   Clock,
@@ -10,6 +11,7 @@ import {
   Home,
   MapPin,
   MessageSquare,
+  BookOpen,
 } from 'lucide-react';
 import { appointmentApi, Appointment, TimeSlot } from '@/services/appointmentApi';
 import { useToast } from '@/context/ToastContext';
@@ -18,6 +20,7 @@ import { Pagination } from '@/components/common/Pagination';
 import { AppointmentListSkeleton } from '@/components/ui/Skeleton';
 import { getApiErrorMessage } from '@/utils/apiError';
 import { Seo } from '@/components/common/Seo';
+import { AttendanceSurveyModal } from '@/components/appointment/AttendanceSurveyModal';
 
 const PAGE_SIZE = 10;
 const STATUS_KEYS = ['ALL', 'OWNER_OFFERED_TIMES', 'PENDING_OWNER', 'USER_ACCEPTED', 'COMPLETED'];
@@ -36,6 +39,8 @@ export const TenantAppointments: React.FC = () => {
   // Selected time slot per appointment id
   const [selectedSlots, setSelectedSlots] = useState<{ [appId: string]: string }>({});
   const [submittingAppId, setSubmittingAppId] = useState<string | null>(null);
+  const [surveyAppId, setSurveyAppId] = useState<string | null>(null);
+  const [submittingSurvey, setSubmittingSurvey] = useState(false);
 
   const fetchAppointments = async () => {
     setLoading(true);
@@ -138,13 +143,24 @@ export const TenantAppointments: React.FC = () => {
     }
   };
 
-  const handleConfirmAttendance = async (appId: string) => {
+  // Người thuê xác nhận "Đã tham gia" -> BE bắt buộc kèm khảo sát (xem
+  // AppointmentsService.confirmAttendance), mở form khảo sát trước thay vì gọi thẳng.
+  const handleConfirmAttendance = (appId: string) => {
+    setSurveyAppId(appId);
+  };
+
+  const handleSubmitSurvey = async (answers: Array<{ questionId: string; value: string | string[] }>) => {
+    if (!surveyAppId) return;
+    setSubmittingSurvey(true);
     try {
-      await appointmentApi.confirmAttendance(appId, true);
+      await appointmentApi.confirmAttendance(surveyAppId, true, answers);
+      setSurveyAppId(null);
       toast.success(t('tenantAppointments.toastAttendanceSuccess'));
       fetchAppointments();
     } catch (err: any) {
       toast.error(getApiErrorMessage(err));
+    } finally {
+      setSubmittingSurvey(false);
     }
   };
 
@@ -267,6 +283,22 @@ export const TenantAppointments: React.FC = () => {
                     </div>
                   )}
 
+                  {/* Viewing guide — chỉ có sau khi chủ nhà/cộng tác viên đã gửi (xem
+                      appointmentApi.ts's guideContent). Sanitize trước khi render — cùng lý do
+                      NewsDetail.tsx: nội dung rich-text do người khác soạn, render thẳng bằng
+                      dangerouslySetInnerHTML sẽ mở đường Stored XSS nếu không lọc. */}
+                  {app.guideContent && (
+                    <div className="bg-sky-50 border border-sky-200 p-3 rounded-xl text-xs text-sky-900">
+                      <span className="font-bold flex items-center gap-1.5 mb-1.5">
+                        <BookOpen className="w-3.5 h-3.5" /> {t('tenantAppointments.guideLabel')}
+                      </span>
+                      <div
+                        className="text-xs text-sky-900 [&_p]:mb-2 [&_img]:rounded-lg [&_img]:my-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(app.guideContent) }}
+                      />
+                    </div>
+                  )}
+
                   {/* Select Slot Form if OWNER_OFFERED_TIMES */}
                   {app.status === 'OWNER_OFFERED_TIMES' && app.timeSlots && app.timeSlots.length > 0 && (
                     <div className="bg-indigo-50/60 border border-indigo-200 p-4 rounded-xl space-y-3">
@@ -351,6 +383,14 @@ export const TenantAppointments: React.FC = () => {
           onPageChange={setPageNumber}
           totalItems={totalItems}
           pageSize={PAGE_SIZE}
+        />
+      )}
+
+      {surveyAppId && (
+        <AttendanceSurveyModal
+          submitting={submittingSurvey}
+          onClose={() => setSurveyAppId(null)}
+          onSubmit={handleSubmitSurvey}
         />
       )}
     </div>

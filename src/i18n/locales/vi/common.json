@@ -130,8 +130,6 @@
     "perMonth": "/tháng",
     "maxPeople": "Tối đa {{count}} người",
     "more": "khác",
-    "viewDetails": "Xem chi tiết",
-    "bookViewing": "Hẹn xem phòng",
     "favorite": "Lưu vào yêu thích",
     "unfavorite": "Bỏ khỏi yêu thích",
     "favoriteError": "Không thể cập nhật yêu thích, vui lòng thử lại"
@@ -332,7 +330,19 @@
     "confirmSlot": "Xác nhận chốt lịch",
     "rejectReasonLabel": "Lý do từ chối:",
     "confirmAttendance": "Xác nhận đã tham gia xem phòng",
-    "durationHint": "Mỗi buổi xem phòng dự kiến kéo dài khoảng 15-30 phút."
+    "durationHint": "Mỗi buổi xem phòng dự kiến kéo dài khoảng 15-30 phút.",
+    "guideLabel": "Hướng dẫn xem nhà"
+  },
+  "attendanceSurveyModal": {
+    "title": "Khảo sát sau khi xem phòng",
+    "subtitle": "Vui lòng chia sẻ cảm nhận của bạn về buổi xem phòng vừa rồi.",
+    "loadError": "Không tải được bộ câu hỏi khảo sát. Vui lòng đóng và thử lại.",
+    "textPlaceholder": "Nhập câu trả lời...",
+    "validationError": "Vui lòng trả lời đầy đủ các câu hỏi bắt buộc",
+    "skipNote": "Các câu không có dấu * là không bắt buộc.",
+    "cancelButton": "Hủy",
+    "submitButton": "Gửi khảo sát",
+    "submitting": "Đang gửi..."
   },
   "roomList": {
     "badge": "Danh Sách Phòng Trọ Sẵn Có",

@@ -309,6 +309,13 @@ export const RoomDetail: React.FC = () => {
             <Heart className={`w-4 h-4 ${isFavorited(room.id) ? 'fill-rose-600' : ''}`} />
             <span className="hidden sm:inline">{isFavorited(room.id) ? t('roomDetail.savedLabel') : t('roomDetail.saveRoom')}</span>
           </button>
+          {/* Tố cáo phòng — ngang hàng cùng Chia sẻ / Lưu phòng. Bất kỳ khách đã đăng nhập nào
+              cũng gửi được, không cần từng thuê phòng (khác RoomReviews bên dưới). */}
+          <ReportRoomButton
+            roomId={room.id}
+            roomName={room.name}
+            className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-600 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+          />
         </div>
       </div>
 
@@ -548,12 +555,6 @@ export const RoomDetail: React.FC = () => {
 
           </div>
         </div>
-      </div>
-
-      {/* Tố cáo phòng — bất kỳ khách đã đăng nhập nào cũng gửi được, không cần từng thuê phòng
-          (khác RoomReviews bên dưới) — ngay lúc xem phòng, đang thuê, hay đã thuê xong. */}
-      <div className="flex justify-end">
-        <ReportRoomButton roomId={room.id} roomName={room.name} />
       </div>
 
       {/* Đánh giá sau khi ở — công khai, chỉ RENT_USER từng thuê phòng này mới viết được */}

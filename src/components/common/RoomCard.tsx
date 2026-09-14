@@ -2,23 +2,22 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Room } from '@/types';
-import { MapPin, Maximize2, Users, CalendarCheck, ShieldCheck, Layers, Navigation, Star, Sparkles, Heart } from 'lucide-react';
+import { MapPin, Maximize2, Users, ShieldCheck, Layers, Navigation, Star, Sparkles, Heart } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useToast } from '@/context/ToastContext';
 
 interface RoomCardProps {
   room: Room;
-  onRequestTour?: (room: Room) => void;
 }
 
 // React.memo: RoomCard được render lặp lại rất nhiều lần trong 1 danh sách (RoomList/Home/...) —
 // bọc memo để tránh re-render khi component cha (danh sách) re-render vì lý do không liên quan gì
-// đến chính thẻ này (props `room`/`onRequestTour` không đổi). Không giải quyết được trường hợp
-// TOÀN BỘ thẻ đang mounted re-render khi có 1 phòng BẤT KỲ được toggle yêu thích (FavoritesContext
-// broadcast theo Context API, không phân biệt theo từng roomId) — đó là hạn chế kiến trúc sâu hơn,
-// cần tách context theo từng item mới giải quyết triệt để, ngoài phạm vi sửa nhanh này.
-const RoomCardComponent: React.FC<RoomCardProps> = ({ room, onRequestTour }) => {
+// đến chính thẻ này (prop `room` không đổi). Không giải quyết được trường hợp TOÀN BỘ thẻ đang
+// mounted re-render khi có 1 phòng BẤT KỲ được toggle yêu thích (FavoritesContext broadcast theo
+// Context API, không phân biệt theo từng roomId) — đó là hạn chế kiến trúc sâu hơn, cần tách
+// context theo từng item mới giải quyết triệt để, ngoài phạm vi sửa nhanh này.
+const RoomCardComponent: React.FC<RoomCardProps> = ({ room }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const toast = useToast();
@@ -52,8 +51,8 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, onRequestTour }) => 
   const detailLink = room.roomGroupId ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`;
 
   return (
-    <div className="glass-card rounded-3xl overflow-hidden flex flex-col justify-between group border border-slate-200/80 hover:border-indigo-200">
-      
+    <article className="relative glass-card rounded-3xl overflow-hidden flex flex-col group border border-slate-200/80 hover:border-indigo-200">
+
       {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
         <img
@@ -63,7 +62,7 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, onRequestTour }) => 
           loading="lazy"
           decoding="async"
         />
-        
+
         {/* Top Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
           <div className="flex items-center gap-1.5">
@@ -132,14 +131,12 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, onRequestTour }) => 
           )}
         </div>
 
-        {/* Favorite Button */}
-        {/* w-11 h-11 (44px) để đạt vùng chạm tối thiểu — trước là w-9 h-9 (36px), dưới ngưỡng
-            khuyến nghị. Dịch vị trí absolute vào bottom-2/right-2 (thay vì -3) để tâm nút vẫn
-            cách đều mép ảnh như trước sau khi tăng kích thước, tránh lệch bố cục so với badge giá. */}
+        {/* Favorite Button — z-10 để nổi trên lớp link phủ toàn thẻ (::after của tiêu đề), nhờ đó
+            bấm tim vẫn tách bạch với hành vi "bấm thẻ -> vào chi tiết". */}
         <button
           onClick={handleToggleFavorite}
           aria-label={favorited ? t('roomCard.unfavorite') : t('roomCard.favorite')}
-          className={`absolute bottom-2 right-2 w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg transition-colors ${
+          className={`absolute bottom-2 right-2 z-10 w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg transition-colors ${
             favorited ? 'bg-rose-500 text-white' : 'bg-white/90 text-slate-600 hover:text-rose-500'
           }`}
         >
@@ -148,7 +145,7 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, onRequestTour }) => 
       </div>
 
       {/* Content */}
-      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+      <div className="p-5 flex-1 flex flex-col space-y-4">
         <div>
           {/* House Name & District */}
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold mb-1.5">
@@ -158,9 +155,14 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, onRequestTour }) => 
             </span>
           </div>
 
-          {/* Title */}
-          <Link to={detailLink} className="block group-hover:text-indigo-600 transition-colors">
-            <h3 className="text-base font-bold text-slate-900 line-clamp-2 leading-snug font-heading">
+          {/* Title — <Link> thật (<a href>) cho SEO, đồng thời ::after phủ kín <article> để bấm
+              bất kỳ đâu trên thẻ đều điều hướng sang trang chi tiết (bỏ 2 nút "Xem chi tiết" /
+              "Đặt lịch xem" ở footer trước đây). */}
+          <Link
+            to={detailLink}
+            className="block after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-indigo-500"
+          >
+            <h3 className="text-base font-bold text-slate-900 line-clamp-2 leading-snug font-heading group-hover:text-indigo-600 transition-colors">
               {room.name}
             </h3>
           </Link>
@@ -197,26 +199,8 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, onRequestTour }) => 
             )}
           </div>
         </div>
-
-        {/* Card Footer Actions */}
-        <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
-          <Link
-            to={detailLink}
-            className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors text-center"
-          >
-            {t('roomCard.viewDetails')}
-          </Link>
-
-          <Link
-            to={detailLink}
-            className="flex-1 py-2.5 rounded-xl gradient-bg text-white font-bold text-xs shadow-md shadow-indigo-500/20 hover:scale-[1.02] transition-transform flex items-center justify-center gap-1.5 text-center"
-          >
-            <CalendarCheck className="w-3.5 h-3.5" />
-            <span>{t('roomCard.bookViewing')}</span>
-          </Link>
-        </div>
       </div>
-    </div>
+    </article>
   );
 };
 
