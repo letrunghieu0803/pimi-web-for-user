@@ -134,5 +134,7 @@
   "000202": "Some evidence images are not valid",
   "000203": "This room report is not in the correct status for this action",
   "000204": "Room report not found",
-  "000215": "This account is not allowed to log in with the requested role on this app"
+  "000215": "This account is not allowed to log in with the requested role on this app",
+  "000216": "Contract end date must be after start date",
+  "000217": "Contract dates overlap with another existing contract for this room"
 }

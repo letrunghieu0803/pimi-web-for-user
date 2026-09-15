@@ -4,6 +4,14 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-15 — Đồng bộ mã lỗi hợp đồng (000216/000217)
+
+**Vì sao:** `errors.json` không đổi thì thiếu 2 mã lỗi mới sinh ra ở đợt sửa hợp đồng bên `bff-for-pimi` (chi tiết đầy đủ ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) — không có gì hiển thị trong repo này dùng tới, nhưng đồng bộ cho nhất quán giữa các client.
+
+**Thay đổi:** `src/i18n/locales/{vi,en}/errors.json` — thêm `000216` (ngày kết thúc hợp đồng phải sau ngày bắt đầu, tách khỏi mã cũ bị trùng `000044`) và `000217` (chồng chéo ngày tháng hợp đồng).
+
+---
+
 ## 2026-09-14 — Đồng bộ tách mã lỗi trùng `000049`
 
 **Vì sao:** bff-for-pimi có 2 lỗi khác nhau (user-not-found vs. `loginAs` escalation) dùng chung mã `000049` (chi tiết ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) — `errors.json` ở đây đang gán `000049` cho message sai (loginAs), khiến lỗi đăng nhập sai username/email hiện nhầm nội dung.
