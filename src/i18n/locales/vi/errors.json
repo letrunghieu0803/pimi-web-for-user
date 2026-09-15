@@ -47,7 +47,7 @@
   "000046": "Bạn không phải là chủ sở hữu nhà trọ trong hợp đồng này",
   "000047": "Bạn không có quyền thực hiện thao tác này",
   "000048": "Truy cập bị từ chối do không đúng vai trò người dùng",
-  "000049": "Tài khoản này không được phép đăng nhập với vai trò được yêu cầu ở ứng dụng này",
+  "000049": "Không tìm thấy người dùng",
   "000050": "Không tìm thấy người dùng với email này",
   "000051": "Không tìm thấy người dùng với email này cần xác thực",
   "000052": "Không tìm thấy hợp đồng",
@@ -133,5 +133,8 @@
   "000197": "Tài khoản này không có quyền truy cập trang quản trị",
   "000202": "Một số ảnh bằng chứng không hợp lệ",
   "000203": "Tố cáo này không ở đúng trạng thái để thực hiện thao tác này",
-  "000204": "Không tìm thấy tố cáo phòng"
+  "000204": "Không tìm thấy tố cáo phòng",
+  "000215": "Tài khoản này không được phép đăng nhập với vai trò được yêu cầu ở ứng dụng này",
+  "000216": "Ngày kết thúc hợp đồng phải sau ngày bắt đầu",
+  "000217": "Thời gian hợp đồng bị chồng chéo với 1 hợp đồng khác của phòng này"
 }
