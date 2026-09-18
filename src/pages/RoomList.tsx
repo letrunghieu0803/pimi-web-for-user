@@ -388,7 +388,7 @@ export const RoomList: React.FC = () => {
       />
 
       {/* Control Bar: Sort & Summary */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-200">
+      <div className="flex flex-col gap-4 1 pt-4 border-t border-slate-200">
         <div className="text-sm text-slate-600 font-medium">
           {t('roomList.showing')} <strong>{rooms.length}</strong> /{' '}
           <strong>{totalItems}</strong> {t('roomList.roomsAvailableSuffix')}
