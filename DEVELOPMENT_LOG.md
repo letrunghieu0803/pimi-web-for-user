@@ -4,6 +4,18 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-19 — Bấm vào thông báo điều hướng thẳng tới trang chi tiết liên quan
+
+**Vì sao:** Người thuê yêu cầu (kèm ảnh chụp trang Thông báo): "khi bấm vào thông báo liên quan tới phần nào thì sẽ dẫn link luôn tới trang đó để xem" — ví dụ minh hoạ là thông báo lịch hẹn xem phòng nên bấm vào phải tới chi tiết lịch hẹn đó. Rà lại code: `Notifications.tsx` (trang danh sách đầy đủ) và `Navbar.tsx` (dropdown chuông thông báo) trước đây bấm vào bất kỳ thông báo nào cũng chỉ đánh dấu đã đọc — dropdown còn tệ hơn, luôn điều hướng cứng về `/notifications` bất kể nội dung.
+
+**Thay đổi:** `src/services/notificationApi.ts` — thêm `getNotificationLink(item)` dùng chung cho cả 2 nơi, suy ra đường dẫn từ `type` + `metadata` của thông báo (khớp đúng shape backend luôn gửi kèm — xem các lệnh gọi `notificationService.createNotification` ở `bff-for-pimi`): `APPOINTMENT` → `/appointments?highlight=<appointmentId>`, `NEWS` → `/news/<articleId>`, `BOOKING` → `/bookings`; các type chưa có trang chi tiết riêng ở web này (`INVOICE`, `ROOM_REPORT_*`...) trả về `null`, giữ nguyên hành vi cũ (chỉ đánh dấu đã đọc). `Notifications.tsx`/`Navbar.tsx` gọi `navigate()` tới link này sau khi đánh dấu đã đọc.
+
+`src/pages/TenantAppointments.tsx` — đọc `?highlight=<id>` qua `useSearchParams`, gọi API mới `appointmentApi.getAppointmentDetail(id)` để biết đúng trạng thái thật của lịch hẹn đó (chỉ biết id từ URL, không biết đang ở tab nào), tự chọn đúng tab lọc trước khi cuộn (`scrollIntoView`) tới và làm nổi bật thẻ tương ứng (viền + ring 3 giây).
+
+**Đã kiểm tra:** `npx tsc --noEmit -p tsconfig.app.json` sạch hoàn toàn (repo này `build` script đã chạy `tsc -b` thật, không bị lỗi "no-op" như ghi nhận ở `Web-Pimi-for-owner` cùng ngày). Live-test qua Browser pane: seed 1 lịch hẹn trạng thái `OWNER_OFFERED_TIMES` + 1 thông báo `APPOINTMENT` trỏ đúng id → bấm vào thông báo ở trang `/notifications` → xác nhận điều hướng đúng `/appointments?highlight=<id>`, tự chọn tab "Needs confirmation" (khớp đúng trạng thái thật), hiện đúng thẻ lịch hẹn phòng 202; thông báo cũng được đánh dấu `isRead: true` (xác nhận qua DB). Đã xoá toàn bộ dữ liệu test.
+
+---
+
 ## 2026-09-15 — Đồng bộ mã lỗi hợp đồng (000216/000217)
 
 **Vì sao:** `errors.json` không đổi thì thiếu 2 mã lỗi mới sinh ra ở đợt sửa hợp đồng bên `bff-for-pimi` (chi tiết đầy đủ ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) — không có gì hiển thị trong repo này dùng tới, nhưng đồng bộ cho nhất quán giữa các client.
