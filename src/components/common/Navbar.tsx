@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useSocket } from '@/context/SocketContext';
 import { Home, Search, Menu, X, Building2, HelpCircle, Info, LogIn, UserPlus, User, CalendarCheck, LogOut, ChevronDown, Bell, CheckCheck, Languages, Newspaper, Heart, History } from 'lucide-react';
-import { notificationApi, NotificationItem } from '@/services/notificationApi';
+import { notificationApi, NotificationItem, getNotificationLink } from '@/services/notificationApi';
 
 const LanguageSwitcher: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { i18n } = useTranslation();
@@ -126,7 +126,7 @@ const NotificationBell: React.FC = () => {
                   onClick={() => {
                     handleMarkAsRead(n);
                     setOpen(false);
-                    navigate('/notifications');
+                    navigate(getNotificationLink(n) || '/notifications');
                   }}
                   className={`p-3 rounded-2xl text-xs transition-all cursor-pointer ${
                     !n.isRead ? 'bg-indigo-50/60 border border-indigo-100' : 'bg-slate-50 hover:bg-slate-100'

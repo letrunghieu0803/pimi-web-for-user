@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import DOMPurify from 'dompurify';
 import {
@@ -28,6 +29,13 @@ const STATUS_KEYS = ['ALL', 'OWNER_OFFERED_TIMES', 'PENDING_OWNER', 'USER_ACCEPT
 export const TenantAppointments: React.FC = () => {
   const { t } = useTranslation();
   const toast = useToast();
+  // Mở từ thông báo (Notifications.tsx) kèm ?highlight=<appointmentId> — chỉ biết id, không biết
+  // lịch hẹn đang ở trạng thái/tab nào, nên phải tự dò trạng thái thật rồi chọn đúng tab trước
+  // khi cuộn tới, không thì lịch hẹn có thể không nằm ở tab đang mở mặc định (OWNER_OFFERED_TIMES
+  // qua filter mặc định 'ALL' vẫn ổn, nhưng an toàn hơn khi tự dò đúng).
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get('highlight');
+  const [highlightedNow, setHighlightedNow] = useState<string | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -84,6 +92,36 @@ export const TenantAppointments: React.FC = () => {
   useEffect(() => {
     fetchStatusCounts();
   }, []);
+
+  useEffect(() => {
+    if (!highlightId) return;
+    (async () => {
+      try {
+        const res: any = await appointmentApi.getAppointmentDetail(highlightId);
+        const detail = res.data?.data || res.data;
+        const matchedTab = STATUS_KEYS.includes(detail?.status) ? detail.status : 'ALL';
+        setStatusFilter(matchedTab);
+        setPageNumber(1);
+      } catch {
+        // Lịch hẹn có thể đã bị xoá hoặc không còn thuộc về người dùng này — bỏ qua, giữ
+        // nguyên tab mặc định 'ALL', không chặn phần còn lại của trang.
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightId]);
+
+  // Cuộn tới và làm nổi bật đúng thẻ lịch hẹn khi mở từ thông báo — chỉ chạy được khi thẻ đó đã
+  // thực sự nằm trong trang/tab đang hiển thị (tab đã được tự chọn đúng ở effect trên).
+  useEffect(() => {
+    if (!highlightId || appointments.length === 0) return;
+    if (!appointments.some((a) => a.id === highlightId)) return;
+    const el = document.getElementById(`appointment-${highlightId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightedNow(highlightId);
+    const timer = setTimeout(() => setHighlightedNow(null), 3000);
+    return () => clearTimeout(timer);
+  }, [appointments, highlightId]);
 
   const handleStatusFilterChange = (key: string) => {
     setStatusFilter(key);
@@ -246,7 +284,12 @@ export const TenantAppointments: React.FC = () => {
             return (
               <div
                 key={app.id}
-                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-5"
+                id={`appointment-${app.id}`}
+                className={`bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-5 ${
+                  highlightedNow === app.id
+                    ? 'border-indigo-400 ring-2 ring-indigo-300'
+                    : 'border-slate-200'
+                }`}
               >
                 <div className="space-y-3 flex-1">
                   <div className="flex items-center justify-between gap-2">

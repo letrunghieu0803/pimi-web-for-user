@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Bell, CheckCheck, Calendar, FileText, Info, Trash2, CheckCircle2, Clock, RotateCcw } from 'lucide-react';
-import { notificationApi, NotificationItem } from '@/services/notificationApi';
+import { notificationApi, NotificationItem, getNotificationLink } from '@/services/notificationApi';
 import { FilterTabs } from '@/components/common/FilterTabs';
 import { Pagination } from '@/components/common/Pagination';
 import { NotificationListSkeleton } from '@/components/ui/Skeleton';
@@ -11,6 +12,7 @@ const PAGE_SIZE = 10;
 
 export const NotificationsPage: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'UNREAD' | 'READ'>('ALL');
@@ -72,6 +74,12 @@ export const NotificationsPage: React.FC = () => {
     } catch (err) {
       console.error('Error marking notification as read:', err);
     }
+  };
+
+  const handleNotificationClick = (item: NotificationItem) => {
+    handleMarkAsRead(item);
+    const link = getNotificationLink(item);
+    if (link) navigate(link);
   };
 
   const handleMarkAsUnread = async (e: React.MouseEvent, item: NotificationItem) => {
@@ -194,7 +202,7 @@ export const NotificationsPage: React.FC = () => {
               return (
                 <div
                   key={item.id}
-                  onClick={() => handleMarkAsRead(item)}
+                  onClick={() => handleNotificationClick(item)}
                   className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 group ${
                     isUnread
                       ? 'bg-indigo-50/40 border-indigo-200/80 shadow-xs hover:border-indigo-300'
