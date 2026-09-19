@@ -54,6 +54,12 @@ export const appointmentApi = {
     return axiosClient.get('/v1/appointments/tenant', { params });
   },
 
+  // Lấy đúng 1 lịch hẹn theo id — dùng khi mở từ thông báo (biết id nhưng không biết status,
+  // nên không biết tab lọc/trạng thái nào chứa nó) để tự chọn đúng tab trước khi cuộn tới.
+  getAppointmentDetail: (id: string) => {
+    return axiosClient.get(`/v1/appointments/${id}`);
+  },
+
   userConfirm: (id: string, payload: { action: 'ACCEPT' | 'REJECT'; selectedTimeSlotId?: string; rejectReason?: string }) => {
     return axiosClient.put(`/v1/appointments/${id}/user-confirm`, payload);
   },
