@@ -31,7 +31,12 @@
     "ctaDesc": "Call Pimi's customer care hotline now and our team will help you find the newest available rooms that match what you need.",
     "ctaCallHotline": "Call Hotline 0987.654.321",
     "recentlyViewedTag": "For you",
-    "recentlyViewedTitle": "Recently viewed rooms"
+    "recentlyViewedTitle": "Recently viewed rooms",
+    "shortTermTag": "Book By Day/Hour",
+    "shortTermTitle": "Short-Term Stays",
+    "longTermTag": "Rent By Month/Year",
+    "longTermTitle": "Long-Term Rentals",
+    "viewMore": "View more"
   },
   "login": {
     "title": "Sign In To Your Account",
@@ -132,7 +137,9 @@
     "more": "more",
     "favorite": "Save to favorites",
     "unfavorite": "Remove from favorites",
-    "favoriteError": "Couldn't update favorites, please try again"
+    "favoriteError": "Couldn't update favorites, please try again",
+    "acceptsForeignTenants": "Accepts foreign tenants",
+    "noForeignTenants": "Vietnamese tenants only"
   },
   "contact": {
     "badge": "Contact Support",
@@ -208,7 +215,7 @@
     "backToLogin": "Back to Sign In",
     "otpLabel": "OTP code (6 digits) *",
     "newPasswordLabel": "New password *",
-    "newPasswordPlaceholder": "At least 8 characters",
+    "newPasswordPlaceholder": "At least 8 characters, with uppercase, lowercase, a number and a special character",
     "confirmPasswordLabel": "Confirm new password *",
     "confirmPasswordPlaceholder": "Re-enter your new password",
     "updating": "Updating...",
@@ -218,6 +225,10 @@
     "toastCodeSent": "A verification OTP has been sent to your email!",
     "toastInvalidOtp": "Please enter the 6-digit OTP!",
     "toastPasswordTooShort": "New password must be at least 8 characters!",
+    "toastPasswordLowercase": "New password must contain at least 1 lowercase letter!",
+    "toastPasswordUppercase": "New password must contain at least 1 uppercase letter!",
+    "toastPasswordNumber": "New password must contain at least 1 number!",
+    "toastPasswordSpecial": "New password must contain at least 1 special character!",
     "toastPasswordMismatch": "Password confirmation doesn't match!",
     "toastResetSuccess": "Password reset successfully! Please sign in again."
   },
@@ -299,7 +310,35 @@
     "paidText": "Please contact the building's collaborator to complete your check-in.",
     "expiredTitle": "Booking expired",
     "expiredText": "The QR code has expired without receiving payment. Go back and book again if you still want this room.",
-    "backToRoomButton": "Back to room"
+    "backToRoomButton": "Back to room",
+    "stayPeriodLabel": "Stay period"
+  },
+  "booking": {
+    "calendarTitle": "Select check-in/check-out dates",
+    "calendarNavHint": "Click once for check-in, click again for check-out",
+    "calendarLegendSelected": "Selected",
+    "calendarLegendBusy": "Fully booked",
+    "calendarDoneButton": "Done",
+    "calWeekdaySun": "Sun",
+    "calWeekdayMon": "Mon",
+    "calWeekdayTue": "Tue",
+    "calWeekdayWed": "Wed",
+    "calWeekdayThu": "Thu",
+    "calWeekdayFri": "Fri",
+    "calWeekdaySat": "Sat",
+    "checkInLabel": "Check-in",
+    "checkOutLabel": "Check-out",
+    "notSelected": "Not selected",
+    "selectDatesButton": "Select check-in/check-out dates",
+    "checkInTimeLabel": "Check-in time",
+    "checkOutTimeLabel": "Check-out time",
+    "quoteNights": "{{count}} nights",
+    "quoteHours": "{{count}} hours",
+    "quoteDiscountApplied": "{{percent}}% off applied",
+    "quoteLoading": "Calculating price...",
+    "quoteError": "Couldn't price this date range, please pick again",
+    "toastNeedDates": "Please select check-in/check-out dates before booking",
+    "toastInvalidDateRange": "Check-out time must be after check-in time"
   },
   "tenantAppointments": {
     "title": "Viewing Appointment History",

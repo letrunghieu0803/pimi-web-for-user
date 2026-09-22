@@ -50,8 +50,27 @@ export const ForgotPassword: React.FC = () => {
       toast.warning(t('forgotPassword.toastInvalidOtp'));
       return;
     }
+    // Khớp CHÍNH XÁC yêu cầu `@IsStrongPassword()` mặc định phía BE (auth.dto.ts: 8+ ký tự, chữ
+    // hoa, chữ thường, số, ký tự đặc biệt) — trước đây chỉ kiểm tra độ dài, khiến mật khẩu qua
+    // được validate FE nhưng vẫn bị BE từ chối ở bước cuối cùng.
     if (!newPassword || newPassword.length < 8) {
       toast.warning(t('forgotPassword.toastPasswordTooShort'));
+      return;
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      toast.warning(t('forgotPassword.toastPasswordLowercase'));
+      return;
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      toast.warning(t('forgotPassword.toastPasswordUppercase'));
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      toast.warning(t('forgotPassword.toastPasswordNumber'));
+      return;
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+      toast.warning(t('forgotPassword.toastPasswordSpecial'));
       return;
     }
     if (newPassword !== confirmPassword) {

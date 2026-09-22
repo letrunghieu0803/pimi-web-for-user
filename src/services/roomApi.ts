@@ -96,7 +96,7 @@ export const mapBackendRoomToRoom = (item: any): Room => {
     availableCount: item.availableCount,
     distanceInKm: item.distanceInKm !== undefined && item.distanceInKm !== null ? Number(item.distanceInKm) : undefined,
     isRecommended: item.isRecommended !== undefined ? !!item.isRecommended : false,
-    ratingScore: item.ratingScore !== undefined && item.ratingScore !== null ? Number(item.ratingScore) : 80,
+    acceptForeignTenants: !!house.acceptForeignTenants,
     rentalTermType: house.rentalTermType || item.rentalTermType || 'SHORT_TERM',
     shortTermPrice: item.shortTermPrice !== undefined && item.shortTermPrice !== null ? Number(item.shortTermPrice) : undefined,
     shortTermPriceUnit: item.shortTermPriceUnit || undefined,

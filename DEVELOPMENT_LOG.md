@@ -4,6 +4,69 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-22 — Sửa 4 lỗi đặt phòng phát hiện qua code review Giai đoạn 2
+
+**Vì sao:** Code review 8 hướng song song trên toàn bộ tính năng "chọn ngày đặt phòng" vừa làm (backend đã sửa cùng ngày, xem `bff-for-pimi/DEVELOPMENT_LOG.md`). Phát hiện thêm 4 lỗi ở web này, tất cả đã verify CONFIRMED và sửa.
+
+**Thay đổi:**
+- `RoomDetail.tsx` — `RoomDetail` bị React Router tái sử dụng NGUYÊN component instance khi điều hướng client-side qua 1 phòng khác (vd bấm "Phòng trọ tương tự"), route không có `key` theo id phòng. Trước đây ngày đã chọn (đã validate hợp lệ với phòng CŨ) hiện lại y nguyên cho phòng MỚI mà chưa hề kiểm tra lại — nay reset `checkInDate/checkOutDate/checkInTime/checkOutTime/quote` mỗi khi đổi phòng. Live-test xác nhận: chọn 5/11→11/11 cho phòng 101, điều hướng qua phòng khác rồi quay lại 101 (vẫn client-side nav, không reload trang — xác nhận qua network requests) → ngày chọn cũ đã biến mất, hiện lại "Chưa chọn".
+- `RoomDetail.tsx` — quote-fetching effect không chặn response CŨ (do đổi ngày liên tiếp, mạng trả không đúng thứ tự) ghi đè lên quote MỚI đang hiển thị — thêm cờ đếm request, chỉ áp dụng kết quả nếu vẫn còn là request mới nhất lúc resolve.
+- `RoomDetail.tsx` — thêm kiểm tra `checkOut > checkIn` trước khi gửi `handleBookAndPay` (trước đây chỉ kiểm tra đã chọn đủ 2 mốc, không kiểm tra thứ tự) + `min` cho ô giờ trả khi trùng ngày với giờ nhận, chặn sớm ở UI thay vì để backend từ chối rồi hiện lỗi chung chung.
+- `components/booking/DateRangeCalendar.tsx` — ngày bận tô xám tính bằng `getFullYear/getMonth/getDate` theo múi giờ TRÌNH DUYỆT trên mốc UTC thật từ backend, trong khi ngày đặt phòng luôn theo giờ Việt Nam — khách xem từ múi giờ khác (nhà có hỗ trợ khách nước ngoài) bị lệch 1 ngày ở ranh giới gần nửa đêm VN (verify bằng script mô phỏng: viewer California tính sai lùi 1 ngày so với viewer Việt Nam cho cùng 1 mốc UTC). Quy đổi cố định UTC+7 trước khi lấy Y/M/D thay vì dùng múi giờ trình duyệt.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` + `npm run lint` sạch. Live-test qua Browser pane: chọn ngày cho phòng 101 (5/11→11/11, đúng giá 6 đêm × 250.000đ = 1.500.000đ) → điều hướng qua "204 (gác xép)" rồi quay lại 101 (xác nhận client-side nav qua network requests, không reload) → ngày đã reset về "Chưa chọn". Viết script Node mô phỏng 2 múi giờ trình duyệt khác nhau cho cùng 1 mốc UTC (viewer Việt Nam vs viewer California) → xác nhận logic cũ lệch 1 ngày cho viewer California, logic mới cho kết quả đúng ở cả 2 múi giờ.
+
+---
+
+## 2026-09-22 — Chọn ngày nhận/trả phòng khi đặt ngắn hạn + báo giá theo bậc giảm giá
+
+**Vì sao:** Đặt phòng ngắn hạn trước đây không hề có ngày nhận/trả — bấm "Đặt & Thanh toán" trả ngay giá niêm yết. Để giảm giá theo đêm (chủ nhà cấu hình ở Web-Pimi-for-owner) có tác dụng thật, cần thêm bước chọn ngày trước khi đặt. Backend tương ứng ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày.
+
+**Thay đổi:**
+- `components/booking/DateRangeCalendar.tsx` (mới) — lịch chọn khoảng ngày tự viết bằng React thuần, không thêm thư viện calendar mới (app dùng React 19 rất mới, nhiều thư viện lịch phổ biến chưa chắc hỗ trợ). Lưới 2 tháng, tự xám ngày quá khứ/đã bận, click chọn ngày nhận rồi ngày trả. Hỗ trợ `allowSameDay` cho phòng tính giá theo giờ (nhận/trả cùng ngày là bình thường với loại phòng này).
+- `RoomDetail.tsx` — khối chọn ngày + báo giá real-time (gọi API báo giá mỗi khi đổi ngày, không tự tính ở FE) trong sidebar, trước nút đặt phòng. Phòng theo giờ có thêm 2 ô chọn giờ riêng.
+- `bookingApi.ts` — `createBooking` nhận thêm ngày nhận/trả; thêm hàm báo giá + liệt kê ngày bận.
+- `BookingPayment.tsx` — hiện thêm ngày nhận/trả trên trang thanh toán (ẩn nếu là đơn cũ trước tính năng này).
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Live-test qua Browser pane với dữ liệu thật: đặt phòng PER_DAY 2 đêm (không giảm giá, đúng 600.000đ) và 8 đêm (giảm 10%, đúng 2.160.000đ) — cả 2 đều tạo đơn thành công, kiểm tra đúng dữ liệu DB. Test chống trùng lịch qua UI (ngày bận bị tô xám, không bấm được) và qua Contract dài hạn của phòng khác. Test phòng PER_HOUR (5 giờ, đúng 3 block × 80.000đ = 240.000đ, không áp giảm giá theo đêm).
+
+**2 lỗi phát hiện và sửa ngay trong lúc test sống** (không phải lỗi thiết kế ban đầu — phát hiện được chính vì test tay thay vì chỉ đọc code): (1) lịch chặn chọn ngày trả TRÙNG ngày nhận, khiến phòng theo giờ (trường hợp bình thường là nhận/trả cùng ngày, khác giờ) không đặt được — thêm `allowSameDay`. (2) giờ mặc định 14:00→12:00 (theo quy ước check-in/check-out qua đêm) tạo khoảng thời gian ÂM khi áp cho phòng theo giờ đặt cùng ngày — đổi mặc định thành 14:00→16:00, luôn hợp lệ dù cùng ngày hay khác ngày.
+
+---
+
+## 2026-09-22 — Thêm section Nhà Ngắn Hạn / Nhà Dài Hạn ở trang chủ
+
+**Vì sao:** Chủ nhà muốn trang chủ có thêm 2 section riêng cho nhà ngắn hạn và dài hạn, kèm nút "Xem thêm" dẫn tới trang tìm phòng đã lọc sẵn đúng loại hình. Trong lúc kiểm tra live phát hiện section "Phòng Trọ Nổi Bật" sẵn có không tự ẩn khi không có phòng nào — hiện tiêu đề trơ trọi không có nội dung bên dưới (dev DB hiện không có phòng SHORT_TERM nào), chủ nhà yêu cầu áp dụng luôn quy tắc "ẩn cả tiêu đề khi không có dữ liệu" cho mọi section liên quan.
+
+**Thay đổi:** `Home.tsx` — thêm component `RentalTermSection` dùng chung cho 2 section mới (fetch theo `rentalTermType`, header + lưới phòng + nút "Xem thêm" trỏ `/rooms?rentalTermType=...`), tự ẩn HẲN section (kể cả tiêu đề) khi tải xong mà không có phòng nào — áp dụng cùng quy tắc cho section "Phòng Trọ Nổi Bật" sẵn có (trước đây luôn hiện tiêu đề dù rỗng).
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Live-test qua Browser pane với dữ liệu thật: section "Nhà Ở Dài Hạn" hiện đúng 3 phòng, nút "Xem thêm" điều hướng đúng `/rooms?rentalTermType=LONG_TERM` với filter tab tương ứng được chọn sẵn; section "Nhà Ở Ngắn Hạn" và "Phòng Trọ Nổi Bật" đều tự ẩn hoàn toàn (không có phòng SHORT_TERM nào trong dev DB) — xác nhận đúng bằng cách đọc lại nội dung trang, không còn tiêu đề trơ trọi.
+
+---
+
+## 2026-09-22 — Bỏ điểm đánh giá giả trên thẻ phòng, thêm thông tin nhận khách nước ngoài
+
+**Vì sao:** Mọi thẻ phòng đều hiện badge "80đ" như 1 điểm đánh giá — kiểm tra `roomApi.ts` phát hiện `ratingScore` luôn mặc định = 80 ở phía FE khi backend không trả (thực tế BE có trả nhưng đây là điểm nội bộ dùng để sắp xếp thứ tự hiển thị, không phải đánh giá thật của người dùng), gây hiểu nhầm cho người thuê. Đồng thời cần bổ sung thông tin phòng có nhận khách nước ngoài hay không — dữ liệu này đã có sẵn ở backend (`RentHouse.acceptForeignTenants`, chủ nhà tự cấu hình) nhưng chưa được hiển thị ở app người thuê.
+
+**Thay đổi:**
+- `RoomCard.tsx` — bỏ hẳn badge điểm "80đ" (icon Star + `room.ratingScore`).
+- `types/index.ts` + `roomApi.ts` — bỏ field `ratingScore` khỏi kiểu `Room`, thêm `acceptForeignTenants` map từ `item.rentHouse.acceptForeignTenants`.
+- `RoomCard.tsx` + `RoomDetail.tsx` — thêm 1 dòng (icon địa cầu) hiện "Nhận khách nước ngoài"/"Không nhận khách nước ngoài" ngay dưới địa chỉ, màu xanh lá/xám tuỳ giá trị. Giữ nguyên phần "Đánh giá" (RoomReviews.tsx, sao thật do người thuê viết) theo yêu cầu — không thuộc phạm vi bỏ điểm giả này.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Live-test qua Browser pane với dữ liệu thật (3 phòng cùng 1 nhà có `acceptForeignTenants: true`): xác nhận không còn badge điểm trên cả 3 thẻ, dòng "Accepts foreign tenants" hiện đúng trên thẻ lẫn trang chi tiết, chuyển ngôn ngữ sang tiếng Việt hiện đúng "Nhận khách nước ngoài".
+
+---
+
+## 2026-09-22 — Sửa validate mật khẩu mới thiếu đủ 4 điều kiện khi quên mật khẩu
+
+**Vì sao:** Chủ nhà báo lỗi khi đổi mật khẩu mới ở luồng quên mật khẩu. Đối chiếu backend (`@IsStrongPassword()` mặc định) phát hiện FE trước đây chỉ kiểm tra độ dài, không kiểm tra chữ hoa/thường/số/ký tự đặc biệt — người dùng nhập mật khẩu qua được FE nhưng vẫn bị backend từ chối.
+
+**Thay đổi:** `ForgotPassword.tsx` — `handleResetPassword` thêm đủ 4 điều kiện kiểm tra (trước đó không có điều kiện nào ngoài độ dài), mỗi điều kiện có toast riêng.
+
+**Đã kiểm tra:** Live-test qua Browser pane chung với đợt sửa tương tự ở `bff-for-pimi`/`Web-Pimi-for-owner` cùng ngày — xem chi tiết kịch bản test ở đó.
+
+---
+
 ## 2026-09-19 — Bấm vào thông báo điều hướng thẳng tới trang chi tiết liên quan
 
 **Vì sao:** Người thuê yêu cầu (kèm ảnh chụp trang Thông báo): "khi bấm vào thông báo liên quan tới phần nào thì sẽ dẫn link luôn tới trang đó để xem" — ví dụ minh hoạ là thông báo lịch hẹn xem phòng nên bấm vào phải tới chi tiết lịch hẹn đó. Rà lại code: `Notifications.tsx` (trang danh sách đầy đủ) và `Navbar.tsx` (dropdown chuông thông báo) trước đây bấm vào bất kỳ thông báo nào cũng chỉ đánh dấu đã đọc — dropdown còn tệ hơn, luôn điều hướng cứng về `/notifications` bất kể nội dung.

@@ -7,13 +7,69 @@ import { RoomCard } from '@/components/common/RoomCard';
 import { HotLocationsSlider } from '@/components/home/HotLocationsSlider';
 import { BannerSlider } from '@/components/home/BannerSlider';
 import { NewsArticlesSlider } from '@/components/home/NewsArticlesSlider';
-import { Search, ShieldCheck, Zap, PhoneCall, Sparkles, Building2, ChevronRight, HeartHandshake, MapPin, History } from 'lucide-react';
+import { Search, ShieldCheck, Zap, PhoneCall, Sparkles, Building2, ChevronRight, HeartHandshake, MapPin, History, Calendar } from 'lucide-react';
 import { DISTRICTS } from '@/data/mockData';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
 import { Seo } from '@/components/common/Seo';
 import { JsonLd } from '@/components/common/JsonLd';
 import { SITE_URL, SITE_NAME, DEFAULT_SEO } from '@/config/seo';
 import { recentlyViewedApi } from '@/utils/recentlyViewed';
+
+// Dùng chung cho 2 section "Nhà ngắn hạn"/"Nhà dài hạn" ở trang chủ — cùng 1 khuôn hình
+// (header + lưới phòng + nút "Xem thêm"), chỉ khác rentalTermType/icon/tiêu đề. Tự ẩn hẳn khi
+// không có phòng nào (giống section "Phòng đã xem gần đây"), tránh hiện tiêu đề trơ trọi không
+// có nội dung bên dưới.
+const RentalTermSection: React.FC<{ type: 'SHORT_TERM' | 'LONG_TERM' }> = ({ type }) => {
+  const { t } = useTranslation();
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    roomApi
+      .getRoomsPaginated({ rentalTermType: type, pageNumber: 1, pageSize: 6, sortBy: 'newest' })
+      .then((res) => setRooms(res.rooms))
+      .finally(() => setLoading(false));
+  }, [type]);
+
+  if (!loading && rooms.length === 0) return null;
+
+  const isShortTerm = type === 'SHORT_TERM';
+  const Icon = isShortTerm ? Zap : Calendar;
+
+  return (
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">
+            <Icon className="w-4 h-4" />
+            <span>{isShortTerm ? t('home.shortTermTag') : t('home.longTermTag')}</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
+            {isShortTerm ? t('home.shortTermTitle') : t('home.longTermTitle')}
+          </h2>
+        </div>
+        <Link
+          to={`/rooms?rentalTermType=${type}`}
+          className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 group shrink-0"
+        >
+          <span>{t('home.viewMore')}</span>
+          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </Link>
+      </div>
+
+      {loading ? (
+        <CardGridSkeleton count={6} />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {rooms.map((room) => (
+            <RoomCard key={room.id} room={room} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};
 
 export const Home: React.FC = () => {
   const { t } = useTranslation();
@@ -194,37 +250,45 @@ export const Home: React.FC = () => {
         </section>
       )}
 
-      {/* Featured Rooms Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">
-              <Building2 className="w-4 h-4" />
-              <span>{t('home.featuredTag')}</span>
+      {/* Featured Rooms Section — ẩn hẳn cả tiêu đề (không chỉ lưới phòng) khi tải xong mà không
+          có phòng nào, tránh hiện tiêu đề trơ trọi không có nội dung bên dưới. */}
+      {(loading || featuredRooms.length > 0) && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">
+                <Building2 className="w-4 h-4" />
+                <span>{t('home.featuredTag')}</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
+                {t('home.featuredTitle')}
+              </h2>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
-              {t('home.featuredTitle')}
-            </h2>
+            <Link
+              to="/rooms"
+              className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 group"
+            >
+              <span>{t('home.viewAllRooms')}</span>
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </div>
-          <Link
-            to="/rooms"
-            className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 group"
-          >
-            <span>{t('home.viewAllRooms')}</span>
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
 
-        {loading ? (
-          <CardGridSkeleton count={6} />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredRooms.map((room) => (
-              <RoomCard key={room.id} room={room} />
-            ))}
-          </div>
-        )}
-      </section>
+          {loading ? (
+            <CardGridSkeleton count={6} />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredRooms.map((room) => (
+                <RoomCard key={room.id} room={room} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Nhà Ngắn Hạn / Nhà Dài Hạn — mỗi section fetch riêng theo rentalTermType, nút "Xem thêm"
+          dẫn tới trang tìm phòng đã lọc sẵn đúng loại hình thuê tương ứng. */}
+      <RentalTermSection type="SHORT_TERM" />
+      <RentalTermSection type="LONG_TERM" />
 
       {/* Why Choose Pimi Feature Grid */}
       <section className="bg-slate-900 text-white py-20">
