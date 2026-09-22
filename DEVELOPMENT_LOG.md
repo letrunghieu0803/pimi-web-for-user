@@ -4,6 +4,20 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-22 — Sửa 4 lỗi đặt phòng phát hiện qua code review Giai đoạn 2
+
+**Vì sao:** Code review 8 hướng song song trên toàn bộ tính năng "chọn ngày đặt phòng" vừa làm (backend đã sửa cùng ngày, xem `bff-for-pimi/DEVELOPMENT_LOG.md`). Phát hiện thêm 4 lỗi ở web này, tất cả đã verify CONFIRMED và sửa.
+
+**Thay đổi:**
+- `RoomDetail.tsx` — `RoomDetail` bị React Router tái sử dụng NGUYÊN component instance khi điều hướng client-side qua 1 phòng khác (vd bấm "Phòng trọ tương tự"), route không có `key` theo id phòng. Trước đây ngày đã chọn (đã validate hợp lệ với phòng CŨ) hiện lại y nguyên cho phòng MỚI mà chưa hề kiểm tra lại — nay reset `checkInDate/checkOutDate/checkInTime/checkOutTime/quote` mỗi khi đổi phòng. Live-test xác nhận: chọn 5/11→11/11 cho phòng 101, điều hướng qua phòng khác rồi quay lại 101 (vẫn client-side nav, không reload trang — xác nhận qua network requests) → ngày chọn cũ đã biến mất, hiện lại "Chưa chọn".
+- `RoomDetail.tsx` — quote-fetching effect không chặn response CŨ (do đổi ngày liên tiếp, mạng trả không đúng thứ tự) ghi đè lên quote MỚI đang hiển thị — thêm cờ đếm request, chỉ áp dụng kết quả nếu vẫn còn là request mới nhất lúc resolve.
+- `RoomDetail.tsx` — thêm kiểm tra `checkOut > checkIn` trước khi gửi `handleBookAndPay` (trước đây chỉ kiểm tra đã chọn đủ 2 mốc, không kiểm tra thứ tự) + `min` cho ô giờ trả khi trùng ngày với giờ nhận, chặn sớm ở UI thay vì để backend từ chối rồi hiện lỗi chung chung.
+- `components/booking/DateRangeCalendar.tsx` — ngày bận tô xám tính bằng `getFullYear/getMonth/getDate` theo múi giờ TRÌNH DUYỆT trên mốc UTC thật từ backend, trong khi ngày đặt phòng luôn theo giờ Việt Nam — khách xem từ múi giờ khác (nhà có hỗ trợ khách nước ngoài) bị lệch 1 ngày ở ranh giới gần nửa đêm VN (verify bằng script mô phỏng: viewer California tính sai lùi 1 ngày so với viewer Việt Nam cho cùng 1 mốc UTC). Quy đổi cố định UTC+7 trước khi lấy Y/M/D thay vì dùng múi giờ trình duyệt.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` + `npm run lint` sạch. Live-test qua Browser pane: chọn ngày cho phòng 101 (5/11→11/11, đúng giá 6 đêm × 250.000đ = 1.500.000đ) → điều hướng qua "204 (gác xép)" rồi quay lại 101 (xác nhận client-side nav qua network requests, không reload) → ngày đã reset về "Chưa chọn". Viết script Node mô phỏng 2 múi giờ trình duyệt khác nhau cho cùng 1 mốc UTC (viewer Việt Nam vs viewer California) → xác nhận logic cũ lệch 1 ngày cho viewer California, logic mới cho kết quả đúng ở cả 2 múi giờ.
+
+---
+
 ## 2026-09-22 — Chọn ngày nhận/trả phòng khi đặt ngắn hạn + báo giá theo bậc giảm giá
 
 **Vì sao:** Đặt phòng ngắn hạn trước đây không hề có ngày nhận/trả — bấm "Đặt & Thanh toán" trả ngay giá niêm yết. Để giảm giá theo đêm (chủ nhà cấu hình ở Web-Pimi-for-owner) có tác dụng thật, cần thêm bước chọn ngày trước khi đặt. Backend tương ứng ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày.
