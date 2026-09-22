@@ -4,6 +4,20 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-22 — Viết lại Chính sách bảo mật + thêm trang Điều khoản sử dụng
+
+**Vì sao:** Trang Chính sách bảo mật cũ (`/privacy`) claim tích hợp VNeID, đồng bộ dữ liệu khai báo lưu trú với Cổng thông tin Bộ Công an (tbltkbtt.bocongan.gov.vn) và các đối tác eKYC C06/RAR/VNPT/Viettel/FPT — rà soát toàn bộ codebase xác nhận **không có** đoạn code nào thực sự làm việc này (KYC thật là AI đọc giấy tờ + nhân sự Pimi duyệt thủ công, không phải eKYC nhà nước). Đây là claim sai sự thật, rủi ro pháp lý nếu công bố. Viết lại toàn bộ nội dung bám đúng cơ chế thật của hệ thống (đặc biệt phần thanh toán giữ hộ tiền qua tài khoản Pimi), đồng thời chưa từng có trang Điều khoản sử dụng nên soạn mới.
+
+**Thay đổi:**
+- `pages/Privacy.tsx` — viết lại toàn bộ nội dung (14 mục: phạm vi áp dụng, dữ liệu thu thập, mục đích, chia sẻ dữ liệu, thanh toán/giữ hộ tiền, bảo mật, thời gian lưu trữ, quyền người dùng, cookie, người dưới 18, chuyển dữ liệu, thay đổi chính sách, liên hệ) — bỏ hết các claim VNeID/Bộ Công an không có thật, giữ nguyên bố cục/style Tailwind sẵn có của trang.
+- `pages/Terms.tsx` (mới) — Điều khoản sử dụng đầy đủ (18 mục): định nghĩa vai trò, xác minh danh tính, vai trò trung gian của Pimi, đăng tin, đặt phòng & thanh toán, hợp đồng dài hạn, hoa hồng, khung huỷ/hoàn tiền (48h/24h), đánh giá & tố cáo, hành vi bị cấm, giới hạn trách nhiệm, luật áp dụng.
+- `App.tsx` — thêm route `/terms`. `components/common/Footer.tsx` — thêm link Điều khoản sử dụng cạnh Chính sách bảo mật (cả khối liên kết nhanh lẫn thanh dưới cùng). `pages/Register.tsx` — checkbox đồng ý khi đăng ký giờ dẫn tới cả 2 trang thay vì chỉ Chính sách bảo mật.
+- i18n: thêm khoá `terms.*`, `seo.termsTitle/termsDescription`, `footer.termsLink`, `register.termsLink/agreeToPolicyMiddle` cho cả `vi`/`en`.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` + `npm run lint` sạch (không phát sinh cảnh báo mới). Live-test qua Browser pane: `/privacy` và `/terms` hiển thị đúng nội dung mới; link Điều khoản sử dụng ở footer (2 vị trí) và ở trang đăng ký đều trỏ đúng `/terms`; checkbox đăng ký hiển thị đúng "Tôi đã đọc và đồng ý với Điều khoản sử dụng và Chính sách Bảo mật của Pimi." với cả 2 link. **Lưu ý còn lại:** mã số thuế/ĐKKD và hotline chính thức vẫn để placeholder `[Bổ sung ...]` — cần điền số thật trước khi công bố; nội dung nên được luật sư rà lại, đặc biệt khung hoàn tiền ở mục 10 Điều khoản.
+
+---
+
 ## 2026-09-22 — Sửa 4 lỗi đặt phòng phát hiện qua code review Giai đoạn 2
 
 **Vì sao:** Code review 8 hướng song song trên toàn bộ tính năng "chọn ngày đặt phòng" vừa làm (backend đã sửa cùng ngày, xem `bff-for-pimi/DEVELOPMENT_LOG.md`). Phát hiện thêm 4 lỗi ở web này, tất cả đã verify CONFIRMED và sửa.
