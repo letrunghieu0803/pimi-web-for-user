@@ -4,7 +4,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Room } from '@/types';
 import { roomApi } from '@/services/roomApi';
 import { appointmentApi, Appointment } from '@/services/appointmentApi';
-import { bookingApi } from '@/services/bookingApi';
+import { bookingApi, BusyRange, BookingQuote } from '@/services/bookingApi';
 import { collaboratorApi, HouseCollaborator } from '@/services/collaboratorApi';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
@@ -13,7 +13,8 @@ import { RoomReviews } from '@/components/room/RoomReviews';
 import { ReportRoomButton } from '@/components/room/ReportRoomButton';
 import { RoomCard } from '@/components/common/RoomCard';
 import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
-import { MapPin, Maximize2, Users, ShieldCheck, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2, Globe2 } from 'lucide-react';
+import { DateRangeCalendar } from '@/components/booking/DateRangeCalendar';
+import { MapPin, Maximize2, Users, ShieldCheck, CalendarCheck, CalendarDays, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2, Globe2 } from 'lucide-react';
 import { VietMapViewer } from '@/components/common/VietMapViewer';
 import { useToast } from '@/context/ToastContext';
 import { RoomDetailSkeleton } from '@/components/ui/Skeleton';
@@ -42,6 +43,22 @@ export const RoomDetail: React.FC = () => {
   const [collaborators, setCollaborators] = useState<HouseCollaborator[]>([]);
   const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
+
+  // Đặt phòng ngắn hạn theo ngày/giờ thật — busyRanges cho lịch tô xám, checkIn/checkOutDate là
+  // NGÀY đã chọn (00:00), checkIn/checkOutTime chỉ có ý nghĩa với phòng PER_HOUR (kết hợp với
+  // ngày để ra đúng thời điểm nhận/trả). quote là báo giá server trả về (tự tính lại mỗi khi đổi
+  // ngày/giờ, KHÔNG tự tính ở FE — tránh lệch công thức với BE, xem PaymentsService.computeBookingPrice).
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [busyRanges, setBusyRanges] = useState<BusyRange[]>([]);
+  const [checkInDate, setCheckInDate] = useState<Date | null>(null);
+  const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
+  // Mặc định 14:00 → 16:00 (chỉ áp dụng phòng PER_HOUR) — LUÔN hợp lệ (giờ trả sau giờ nhận) dù
+  // khách chọn cùng 1 ngày (trường hợp bình thường của phòng theo giờ) hay khác ngày.
+  const [checkInTime, setCheckInTime] = useState('14:00');
+  const [checkOutTime, setCheckOutTime] = useState('16:00');
+  const [quote, setQuote] = useState<BookingQuote | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState(false);
 
   const fetchActiveAppointment = async (currentRoom: Room | null) => {
     if (!isAuthenticated || !targetId || !currentRoom) return;
@@ -79,6 +96,12 @@ export const RoomDetail: React.FC = () => {
               .then((res: any) => setCollaborators(res?.data || res || []))
               .catch(() => setCollaborators([]));
           }
+          if (data?.id) {
+            bookingApi
+              .getAvailability(data.id)
+              .then((res: any) => setBusyRanges(res?.data || res || []))
+              .catch(() => setBusyRanges([]));
+          }
         })
         .finally(() => setLoading(false));
 
@@ -93,6 +116,40 @@ export const RoomDetail: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetId, isGroupView, isAuthenticated]);
+
+  // Kết hợp ngày đã chọn + giờ (chỉ có ý nghĩa với phòng PER_HOUR) thành 1 mốc thời gian thật.
+  const combineDateAndTime = (date: Date, time: string): Date => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const combined = new Date(date);
+    combined.setHours(hours || 0, minutes || 0, 0, 0);
+    return combined;
+  };
+
+  const isHourlyRoom = room?.shortTermPriceUnit === 'PER_HOUR';
+
+  // Báo giá lại mỗi khi khách đổi ngày/giờ — luôn hỏi server (không tự tính ở FE) để không bao
+  // giờ lệch công thức thật (block giá/giảm theo bậc) với lúc đặt thật.
+  useEffect(() => {
+    if (!room?.id || !checkInDate || !checkOutDate) {
+      setQuote(null);
+      setQuoteError(false);
+      return;
+    }
+    const checkIn = isHourlyRoom ? combineDateAndTime(checkInDate, checkInTime) : checkInDate;
+    const checkOut = isHourlyRoom ? combineDateAndTime(checkOutDate, checkOutTime) : checkOutDate;
+
+    setQuoteLoading(true);
+    setQuoteError(false);
+    bookingApi
+      .getQuote(room.id, checkIn.toISOString(), checkOut.toISOString())
+      .then((res: any) => setQuote(res?.data || res))
+      .catch(() => {
+        setQuote(null);
+        setQuoteError(true);
+      })
+      .finally(() => setQuoteLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room?.id, checkInDate, checkOutDate, checkInTime, checkOutTime, isHourlyRoom]);
 
   if (loading) {
     return (
@@ -168,10 +225,18 @@ export const RoomDetail: React.FC = () => {
       return;
     }
 
+    if (!checkInDate || !checkOutDate) {
+      toast.warning(t('booking.toastNeedDates'));
+      setShowCalendar(true);
+      return;
+    }
+
     if (bookingSubmitting) return;
     setBookingSubmitting(true);
     try {
-      const res: any = await bookingApi.createBooking(room.id);
+      const checkIn = isHourlyRoom ? combineDateAndTime(checkInDate, checkInTime) : checkInDate;
+      const checkOut = isHourlyRoom ? combineDateAndTime(checkOutDate, checkOutTime) : checkOutDate;
+      const res: any = await bookingApi.createBooking(room.id, checkIn.toISOString(), checkOut.toISOString());
       const booking = res?.data || res;
       navigate(`/payment/${booking.id}`);
     } catch (err: any) {
@@ -185,6 +250,75 @@ export const RoomDetail: React.FC = () => {
   const effectivePrice = room.price || room.shortTermPrice || 0;
   const roomSeoDescription = (room.description || '').replace(/\s+/g, ' ').trim().slice(0, 160) ||
     t('seo.roomDetailFallbackDescription', { name: room.name, address: room.address });
+
+  // Khối chọn ngày nhận/trả phòng — CHỈ hiện ở sidebar desktop (thanh CTA sticky mobile quá hẹp
+  // để nhét thêm lịch + giờ + báo giá). Trên mobile, bấm nút đặt phòng khi chưa chọn ngày sẽ tự
+  // mở modal lịch (xem handleBookAndPay) — vẫn dùng chung đúng 1 modal DateRangeCalendar.
+  const dateSelectorBlock = canBookShortTerm ? (
+    <div className="space-y-2.5">
+      <button
+        type="button"
+        onClick={() => setShowCalendar(true)}
+        className="w-full flex items-center gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-indigo-300 transition-colors text-left"
+      >
+        <CalendarDays className="w-4 h-4 text-indigo-600 shrink-0" />
+        {checkInDate && checkOutDate ? (
+          <span className="text-xs font-bold text-slate-800">
+            {checkInDate.toLocaleDateString('vi-VN')} → {checkOutDate.toLocaleDateString('vi-VN')}
+          </span>
+        ) : (
+          <span className="text-xs font-semibold text-slate-500">{t('booking.selectDatesButton')}</span>
+        )}
+      </button>
+
+      {isHourlyRoom && checkInDate && checkOutDate && (
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-[11px] text-slate-500 block mb-1">{t('booking.checkInTimeLabel')}</label>
+            <input
+              type="time"
+              value={checkInTime}
+              onChange={(e) => setCheckInTime(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] text-slate-500 block mb-1">{t('booking.checkOutTimeLabel')}</label>
+            <input
+              type="time"
+              value={checkOutTime}
+              onChange={(e) => setCheckOutTime(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+        </div>
+      )}
+
+      {checkInDate && checkOutDate && (
+        <div className="text-xs px-1">
+          {quoteLoading ? (
+            <span className="text-slate-400">{t('booking.quoteLoading')}</span>
+          ) : quoteError ? (
+            <span className="text-rose-500">{t('booking.quoteError')}</span>
+          ) : quote ? (
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">
+                {quote.nights !== null
+                  ? t('booking.quoteNights', { count: quote.nights })
+                  : t('booking.quoteHours', { count: quote.hours })}
+                {quote.discountPercent > 0 && (
+                  <span className="text-emerald-600 font-bold ml-1">
+                    ({t('booking.quoteDiscountApplied', { percent: quote.discountPercent })})
+                  </span>
+                )}
+              </span>
+              <span className="font-black text-slate-900">{quote.amount.toLocaleString('vi-VN')}đ</span>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </div>
+  ) : null;
 
   // Nút hành động chính (giống hệt logic trong sidebar gốc) — dùng lại nguyên khối này ở cả
   // sidebar (>= lg) lẫn thanh CTA sticky mobile (< lg) để KHÔNG tạo ra 2 nguồn sự thật cho
@@ -538,6 +672,7 @@ export const RoomDetail: React.FC = () => {
 
             {/* Direct Primary Actions */}
             <div className="space-y-3">
+              {dateSelectorBlock}
               {primaryActionButton}
 
               {hasCollaborators && (
@@ -598,6 +733,20 @@ export const RoomDetail: React.FC = () => {
         <ContactCollaboratorModal
           collaborators={collaborators}
           onClose={() => setShowCollaboratorModal(false)}
+        />
+      )}
+
+      {showCalendar && (
+        <DateRangeCalendar
+          busyRanges={busyRanges}
+          checkInDate={checkInDate}
+          checkOutDate={checkOutDate}
+          allowSameDay={isHourlyRoom}
+          onChange={(newCheckIn, newCheckOut) => {
+            setCheckInDate(newCheckIn);
+            setCheckOutDate(newCheckOut);
+          }}
+          onClose={() => setShowCalendar(false)}
         />
       )}
 

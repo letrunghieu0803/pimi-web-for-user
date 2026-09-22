@@ -74,6 +74,8 @@ export const BookingPayment: React.FC = () => {
   }, [booking?.status, booking?.expiresAt]);
 
   const formatMoney = (n: string | number) => `${Number(n).toLocaleString('vi-VN')} đ`;
+  const formatDateTime = (iso: string) =>
+    new Date(iso).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   if (loading) {
     return (
@@ -113,6 +115,12 @@ export const BookingPayment: React.FC = () => {
         <div className="space-y-1 text-center">
           <h1 className="text-lg font-black text-slate-900 font-heading">{booking.roomName}</h1>
           <p className="text-2xl font-black text-emerald-600 font-heading">{formatMoney(booking.amount)}</p>
+          {/* checkInDate/checkOutDate null ở các đơn tạo trước tính năng chọn ngày (không backfill). */}
+          {booking.checkInDate && booking.checkOutDate && (
+            <p className="text-xs text-slate-500">
+              {t('bookingPayment.stayPeriodLabel')}: {formatDateTime(booking.checkInDate)} → {formatDateTime(booking.checkOutDate)}
+            </p>
+          )}
         </div>
 
         {isPending && (
