@@ -4,6 +4,22 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-22 — Chọn ngày nhận/trả phòng khi đặt ngắn hạn + báo giá theo bậc giảm giá
+
+**Vì sao:** Đặt phòng ngắn hạn trước đây không hề có ngày nhận/trả — bấm "Đặt & Thanh toán" trả ngay giá niêm yết. Để giảm giá theo đêm (chủ nhà cấu hình ở Web-Pimi-for-owner) có tác dụng thật, cần thêm bước chọn ngày trước khi đặt. Backend tương ứng ở `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày.
+
+**Thay đổi:**
+- `components/booking/DateRangeCalendar.tsx` (mới) — lịch chọn khoảng ngày tự viết bằng React thuần, không thêm thư viện calendar mới (app dùng React 19 rất mới, nhiều thư viện lịch phổ biến chưa chắc hỗ trợ). Lưới 2 tháng, tự xám ngày quá khứ/đã bận, click chọn ngày nhận rồi ngày trả. Hỗ trợ `allowSameDay` cho phòng tính giá theo giờ (nhận/trả cùng ngày là bình thường với loại phòng này).
+- `RoomDetail.tsx` — khối chọn ngày + báo giá real-time (gọi API báo giá mỗi khi đổi ngày, không tự tính ở FE) trong sidebar, trước nút đặt phòng. Phòng theo giờ có thêm 2 ô chọn giờ riêng.
+- `bookingApi.ts` — `createBooking` nhận thêm ngày nhận/trả; thêm hàm báo giá + liệt kê ngày bận.
+- `BookingPayment.tsx` — hiện thêm ngày nhận/trả trên trang thanh toán (ẩn nếu là đơn cũ trước tính năng này).
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Live-test qua Browser pane với dữ liệu thật: đặt phòng PER_DAY 2 đêm (không giảm giá, đúng 600.000đ) và 8 đêm (giảm 10%, đúng 2.160.000đ) — cả 2 đều tạo đơn thành công, kiểm tra đúng dữ liệu DB. Test chống trùng lịch qua UI (ngày bận bị tô xám, không bấm được) và qua Contract dài hạn của phòng khác. Test phòng PER_HOUR (5 giờ, đúng 3 block × 80.000đ = 240.000đ, không áp giảm giá theo đêm).
+
+**2 lỗi phát hiện và sửa ngay trong lúc test sống** (không phải lỗi thiết kế ban đầu — phát hiện được chính vì test tay thay vì chỉ đọc code): (1) lịch chặn chọn ngày trả TRÙNG ngày nhận, khiến phòng theo giờ (trường hợp bình thường là nhận/trả cùng ngày, khác giờ) không đặt được — thêm `allowSameDay`. (2) giờ mặc định 14:00→12:00 (theo quy ước check-in/check-out qua đêm) tạo khoảng thời gian ÂM khi áp cho phòng theo giờ đặt cùng ngày — đổi mặc định thành 14:00→16:00, luôn hợp lệ dù cùng ngày hay khác ngày.
+
+---
+
 ## 2026-09-22 — Thêm section Nhà Ngắn Hạn / Nhà Dài Hạn ở trang chủ
 
 **Vì sao:** Chủ nhà muốn trang chủ có thêm 2 section riêng cho nhà ngắn hạn và dài hạn, kèm nút "Xem thêm" dẫn tới trang tìm phòng đã lọc sẵn đúng loại hình. Trong lúc kiểm tra live phát hiện section "Phòng Trọ Nổi Bật" sẵn có không tự ẩn khi không có phòng nào — hiện tiêu đề trơ trọi không có nội dung bên dưới (dev DB hiện không có phòng SHORT_TERM nào), chủ nhà yêu cầu áp dụng luôn quy tắc "ẩn cả tiêu đề khi không có dữ liệu" cho mọi section liên quan.
