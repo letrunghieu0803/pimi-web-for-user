@@ -208,6 +208,10 @@ export const Register: React.FC = () => {
             />
             <span>
               {t('register.agreeToPolicyPrefix')}{' '}
+              <Link to="/terms" target="_blank" className="text-indigo-600 font-bold hover:underline">
+                {t('register.termsLink')}
+              </Link>{' '}
+              {t('register.agreeToPolicyMiddle')}{' '}
               <Link to="/privacy" target="_blank" className="text-indigo-600 font-bold hover:underline">
                 {t('register.privacyPolicyLink')}
               </Link>{' '}

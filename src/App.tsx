@@ -21,6 +21,7 @@ const RoomDetail = lazy(() => import('@/pages/RoomDetail').then((m) => ({ defaul
 const About = lazy(() => import('@/pages/About').then((m) => ({ default: m.About })));
 const FAQ = lazy(() => import('@/pages/FAQ').then((m) => ({ default: m.FAQ })));
 const Privacy = lazy(() => import('@/pages/Privacy').then((m) => ({ default: m.Privacy })));
+const Terms = lazy(() => import('@/pages/Terms').then((m) => ({ default: m.Terms })));
 const Contact = lazy(() => import('@/pages/Contact').then((m) => ({ default: m.Contact })));
 const NewsList = lazy(() => import('@/pages/NewsList').then((m) => ({ default: m.NewsList })));
 const NewsDetail = lazy(() => import('@/pages/NewsDetail').then((m) => ({ default: m.NewsDetail })));
@@ -87,6 +88,7 @@ export const App: React.FC = () => {
                           <Route path="/news/:id" element={<NewsDetail />} />
                           <Route path="/faq" element={<FAQ />} />
                           <Route path="/privacy" element={<Privacy />} />
+                          <Route path="/terms" element={<Terms />} />
                           <Route path="/contact" element={<Contact />} />
 
                           {/* Auth Routes */}
