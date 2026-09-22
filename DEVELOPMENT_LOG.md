@@ -4,6 +4,39 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-22 — Thêm section Nhà Ngắn Hạn / Nhà Dài Hạn ở trang chủ
+
+**Vì sao:** Chủ nhà muốn trang chủ có thêm 2 section riêng cho nhà ngắn hạn và dài hạn, kèm nút "Xem thêm" dẫn tới trang tìm phòng đã lọc sẵn đúng loại hình. Trong lúc kiểm tra live phát hiện section "Phòng Trọ Nổi Bật" sẵn có không tự ẩn khi không có phòng nào — hiện tiêu đề trơ trọi không có nội dung bên dưới (dev DB hiện không có phòng SHORT_TERM nào), chủ nhà yêu cầu áp dụng luôn quy tắc "ẩn cả tiêu đề khi không có dữ liệu" cho mọi section liên quan.
+
+**Thay đổi:** `Home.tsx` — thêm component `RentalTermSection` dùng chung cho 2 section mới (fetch theo `rentalTermType`, header + lưới phòng + nút "Xem thêm" trỏ `/rooms?rentalTermType=...`), tự ẩn HẲN section (kể cả tiêu đề) khi tải xong mà không có phòng nào — áp dụng cùng quy tắc cho section "Phòng Trọ Nổi Bật" sẵn có (trước đây luôn hiện tiêu đề dù rỗng).
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Live-test qua Browser pane với dữ liệu thật: section "Nhà Ở Dài Hạn" hiện đúng 3 phòng, nút "Xem thêm" điều hướng đúng `/rooms?rentalTermType=LONG_TERM` với filter tab tương ứng được chọn sẵn; section "Nhà Ở Ngắn Hạn" và "Phòng Trọ Nổi Bật" đều tự ẩn hoàn toàn (không có phòng SHORT_TERM nào trong dev DB) — xác nhận đúng bằng cách đọc lại nội dung trang, không còn tiêu đề trơ trọi.
+
+---
+
+## 2026-09-22 — Bỏ điểm đánh giá giả trên thẻ phòng, thêm thông tin nhận khách nước ngoài
+
+**Vì sao:** Mọi thẻ phòng đều hiện badge "80đ" như 1 điểm đánh giá — kiểm tra `roomApi.ts` phát hiện `ratingScore` luôn mặc định = 80 ở phía FE khi backend không trả (thực tế BE có trả nhưng đây là điểm nội bộ dùng để sắp xếp thứ tự hiển thị, không phải đánh giá thật của người dùng), gây hiểu nhầm cho người thuê. Đồng thời cần bổ sung thông tin phòng có nhận khách nước ngoài hay không — dữ liệu này đã có sẵn ở backend (`RentHouse.acceptForeignTenants`, chủ nhà tự cấu hình) nhưng chưa được hiển thị ở app người thuê.
+
+**Thay đổi:**
+- `RoomCard.tsx` — bỏ hẳn badge điểm "80đ" (icon Star + `room.ratingScore`).
+- `types/index.ts` + `roomApi.ts` — bỏ field `ratingScore` khỏi kiểu `Room`, thêm `acceptForeignTenants` map từ `item.rentHouse.acceptForeignTenants`.
+- `RoomCard.tsx` + `RoomDetail.tsx` — thêm 1 dòng (icon địa cầu) hiện "Nhận khách nước ngoài"/"Không nhận khách nước ngoài" ngay dưới địa chỉ, màu xanh lá/xám tuỳ giá trị. Giữ nguyên phần "Đánh giá" (RoomReviews.tsx, sao thật do người thuê viết) theo yêu cầu — không thuộc phạm vi bỏ điểm giả này.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Live-test qua Browser pane với dữ liệu thật (3 phòng cùng 1 nhà có `acceptForeignTenants: true`): xác nhận không còn badge điểm trên cả 3 thẻ, dòng "Accepts foreign tenants" hiện đúng trên thẻ lẫn trang chi tiết, chuyển ngôn ngữ sang tiếng Việt hiện đúng "Nhận khách nước ngoài".
+
+---
+
+## 2026-09-22 — Sửa validate mật khẩu mới thiếu đủ 4 điều kiện khi quên mật khẩu
+
+**Vì sao:** Chủ nhà báo lỗi khi đổi mật khẩu mới ở luồng quên mật khẩu. Đối chiếu backend (`@IsStrongPassword()` mặc định) phát hiện FE trước đây chỉ kiểm tra độ dài, không kiểm tra chữ hoa/thường/số/ký tự đặc biệt — người dùng nhập mật khẩu qua được FE nhưng vẫn bị backend từ chối.
+
+**Thay đổi:** `ForgotPassword.tsx` — `handleResetPassword` thêm đủ 4 điều kiện kiểm tra (trước đó không có điều kiện nào ngoài độ dài), mỗi điều kiện có toast riêng.
+
+**Đã kiểm tra:** Live-test qua Browser pane chung với đợt sửa tương tự ở `bff-for-pimi`/`Web-Pimi-for-owner` cùng ngày — xem chi tiết kịch bản test ở đó.
+
+---
+
 ## 2026-09-19 — Bấm vào thông báo điều hướng thẳng tới trang chi tiết liên quan
 
 **Vì sao:** Người thuê yêu cầu (kèm ảnh chụp trang Thông báo): "khi bấm vào thông báo liên quan tới phần nào thì sẽ dẫn link luôn tới trang đó để xem" — ví dụ minh hoạ là thông báo lịch hẹn xem phòng nên bấm vào phải tới chi tiết lịch hẹn đó. Rà lại code: `Notifications.tsx` (trang danh sách đầy đủ) và `Navbar.tsx` (dropdown chuông thông báo) trước đây bấm vào bất kỳ thông báo nào cũng chỉ đánh dấu đã đọc — dropdown còn tệ hơn, luôn điều hướng cứng về `/notifications` bất kể nội dung.
