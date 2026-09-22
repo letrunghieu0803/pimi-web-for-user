@@ -39,7 +39,7 @@ export interface Room {
   availableCount?: number;
   distanceInKm?: number;
   isRecommended?: boolean;
-  ratingScore?: number;
+  acceptForeignTenants?: boolean;
   rentalTermType?: RentalTermType;
   shortTermPrice?: number;
   shortTermPriceUnit?: ShortTermPriceUnit;

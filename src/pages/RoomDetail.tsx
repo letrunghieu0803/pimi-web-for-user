@@ -13,7 +13,7 @@ import { RoomReviews } from '@/components/room/RoomReviews';
 import { ReportRoomButton } from '@/components/room/ReportRoomButton';
 import { RoomCard } from '@/components/common/RoomCard';
 import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
-import { MapPin, Maximize2, Users, ShieldCheck, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2 } from 'lucide-react';
+import { MapPin, Maximize2, Users, ShieldCheck, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2, Globe2 } from 'lucide-react';
 import { VietMapViewer } from '@/components/common/VietMapViewer';
 import { useToast } from '@/context/ToastContext';
 import { RoomDetailSkeleton } from '@/components/ui/Skeleton';
@@ -391,6 +391,16 @@ export const RoomDetail: React.FC = () => {
             <p className="flex items-center gap-1.5 text-sm text-slate-600">
               <MapPin className="w-4 h-4 text-indigo-600 shrink-0" />
               <span>{room.address}, {room.district}, {room.city}</span>
+            </p>
+            <p
+              className={`flex items-center gap-1.5 text-sm font-semibold ${
+                room.acceptForeignTenants ? 'text-emerald-600' : 'text-slate-400'
+              }`}
+            >
+              <Globe2 className="w-4 h-4 shrink-0" />
+              <span>
+                {room.acceptForeignTenants ? t('roomCard.acceptsForeignTenants') : t('roomCard.noForeignTenants')}
+              </span>
             </p>
           </div>
 

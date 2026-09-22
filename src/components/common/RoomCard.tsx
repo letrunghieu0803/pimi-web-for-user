@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Room } from '@/types';
-import { MapPin, Maximize2, Users, ShieldCheck, Layers, Navigation, Star, Sparkles, Heart } from 'lucide-react';
+import { MapPin, Maximize2, Users, ShieldCheck, Layers, Navigation, Sparkles, Heart, Globe2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useToast } from '@/context/ToastContext';
@@ -83,13 +83,6 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room }) => {
           </div>
 
           <div className="flex items-center gap-1.5">
-            {room.ratingScore !== undefined && (
-              <span className="badge-tag bg-slate-900/85 text-amber-300 font-bold backdrop-blur-md shadow-sm">
-                <Star className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
-                <span>{room.ratingScore}đ</span>
-              </span>
-            )}
-
             {room.distanceInKm !== undefined && (
               <span className="badge-tag bg-amber-500/95 text-white backdrop-blur-md shadow-sm animate-pulse">
                 <Navigation className="w-3.5 h-3.5" />
@@ -171,6 +164,18 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room }) => {
           <p className="flex items-center gap-1.5 text-xs text-slate-500 mt-2 line-clamp-1">
             <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>{room.address}</span>
+          </p>
+
+          {/* Foreign Tenants Note */}
+          <p
+            className={`flex items-center gap-1.5 text-xs font-medium mt-1.5 ${
+              room.acceptForeignTenants ? 'text-emerald-600' : 'text-slate-400'
+            }`}
+          >
+            <Globe2 className="w-3.5 h-3.5 shrink-0" />
+            <span>
+              {room.acceptForeignTenants ? t('roomCard.acceptsForeignTenants') : t('roomCard.noForeignTenants')}
+            </span>
           </p>
 
           {/* Key Specs Grid */}
