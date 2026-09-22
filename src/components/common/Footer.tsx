@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Building2, Phone, Mail, MapPin, ShieldCheck, Heart, ArrowUpRight, PhoneCall, Shield, MessageSquare } from 'lucide-react';
+import { Building2, Phone, Mail, MapPin, ShieldCheck, Heart, ArrowUpRight, PhoneCall, Shield, FileText, MessageSquare } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const { t } = useTranslation();
@@ -53,6 +53,12 @@ export const Footer: React.FC = () => {
                 <Link to="/privacy" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-emerald-300 font-semibold">
                   <Shield className="w-4 h-4 text-emerald-400" />
                   <span>{t('footer.privacyLink')}</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-emerald-300 font-semibold">
+                  <FileText className="w-4 h-4 text-emerald-400" />
+                  <span>{t('footer.termsLink')}</span>
                 </Link>
               </li>
               <li>
@@ -114,6 +120,8 @@ export const Footer: React.FC = () => {
           <p>© {new Date().getFullYear()} Pimi Platform. {t('footer.rightsReserved')}</p>
           <div className="flex items-center gap-4 text-slate-400">
             <Link to="/privacy" className="hover:text-slate-200 transition-colors">{t('footer.privacyLink')}</Link>
+            <span>•</span>
+            <Link to="/terms" className="hover:text-slate-200 transition-colors">{t('footer.termsLink')}</Link>
             <span>•</span>
             <Link to="/contact" className="hover:text-slate-200 transition-colors">{t('footer.contactLink')}</Link>
             <span>•</span>

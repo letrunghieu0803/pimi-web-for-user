@@ -114,6 +114,7 @@
     "aboutLink": "About us",
     "faqLink": "Frequently Asked Questions",
     "privacyLink": "Privacy Policy",
+    "termsLink": "Terms of Service",
     "contactLink": "Contact support",
     "popularAreasTitle": "Popular Areas",
     "area1": "Rooms in Cầu Giấy (Hanoi)",
@@ -460,6 +461,8 @@
     "confirmPlaceholder": "Re-enter password",
     "roleNotice": "Your account will be created with the Tenant role (RENT_USER).",
     "agreeToPolicyPrefix": "I have read and agree to the",
+    "termsLink": "Terms of Service",
+    "agreeToPolicyMiddle": "and",
     "privacyPolicyLink": "Privacy Policy",
     "agreeToPolicySuffix": "of Pimi.",
     "creating": "Creating account...",
@@ -512,7 +515,12 @@
   "privacy": {
     "badge": "User Data Protection",
     "title": "Personal Data & Privacy Protection Policy",
-    "effectiveDate": "Effective date: 29/07/2026 · Pimi Nest Co., Ltd. (content below is provided in Vietnamese, per Vietnamese legal requirements)"
+    "effectiveDate": "Effective date: 22/09/2026 · Version 1.0 · Pimi Nest Co., Ltd. (content below is provided in Vietnamese, per Vietnamese legal requirements)"
+  },
+  "terms": {
+    "badge": "Platform Usage Agreement",
+    "title": "Terms of Service",
+    "effectiveDate": "Effective date: 22/09/2026 · Version 1.0 · Pimi Nest Co., Ltd. (content below is provided in Vietnamese, per Vietnamese legal requirements)"
   },
   "requestTourModal": {
     "toastNeedName": "Please enter your full name!",
@@ -579,7 +587,9 @@
     "contactTitle": "Contact Us",
     "contactDescription": "Get in touch with the Pimi support team for rental guidance, contract questions, and other assistance.",
     "privacyTitle": "Privacy Policy",
-    "privacyDescription": "Pimi's privacy policy and personal data protection practices for platform users."
+    "privacyDescription": "Pimi's privacy policy and personal data protection practices for platform users.",
+    "termsTitle": "Terms of Service",
+    "termsDescription": "Pimi's terms of service: booking flow, payments, commission, cancellation/refunds and each party's responsibilities."
   },
   "favoriteRooms": {
     "title": "Favorite rooms",

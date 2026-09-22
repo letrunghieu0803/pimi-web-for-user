@@ -114,6 +114,7 @@
     "aboutLink": "Về chúng tôi",
     "faqLink": "Câu hỏi thường gặp (FAQ)",
     "privacyLink": "Chính sách bảo mật",
+    "termsLink": "Điều khoản sử dụng",
     "contactLink": "Liên hệ hỗ trợ",
     "popularAreasTitle": "Khu Vực Hot",
     "area1": "Phòng trọ Cầu Giấy (Hà Nội)",
@@ -460,6 +461,8 @@
     "confirmPlaceholder": "Nhập lại Mật khẩu",
     "roleNotice": "Tài khoản sẽ được tạo với Vai trò Người Thuê Nhà (RENT_USER).",
     "agreeToPolicyPrefix": "Tôi đã đọc và đồng ý với",
+    "termsLink": "Điều khoản sử dụng",
+    "agreeToPolicyMiddle": "và",
     "privacyPolicyLink": "Chính sách Bảo mật",
     "agreeToPolicySuffix": "của Pimi.",
     "creating": "Đang tạo tài khoản...",
@@ -512,7 +515,12 @@
   "privacy": {
     "badge": "Bảo Vệ Thông Tin Người Dùng",
     "title": "Chính Sách Bảo Vệ Dữ Liệu Và Thông Tin Cá Nhân",
-    "effectiveDate": "Ngày hiệu lực: 29/07/2026 · Công ty TNHH Pimi Nest"
+    "effectiveDate": "Ngày hiệu lực: 22/09/2026 · Phiên bản 1.0 · Công ty TNHH Pimi Nest"
+  },
+  "terms": {
+    "badge": "Thoả Thuận Sử Dụng Nền Tảng",
+    "title": "Điều Khoản Sử Dụng",
+    "effectiveDate": "Ngày hiệu lực: 22/09/2026 · Phiên bản 1.0 · Công ty TNHH Pimi Nest"
   },
   "requestTourModal": {
     "toastNeedName": "Vui lòng nhập họ và tên của bạn!",
@@ -579,7 +587,9 @@
     "contactTitle": "Liên hệ",
     "contactDescription": "Liên hệ đội ngũ hỗ trợ Pimi để được tư vấn thuê phòng trọ, giải đáp thắc mắc hợp đồng và các vấn đề khác.",
     "privacyTitle": "Chính sách bảo mật",
-    "privacyDescription": "Chính sách bảo mật và quyền riêng tư dữ liệu cá nhân của người dùng khi sử dụng nền tảng Pimi."
+    "privacyDescription": "Chính sách bảo mật và quyền riêng tư dữ liệu cá nhân của người dùng khi sử dụng nền tảng Pimi.",
+    "termsTitle": "Điều khoản sử dụng",
+    "termsDescription": "Điều khoản sử dụng nền tảng Pimi: quy trình đặt phòng, thanh toán, hoa hồng, huỷ/hoàn tiền và trách nhiệm các bên."
   },
   "favoriteRooms": {
     "title": "Phòng yêu thích",
