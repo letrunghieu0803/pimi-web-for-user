@@ -31,7 +31,12 @@
     "ctaDesc": "Gọi ngay Hotline chăm sóc khách hàng của Pimi để được trợ lý hỗ trợ tư vấn và gợi ý danh sách phòng trống mới nhất theo yêu cầu.",
     "ctaCallHotline": "Gọi Hotline 0987.654.321",
     "recentlyViewedTag": "Dành cho bạn",
-    "recentlyViewedTitle": "Phòng đã xem gần đây"
+    "recentlyViewedTitle": "Phòng đã xem gần đây",
+    "shortTermTag": "Thuê Theo Ngày/Giờ",
+    "shortTermTitle": "Nhà Ở Ngắn Hạn",
+    "longTermTag": "Thuê Theo Tháng/Năm",
+    "longTermTitle": "Nhà Ở Dài Hạn",
+    "viewMore": "Xem thêm"
   },
   "login": {
     "title": "Đăng Nhập Tài Khoản",
@@ -132,7 +137,9 @@
     "more": "khác",
     "favorite": "Lưu vào yêu thích",
     "unfavorite": "Bỏ khỏi yêu thích",
-    "favoriteError": "Không thể cập nhật yêu thích, vui lòng thử lại"
+    "favoriteError": "Không thể cập nhật yêu thích, vui lòng thử lại",
+    "acceptsForeignTenants": "Nhận khách nước ngoài",
+    "noForeignTenants": "Không nhận khách nước ngoài"
   },
   "contact": {
     "badge": "Liên Hệ Hỗ Trợ",
@@ -208,7 +215,7 @@
     "backToLogin": "Quay lại trang Đăng nhập",
     "otpLabel": "Mã OTP (6 chữ số) *",
     "newPasswordLabel": "Mật khẩu mới *",
-    "newPasswordPlaceholder": "Tối thiểu 8 ký tự",
+    "newPasswordPlaceholder": "Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
     "confirmPasswordLabel": "Xác nhận mật khẩu mới *",
     "confirmPasswordPlaceholder": "Nhập lại mật khẩu mới",
     "updating": "Đang cập nhật...",
@@ -218,6 +225,10 @@
     "toastCodeSent": "Mã OTP xác minh đã được gửi đến email của bạn!",
     "toastInvalidOtp": "Vui lòng nhập mã OTP gồm 6 chữ số!",
     "toastPasswordTooShort": "Mật khẩu mới phải có ít nhất 8 ký tự!",
+    "toastPasswordLowercase": "Mật khẩu mới phải có ít nhất 1 chữ cái thường!",
+    "toastPasswordUppercase": "Mật khẩu mới phải có ít nhất 1 chữ cái in hoa!",
+    "toastPasswordNumber": "Mật khẩu mới phải có ít nhất 1 chữ số!",
+    "toastPasswordSpecial": "Mật khẩu mới phải có ít nhất 1 ký tự đặc biệt!",
     "toastPasswordMismatch": "Xác nhận mật khẩu không trùng khớp!",
     "toastResetSuccess": "Đổi mật khẩu thành công! Vui lòng đăng nhập lại."
   },
