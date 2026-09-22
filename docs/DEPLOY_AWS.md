@@ -7,6 +7,10 @@ của bạn — Claude không có quyền truy cập tài khoản AWS để làm
 Workflow tương ứng đã có sẵn tại `.github/workflows/deploy-product.yml` (build Vite → sync S3 →
 invalidate CloudFront). Phần còn lại là tạo hạ tầng AWS + khai báo secrets/variables trên GitHub.
 
+> **Gắn tên miền:** làm hết bước 1-3 ở đây trước (tạo bucket + CloudFront distribution), rồi sang
+> `bff-for-pimi/docs/DEPLOY_AWS.md` mục 7 để tạo Route 53 record cho domain thật — tài liệu đó gom
+> chung phần domain cho cả 3 trang (2 web + backend) để không phải lặp lại hướng dẫn Route 53 3 lần.
+
 > Thay `<...>` bằng giá trị thật của bạn. Region gợi ý `ap-southeast-1` (Singapore, gần Việt Nam nhất) —
 > đổi nếu bạn đã có hạ tầng AWS khác vùng.
 
