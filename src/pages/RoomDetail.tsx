@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Room } from '@/types';
@@ -59,6 +59,9 @@ export const RoomDetail: React.FC = () => {
   const [quote, setQuote] = useState<BookingQuote | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState(false);
+  // Chặn quote CŨ (do đổi ngày/giờ liên tiếp, response về không đúng thứ tự gửi) ghi đè lên quote
+  // MỚI hơn đang hiển thị — chỉ áp dụng kết quả nếu request vẫn còn là request mới nhất lúc resolve.
+  const quoteRequestIdRef = useRef(0);
 
   const fetchActiveAppointment = async (currentRoom: Room | null) => {
     if (!isAuthenticated || !targetId || !currentRoom) return;
@@ -81,6 +84,17 @@ export const RoomDetail: React.FC = () => {
     if (targetId) {
       window.scrollTo(0, 0);
       setLoading(true);
+      // RoomDetail được React Router tái sử dụng NGUYÊN component instance khi điều hướng qua 1
+      // phòng khác bằng client-side nav (vd bấm "similar rooms" bên dưới) — nếu không reset, ngày
+      // đã chọn (đã validate hợp lệ với busyRanges của phòng CŨ) sẽ hiện lại cho phòng MỚI mà chưa
+      // hề được kiểm tra lại, dù busyRanges/quote bên dưới đã tự fetch lại đúng cho phòng mới.
+      setCheckInDate(null);
+      setCheckOutDate(null);
+      setCheckInTime('14:00');
+      setCheckOutTime('16:00');
+      setQuote(null);
+      setQuoteError(false);
+      setShowCalendar(false);
       const fetchDetail = isGroupView ? roomApi.getRoomGroupById(targetId) : roomApi.getRoomById(targetId);
       fetchDetail
         .then((data) => {
@@ -138,16 +152,24 @@ export const RoomDetail: React.FC = () => {
     const checkIn = isHourlyRoom ? combineDateAndTime(checkInDate, checkInTime) : checkInDate;
     const checkOut = isHourlyRoom ? combineDateAndTime(checkOutDate, checkOutTime) : checkOutDate;
 
+    const requestId = ++quoteRequestIdRef.current;
     setQuoteLoading(true);
     setQuoteError(false);
     bookingApi
       .getQuote(room.id, checkIn.toISOString(), checkOut.toISOString())
-      .then((res: any) => setQuote(res?.data || res))
+      .then((res: any) => {
+        if (quoteRequestIdRef.current !== requestId) return;
+        setQuote(res?.data || res);
+      })
       .catch(() => {
+        if (quoteRequestIdRef.current !== requestId) return;
         setQuote(null);
         setQuoteError(true);
       })
-      .finally(() => setQuoteLoading(false));
+      .finally(() => {
+        if (quoteRequestIdRef.current !== requestId) return;
+        setQuoteLoading(false);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room?.id, checkInDate, checkOutDate, checkInTime, checkOutTime, isHourlyRoom]);
 
@@ -231,11 +253,16 @@ export const RoomDetail: React.FC = () => {
       return;
     }
 
+    const checkIn = isHourlyRoom ? combineDateAndTime(checkInDate, checkInTime) : checkInDate;
+    const checkOut = isHourlyRoom ? combineDateAndTime(checkOutDate, checkOutTime) : checkOutDate;
+    if (checkOut.getTime() <= checkIn.getTime()) {
+      toast.warning(t('booking.toastInvalidDateRange'));
+      return;
+    }
+
     if (bookingSubmitting) return;
     setBookingSubmitting(true);
     try {
-      const checkIn = isHourlyRoom ? combineDateAndTime(checkInDate, checkInTime) : checkInDate;
-      const checkOut = isHourlyRoom ? combineDateAndTime(checkOutDate, checkOutTime) : checkOutDate;
       const res: any = await bookingApi.createBooking(room.id, checkIn.toISOString(), checkOut.toISOString());
       const booking = res?.data || res;
       navigate(`/payment/${booking.id}`);
@@ -287,6 +314,9 @@ export const RoomDetail: React.FC = () => {
             <input
               type="time"
               value={checkOutTime}
+              // Chỉ ràng buộc được khi cùng 1 ngày (min theo giờ không có ý nghĩa khi trả phòng ở
+              // ngày sau) — handleBookAndPay vẫn kiểm tra lại đầy đủ trước khi gửi request.
+              min={checkInDate && checkOutDate && checkInDate.getTime() === checkOutDate.getTime() ? checkInTime : undefined}
               onChange={(e) => setCheckOutTime(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
             />

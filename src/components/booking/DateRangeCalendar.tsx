@@ -16,6 +16,19 @@ interface DateRangeCalendarProps {
 }
 
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+// Booking backend luôn coi "ngày" theo lịch Việt Nam (UTC+7) — busyRanges trả về từ server là
+// mốc UTC thật. Nếu quy đổi về ngày lịch bằng getFullYear/getMonth/getDate (múi giờ TRÌNH DUYỆT)
+// như startOfDay() ở trên, khách xem từ múi giờ khác Việt Nam (nhà hỗ trợ khách nước ngoài —
+// acceptForeignTenants) sẽ tính sai lệch 1 ngày cho ranh giới UTC gần nửa đêm VN. Quy đổi cố định
+// về UTC+7 trước khi lấy Y/M/D để MỌI khách đều thấy đúng cùng 1 ngày bận, bất kể múi giờ trình
+// duyệt — kết quả vẫn là 1 Date ở nửa đêm LOCAL để so sánh nhất quán với các ô lưới khác (đều
+// dựng bằng new Date(y,m,d) local, xem buildMonthGrid).
+const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
+const toVnCalendarDay = (isoOrDate: string | Date): Date => {
+  const shifted = new Date(new Date(isoOrDate).getTime() + VN_OFFSET_MS);
+  return new Date(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
+};
 const addDays = (d: Date, days: number) => {
   const next = new Date(d);
   next.setDate(next.getDate() + days);
@@ -52,14 +65,14 @@ export const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
   allowSameDay = false,
 }) => {
   const { t } = useTranslation();
-  const today = startOfDay(new Date());
+  const today = toVnCalendarDay(new Date());
   const [visibleMonth, setVisibleMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
 
   const busyDayTimestamps = useMemo(() => {
     const set = new Set<number>();
     busyRanges.forEach((range) => {
-      let cursor = startOfDay(new Date(range.start));
-      const end = startOfDay(new Date(range.end));
+      let cursor = toVnCalendarDay(range.start);
+      const end = toVnCalendarDay(range.end);
       while (cursor.getTime() < end.getTime()) {
         set.add(cursor.getTime());
         cursor = addDays(cursor, 1);

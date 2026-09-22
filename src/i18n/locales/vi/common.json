@@ -337,7 +337,8 @@
     "quoteDiscountApplied": "Đã giảm {{percent}}%",
     "quoteLoading": "Đang tính giá...",
     "quoteError": "Không tính được giá cho khoảng ngày này, vui lòng chọn lại",
-    "toastNeedDates": "Vui lòng chọn ngày nhận/trả phòng trước khi đặt"
+    "toastNeedDates": "Vui lòng chọn ngày nhận/trả phòng trước khi đặt",
+    "toastInvalidDateRange": "Giờ trả phòng phải sau giờ nhận phòng"
   },
   "tenantAppointments": {
     "title": "Lịch sử Đặt lịch xem phòng",

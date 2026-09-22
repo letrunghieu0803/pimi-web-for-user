@@ -337,7 +337,8 @@
     "quoteDiscountApplied": "{{percent}}% off applied",
     "quoteLoading": "Calculating price...",
     "quoteError": "Couldn't price this date range, please pick again",
-    "toastNeedDates": "Please select check-in/check-out dates before booking"
+    "toastNeedDates": "Please select check-in/check-out dates before booking",
+    "toastInvalidDateRange": "Check-out time must be after check-in time"
   },
   "tenantAppointments": {
     "title": "Viewing Appointment History",
