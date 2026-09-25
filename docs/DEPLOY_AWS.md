@@ -9,7 +9,8 @@ invalidate CloudFront). Phần còn lại là tạo hạ tầng AWS + khai báo 
 
 > **Gắn tên miền:** làm hết bước 1-3 ở đây trước (tạo bucket + CloudFront distribution), rồi sang
 > `bff-for-pimi/docs/DEPLOY_AWS.md` mục 7 để tạo Route 53 record cho domain thật — tài liệu đó gom
-> chung phần domain cho cả 3 trang (2 web + backend) để không phải lặp lại hướng dẫn Route 53 3 lần.
+> chung phần domain cho cả 4 (3 web + backend) để không phải lặp lại hướng dẫn Route 53 nhiều lần.
+> Domain của trang này là `pimi.vn` — domain gốc riêng (không phải subdomain của domain khác).
 
 > Thay `<...>` bằng giá trị thật của bạn. Region gợi ý `ap-southeast-1` (Singapore, gần Việt Nam nhất) —
 > đổi nếu bạn đã có hạ tầng AWS khác vùng.
