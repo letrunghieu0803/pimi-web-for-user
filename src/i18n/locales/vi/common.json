@@ -298,6 +298,25 @@
     "zaloButton": "Nhắn Zalo",
     "emptyText": "Toà nhà này chưa có cộng tác viên phụ trách."
   },
+  "invoiceDetail": {
+    "title": "Chi tiết hoá đơn",
+    "notFound": "Không tìm thấy hoá đơn hoặc liên kết đã hết hiệu lực",
+    "missingToken": "Liên kết không hợp lệ — thiếu mã xác thực",
+    "backToHome": "Về trang chủ",
+    "periodLabel": "Kỳ thanh toán",
+    "tenantLabel": "Khách thuê",
+    "defaultTenantName": "Quý khách",
+    "roomFeeLabel": "Tiền phòng",
+    "totalLabel": "Tổng cộng",
+    "dueDateLabel": "Hạn thanh toán",
+    "instructionTitle": "Hướng dẫn thanh toán",
+    "instructionStep1": "1. Mở app ngân hàng bất kỳ và quét mã QR ở trên.",
+    "instructionStep2": "2. Kiểm tra đúng số tiền rồi xác nhận chuyển khoản.",
+    "referenceLabel": "Nội dung chuyển khoản",
+    "paidText": "Hoá đơn này đã được thanh toán.",
+    "overdueText": "Hoá đơn đã quá hạn thanh toán, vui lòng liên hệ chủ nhà.",
+    "contactOwnerLabel": "Liên hệ chủ nhà"
+  },
   "bookingPayment": {
     "title": "Thanh toán đặt phòng",
     "notFound": "Không tìm thấy đơn đặt phòng",

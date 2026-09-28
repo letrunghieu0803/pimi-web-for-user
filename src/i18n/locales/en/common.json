@@ -298,6 +298,25 @@
     "zaloButton": "Chat on Zalo",
     "emptyText": "No collaborator has been assigned to this building yet."
   },
+  "invoiceDetail": {
+    "title": "Invoice Detail",
+    "notFound": "Invoice not found or the link has expired",
+    "missingToken": "Invalid link — missing verification token",
+    "backToHome": "Back to home",
+    "periodLabel": "Billing period",
+    "tenantLabel": "Tenant",
+    "defaultTenantName": "Dear customer",
+    "roomFeeLabel": "Room rent",
+    "totalLabel": "Total",
+    "dueDateLabel": "Due date",
+    "instructionTitle": "Payment instructions",
+    "instructionStep1": "1. Open any banking app and scan the QR code above.",
+    "instructionStep2": "2. Check the amount then confirm the transfer.",
+    "referenceLabel": "Transfer note",
+    "paidText": "This invoice has been paid.",
+    "overdueText": "This invoice is overdue, please contact the house owner.",
+    "contactOwnerLabel": "Contact owner"
+  },
   "bookingPayment": {
     "title": "Booking Payment",
     "notFound": "Booking not found",
