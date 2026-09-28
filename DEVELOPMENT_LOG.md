@@ -4,6 +4,35 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-28 — Trang xem chi tiết hoá đơn public (nút "Xem chi tiết" trong tin ZNS)
+
+**Vì sao:** Backend (bff-for-pimi) vừa nối API gửi hoá đơn qua Zalo ZNS thật, template có nút
+"Xem chi tiết" cần trỏ tới 1 trang thật của web này — nhưng rà soát phát hiện repo này **chưa
+từng có trang/route nào hiển thị chi tiết 1 hoá đơn**, kể cả trong luồng đăng nhập (notification
+loại `INVOICE` trước đây bấm vào không đi đâu cả, xem `getNotificationLink` trong
+`notificationApi.ts`). Đối tượng chính của tính năng ZNS là **khách vãng lai** (chủ nhà nhập
+`guestTenantPhone`, không có tài khoản Pimi) nên trang này bắt buộc phải xem được mà **không cần
+đăng nhập**.
+
+**Thay đổi:**
+- `services/invoiceApi.ts` (mới): gọi `GET /v1/invoices/public/:id?token=...` (endpoint mới phía
+  BE, xác thực bằng `token` khớp `Invoice.viewToken` — không phải bằng đăng nhập).
+- `pages/InvoiceDetail.tsx` (mới): đọc `token` từ query string (không phải header/body — link
+  người dùng bấm thẳng từ tin nhắn, không gắn được Authorization), hiển thị dòng hoá đơn/tổng
+  tiền/QR thanh toán (khi `PENDING_PAYMENT`)/trạng thái đã thanh toán hoặc quá hạn — cùng pattern
+  UI với `BookingPayment.tsx` đã có (luồng đặt phòng ngắn hạn).
+- `App.tsx`: route `/invoices/:id` — không bọc trong guard nào (repo này không có wrapper
+  `ProtectedRoute` chung, từng trang tự quyết có cần đăng nhập hay không).
+- i18n: namespace `invoiceDetail.*` đầy đủ vi/en.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` + `npx oxlint` sạch. Test qua browser
+pane với ID/token giả → hiện đúng trạng thái "Không tìm thấy hoá đơn" (message thật từ BE, không
+phải lỗi) + nút "Về trang chủ"; xác nhận i18n đổi ngôn ngữ VI/EN hoạt động đúng cho cả 2. Chưa
+test được với hoá đơn thật (cần 1 hoá đơn đã `confirm()` để có `viewToken` — template ZNS phía BE
+cũng đang chờ Zalo duyệt).
+
+---
+
 ## 2026-09-22 — Viết lại Chính sách bảo mật + thêm trang Điều khoản sử dụng
 
 **Vì sao:** Trang Chính sách bảo mật cũ (`/privacy`) claim tích hợp VNeID, đồng bộ dữ liệu khai báo lưu trú với Cổng thông tin Bộ Công an (tbltkbtt.bocongan.gov.vn) và các đối tác eKYC C06/RAR/VNPT/Viettel/FPT — rà soát toàn bộ codebase xác nhận **không có** đoạn code nào thực sự làm việc này (KYC thật là AI đọc giấy tờ + nhân sự Pimi duyệt thủ công, không phải eKYC nhà nước). Đây là claim sai sự thật, rủi ro pháp lý nếu công bố. Viết lại toàn bộ nội dung bám đúng cơ chế thật của hệ thống (đặc biệt phần thanh toán giữ hộ tiền qua tài khoản Pimi), đồng thời chưa từng có trang Điều khoản sử dụng nên soạn mới.
