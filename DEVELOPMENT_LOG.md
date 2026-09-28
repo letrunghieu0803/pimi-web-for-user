@@ -4,6 +4,35 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-28 (2) — Đổi route hoá đơn theo domain cố định của Zalo + tự redirect sang bản test
+
+**Vì sao:** Zalo bắt buộc URL nút "Xem chi tiết" trong template ZNS thuộc domain ĐÃ XÁC THỰC —
+base URL `https://pimi.vn/invoice/` giờ khai báo cố định trên OA Manager lúc tạo template, route
+cũ `/invoices/:id?token=` (chọn tuỳ ý lúc mới xây trang) không còn khớp. Domain nút bấm cũng bị
+khoá cứng về `pimi.vn` (production) dù hoá đơn có thể thuộc môi trường test — bản deploy production
+chỉ gọi được `api.pimi.vn`, không thấy hoá đơn nằm trong DB test.
+
+**Thay đổi:**
+- `App.tsx`: route `/invoices/:id` → `/invoice/:composite`.
+- `InvoiceDetail.tsx`: `parseComposite()` tách `{invoiceId}.{viewToken}.{env}` từ 1 tham số URL
+  duy nhất (xem `zalo-zns-sender.service.ts` phía `bff-for-pimi` — nối bằng dấu `.` thay vì
+  `?`/`&`/`=` vì Zalo có thể percent-encode giá trị tham số như 1 chuỗi đơn). Nếu `env === 'test'`
+  mà đang đứng trên domain production, tự `window.location.href` redirect TOÀN TRANG (khác origin,
+  không dùng React Router điều hướng nội bộ được) sang bản deploy test
+  (`VITE_TEST_SITE_URL`, mặc định `pimi-web-for-user.vercel.app` — đã trỏ sẵn `VITE_API_ENDPOINT`
+  sang `test.api.pimi.vn` từ đợt sửa domain trước) TRƯỚC KHI gọi API, tránh gọi nhầm production
+  rồi hiện "không tìm thấy" trong lúc chờ redirect chạy.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` + `npx oxlint` sạch. Test qua browser
+pane trên localhost với `id_invoice` giả: `env=prod` → gọi thẳng API, hiện đúng "Không tìm thấy
+hoá đơn" (message thật từ BE); `env=test` trên localhost → **không** redirect (đúng thiết kế, vì
+guard chỉ kích hoạt khi hostname thật sự kết thúc bằng `pimi.vn`), cũng gọi API và hiện lỗi tương
+tự — xác nhận `parseComposite()` + guard domain hoạt động đúng. Chưa test được nhánh redirect
+thật (cần deploy lên domain `pimi.vn` thật mới kích hoạt) + chưa test với hoá đơn thật (cần
+template ZNS được Zalo duyệt).
+
+---
+
 ## 2026-09-28 — Trang xem chi tiết hoá đơn public (nút "Xem chi tiết" trong tin ZNS)
 
 **Vì sao:** Backend (bff-for-pimi) vừa nối API gửi hoá đơn qua Zalo ZNS thật, template có nút
