@@ -107,7 +107,7 @@ export const App: React.FC = () => {
                           <Route path="/favorites" element={<FavoriteRooms />} />
                           <Route path="/recently-viewed" element={<RecentlyViewed />} />
                           {/* Public — không đăng nhập, dùng cho link "Xem chi tiết" gửi qua ZNS/email */}
-                          <Route path="/invoices/:id" element={<InvoiceDetail />} />
+                          <Route path="/invoice/:composite" element={<InvoiceDetail />} />
                         </Routes>
                       </Suspense>
                     </ErrorBoundary>

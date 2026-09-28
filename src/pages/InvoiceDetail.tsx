@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { CheckCircle2, AlertTriangle, Loader2, Receipt } from 'lucide-react';
 import { invoiceApi, Invoice } from '@/services/invoiceApi';
 import { getApiErrorMessage } from '@/utils/apiError';
@@ -10,35 +10,63 @@ const formatMoney = (n: string | number) => `${Number(n).toLocaleString('vi-VN')
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-// Trang xem hoá đơn KHÔNG cần đăng nhập — link "Xem chi tiết" gửi qua ZNS/email trỏ vào đây,
-// đọc `token` từ query string (không phải body/header) vì đây là link người dùng bấm thẳng từ
-// tin nhắn, không có cách nào gắn Authorization header. Hoạt động cho cả khách vãng lai (không
-// có tài khoản Pimi) lẫn khách đã đăng nhập — không phân biệt, chỉ cần đúng token.
+// Bản deploy dùng để xem hoá đơn TEST — Zalo khoá cứng domain nút bấm về pimi.vn (domain đã xác
+// thực) nên link luôn mở trên bản production dù hoá đơn thuộc môi trường nào; nếu là hoá đơn
+// test, redirect sang đúng bản này (đã trỏ VITE_API_ENDPOINT sang test.api.pimi.vn từ trước).
+const TEST_SITE_ORIGIN = import.meta.env.VITE_TEST_SITE_URL || 'https://pimi-web-for-user.vercel.app';
+
+// `id_invoice` phía ZNS/email là 1 chuỗi ghép `{invoiceId}.{viewToken}.{env}` (xem
+// zalo-zns-sender.service.ts phía BE) — nối bằng dấu `.` thay vì query string (`?`/`&`) vì Zalo
+// có thể percent-encode giá trị tham số như 1 chuỗi đơn, làm hỏng cú pháp query nếu nhúng thẳng.
+const parseComposite = (composite: string | undefined) => {
+  const parts = (composite || '').split('.');
+  if (parts.length !== 3) return null;
+  const [invoiceId, token, env] = parts;
+  if (!invoiceId || !token) return null;
+  return { invoiceId, token, env };
+};
+
+// Trang xem hoá đơn KHÔNG cần đăng nhập — link "Xem chi tiết" gửi qua ZNS/email trỏ vào đây.
+// Hoạt động cho cả khách vãng lai (không có tài khoản Pimi) lẫn khách đã đăng nhập — không phân
+// biệt, chỉ cần đúng token nhúng trong `composite`.
 export const InvoiceDetail: React.FC = () => {
   const { t } = useTranslation();
-  const { id } = useParams<{ id: string }>();
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get('token') || '';
+  const { composite } = useParams<{ composite: string }>();
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const parsed = parseComposite(composite);
+
   useEffect(() => {
-    if (!id || !token) {
+    if (!parsed) {
       setError(t('invoiceDetail.missingToken'));
       setLoading(false);
       return;
     }
+
+    // Hoá đơn TEST nhưng đang đứng trên domain production (pimi.vn) — bản deploy này chỉ gọi
+    // được api.pimi.vn (production), không thấy được hoá đơn nằm trong DB test. Redirect toàn
+    // trang (không phải điều hướng React Router — khác origin) sang đúng bản test rồi dừng lại,
+    // không tự gọi API ở đây nữa (tránh gọi nhầm rồi vẫn hiện lỗi "không tìm thấy" trong chớp
+    // mắt trước khi redirect kịp chạy).
+    const isOnProductionDomain = window.location.hostname.endsWith('pimi.vn');
+    if (parsed.env === 'test' && isOnProductionDomain) {
+      window.location.href = `${TEST_SITE_ORIGIN}/invoice/${composite}`;
+      return;
+    }
+
     invoiceApi
-      .getPublic(id, token)
+      .getPublic(parsed.invoiceId, parsed.token)
       .then((res: any) => {
         setInvoice(res?.data || res);
         setError('');
       })
       .catch((err) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
-  }, [id, token, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [composite, t]);
 
   if (loading) {
     return (
@@ -67,7 +95,7 @@ export const InvoiceDetail: React.FC = () => {
 
   return (
     <div className="max-w-xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-      <Seo title={t('invoiceDetail.title')} path={`/invoices/${id}`} noindex />
+      <Seo title={t('invoiceDetail.title')} path={`/invoice/${composite}`} noindex />
 
       <div className="glass-panel p-6 rounded-3xl shadow-xl border border-slate-200/90 space-y-6">
         <div className="flex items-center gap-3">
