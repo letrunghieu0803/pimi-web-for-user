@@ -4,6 +4,35 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-29 — Đặt lịch xem phòng tự chọn slot (thay nút "Yêu cầu xem phòng" đơn giản cũ)
+
+**Vì sao:** Đồng bộ backend đổi luồng lịch hẹn — khách thuê giờ tự chọn khung giờ 30 phút còn
+trống trên lịch chủ nhà đã mở sẵn, xác nhận ngay lúc đặt, không cần chờ chủ nhà đề xuất giờ.
+Backend tương ứng ở `bff-for-pimi/DEVELOPMENT_LOG.md` (2026-09-29).
+
+**Thay đổi:**
+- 3 component mới thay thế nút đơn cũ trong `RoomDetail.tsx`: `ViewingSlotPicker.tsx` (lịch +
+  lưới slot 30 phút, đọc `GET .../public/:rentHouseId/grid`, cho chọn 1-2 slot liên tiếp),
+  `ViewingBookingForm.tsx` (form bắt buộc: người xem hộ/chính mình, SĐT, email, số người ở dự
+  kiến, tên người dự kiến ở, ghi chú tuỳ chọn), `ViewingConfirmationPanel.tsx` (hiện ngay sau đặt
+  thành công — địa chỉ, ngày giờ, tên người xem, giá phòng, hướng dẫn xem nhà nếu có, sanitize qua
+  DOMPurify). `services/appointmentAvailabilityApi.ts` mới.
+- `TenantAppointments.tsx`: thêm tab/badge `CONFIRMED`, hiển thị field mới, nới điều kiện nút
+  "xác nhận có mặt" sang cả `CONFIRMED`. Khối chọn giờ dạng radio cũ đánh dấu legacy.
+
+**2 bug phát hiện + sửa lúc live-test:**
+- `ViewingConfirmationPanel.tsx` hiện sai giờ xem phòng (lệch theo múi giờ máy khách) — cùng
+  nguyên nhân "DateTime neo UTC" đã ghi ở BE log, sửa bằng ép `timeZone: 'UTC'` khi format.
+- Giá phòng hiện thiếu dấu phân cách hàng nghìn + dư dấu `/` ("5600000đ / / tháng") — do
+  `rentRoom.price` BE trả về dạng string (Prisma Decimal serialize qua JSON), code cũ gọi thẳng
+  `.toLocaleString()` trên string là no-op. Sửa `formatPrice` ép `Number()` trước, bỏ dấu `/` dư.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Live-test qua Browser pane: đặt lịch
+2 slot liên tiếp, panel xác nhận hiện đúng đủ giờ/giá/hướng dẫn, đặt trùng slot (không bị chặn,
+đúng chủ đích tính năng), lịch sử "Lịch hẹn của tôi" hiển thị đúng dữ liệu `CONFIRMED`.
+
+---
+
 ## 2026-09-22 — Viết lại Chính sách bảo mật + thêm trang Điều khoản sử dụng
 
 **Vì sao:** Trang Chính sách bảo mật cũ (`/privacy`) claim tích hợp VNeID, đồng bộ dữ liệu khai báo lưu trú với Cổng thông tin Bộ Công an (tbltkbtt.bocongan.gov.vn) và các đối tác eKYC C06/RAR/VNPT/Viettel/FPT — rà soát toàn bộ codebase xác nhận **không có** đoạn code nào thực sự làm việc này (KYC thật là AI đọc giấy tờ + nhân sự Pimi duyệt thủ công, không phải eKYC nhà nước). Đây là claim sai sự thật, rủi ro pháp lý nếu công bố. Viết lại toàn bộ nội dung bám đúng cơ chế thật của hệ thống (đặc biệt phần thanh toán giữ hộ tiền qua tài khoản Pimi), đồng thời chưa từng có trang Điều khoản sử dụng nên soạn mới.

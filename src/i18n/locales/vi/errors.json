@@ -136,5 +136,14 @@
   "000204": "Không tìm thấy tố cáo phòng",
   "000215": "Tài khoản này không được phép đăng nhập với vai trò được yêu cầu ở ứng dụng này",
   "000216": "Ngày kết thúc hợp đồng phải sau ngày bắt đầu",
-  "000217": "Thời gian hợp đồng bị chồng chéo với 1 hợp đồng khác của phòng này"
+  "000217": "Thời gian hợp đồng bị chồng chéo với 1 hợp đồng khác của phòng này",
+  "000227": "Khung giờ này không mở để đặt xem nhà — vui lòng chọn khung giờ khác",
+  "000228": "Khung giờ mở cửa không tồn tại",
+  "000229": "Khung giờ này chồng lấn với 1 khung giờ khác đã cấu hình cùng ngày",
+  "000230": "Khung giờ không hợp lệ — giờ bắt đầu/kết thúc phải là bội số của 30 phút và giờ kết thúc phải sau giờ bắt đầu",
+  "000231": "Khung giờ khoá không tồn tại",
+  "000232": "Bạn không có quyền cấu hình lịch xem nhà của toà nhà này",
+  "000233": "Khoảng thời gian xem lịch tối đa 62 ngày",
+  "000234": "Lịch hẹn này không thể huỷ (đã huỷ/đã hoàn tất trước đó)",
+  "000235": "Bạn không có quyền huỷ lịch hẹn này"
 }

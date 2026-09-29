@@ -371,7 +371,13 @@
     "rejectReasonLabel": "Lý do từ chối:",
     "confirmAttendance": "Xác nhận đã tham gia xem phòng",
     "durationHint": "Mỗi buổi xem phòng dự kiến kéo dài khoảng 15-30 phút.",
-    "guideLabel": "Hướng dẫn xem nhà"
+    "guideLabel": "Hướng dẫn xem nhà",
+    "filterConfirmed": "Đã đặt lịch",
+    "badgeConfirmed": "Đã xác nhận (Đặt lịch trực tiếp)",
+    "occupantNameLabel": "Tên người dự kiến ở",
+    "occupantsCountLabel": "Số người ở dự kiến",
+    "contactPhoneLabel": "SĐT liên hệ",
+    "contactEmailLabel": "Email liên hệ"
   },
   "attendanceSurveyModal": {
     "title": "Khảo sát sau khi xem phòng",
@@ -649,5 +655,53 @@
     "toastNeedDetail": "Vui lòng nhập chi tiết tố cáo",
     "toastNeedImage": "Vui lòng đính kèm ít nhất 1 ảnh bằng chứng",
     "toastSuccess": "Đã gửi tố cáo — đội ngũ Pimi sẽ xem xét sớm nhất"
+  },
+  "viewingSlotPicker": {
+    "title": "Chọn khung giờ xem phòng",
+    "subtitle": "Chọn 1 ngày còn trống, sau đó chọn 1-2 khung giờ 30 phút liên tiếp (tối đa 60 phút).",
+    "loading": "Đang tải lịch trống...",
+    "loadError": "Không tải được lịch trống, vui lòng thử lại.",
+    "legendOpen": "Còn trống",
+    "legendSelected": "Đã chọn",
+    "slotsForDayLabel": "Khung giờ trống ngày {{date}}",
+    "slotCountHint": "Chọn tối đa 2 khung liên tiếp (60 phút).",
+    "noSlotsForDay": "Ngày này không có khung giờ mở để xem phòng.",
+    "selectedSummary": "Đã chọn: {{date}}, {{start}} - {{end}}",
+    "notSelectedYet": "Chưa chọn khung giờ nào",
+    "nextButton": "Tiếp tục"
+  },
+  "viewingBookingForm": {
+    "title": "Thông tin đặt lịch xem phòng",
+    "subtitle": "Vui lòng điền đầy đủ thông tin bên dưới để chủ nhà chuẩn bị đón tiếp bạn.",
+    "toastNeedPhone": "Vui lòng nhập số điện thoại liên hệ!",
+    "toastInvalidEmail": "Vui lòng nhập email hợp lệ!",
+    "toastNeedOccupantName": "Vui lòng nhập tên người dự kiến ở!",
+    "toastInvalidOccupants": "Số lượng người ở dự kiến phải từ 1 trở lên!",
+    "viewerTypeLabel": "Người đi xem phòng",
+    "viewerTypeSelf": "Chính mình",
+    "viewerTypeProxy": "Xem hộ",
+    "phoneLabel": "Số điện thoại liên hệ *",
+    "phonePlaceholder": "Ví dụ: 0901234567",
+    "emailLabel": "Email liên hệ *",
+    "emailPlaceholder": "Ví dụ: ban@email.com",
+    "occupantNameLabel": "Họ tên người dự kiến ở *",
+    "occupantNamePlaceholder": "Nhập họ và tên",
+    "occupantsCountLabel": "Số lượng người ở dự kiến *",
+    "noteLabel": "Ghi chú thêm (không bắt buộc)",
+    "notePlaceholder": "Ví dụ: Tôi muốn hỏi thêm về chỗ đỗ xe ô tô...",
+    "backButton": "Quay lại",
+    "submitting": "Đang đặt lịch...",
+    "submitButton": "Xác nhận đặt lịch xem phòng"
+  },
+  "viewingConfirmationPanel": {
+    "title": "Đặt lịch xem phòng thành công!",
+    "subtitle": "Lịch hẹn của bạn đã được xác nhận ngay, không cần chờ chủ nhà phản hồi.",
+    "addressLabel": "Địa chỉ xem phòng",
+    "dateTimeLabel": "Ngày giờ xem phòng",
+    "viewerNameLabel": "Tên người xem phòng",
+    "proxyTag": "xem hộ",
+    "priceLabel": "Giá phòng",
+    "guideLabel": "Cách thức xem phòng / Lưu ý",
+    "closeButton": "Đã hiểu"
   }
 }

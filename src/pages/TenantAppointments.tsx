@@ -24,7 +24,10 @@ import { Seo } from '@/components/common/Seo';
 import { AttendanceSurveyModal } from '@/components/appointment/AttendanceSurveyModal';
 
 const PAGE_SIZE = 10;
-const STATUS_KEYS = ['ALL', 'OWNER_OFFERED_TIMES', 'PENDING_OWNER', 'USER_ACCEPTED', 'COMPLETED'];
+// 'CONFIRMED' — lịch hẹn tự đặt trực tiếp (luồng mới, xác nhận ngay lúc tạo). Các trạng thái còn
+// lại là của luồng cũ (yêu cầu → chủ nhà đề xuất giờ → khách chọn) — vẫn giữ hiển thị vì lịch hẹn
+// cũ tạo trước khi đổi luồng có thể vẫn còn tồn tại ở các trạng thái này.
+const STATUS_KEYS = ['ALL', 'CONFIRMED', 'OWNER_OFFERED_TIMES', 'PENDING_OWNER', 'USER_ACCEPTED', 'COMPLETED'];
 
 export const TenantAppointments: React.FC = () => {
   const { t } = useTranslation();
@@ -130,6 +133,7 @@ export const TenantAppointments: React.FC = () => {
 
   const filterTabs = [
     { key: 'ALL', label: t('tenantAppointments.filterAll'), count: statusCounts.ALL ?? 0 },
+    { key: 'CONFIRMED', label: t('tenantAppointments.filterConfirmed'), count: statusCounts.CONFIRMED ?? 0 },
     { key: 'OWNER_OFFERED_TIMES', label: t('tenantAppointments.filterOffered'), count: statusCounts.OWNER_OFFERED_TIMES ?? 0 },
     { key: 'PENDING_OWNER', label: t('tenantAppointments.filterPending'), count: statusCounts.PENDING_OWNER ?? 0 },
     { key: 'USER_ACCEPTED', label: t('tenantAppointments.filterAccepted'), count: statusCounts.USER_ACCEPTED ?? 0 },
@@ -204,6 +208,12 @@ export const TenantAppointments: React.FC = () => {
 
   const getStatusBadge = (app: Appointment) => {
     switch (app.status) {
+      case 'CONFIRMED':
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 flex items-center gap-1.5 w-fit">
+            <CheckCircle2 className="w-3.5 h-3.5" /> {t('tenantAppointments.badgeConfirmed')}
+          </span>
+        );
       case 'PENDING_OWNER':
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1.5 w-fit">
@@ -316,13 +326,49 @@ export const TenantAppointments: React.FC = () => {
 
                   </div>
 
-                  {/* Confirmed Slot */}
+                  {/* Confirmed Slot — legacy: chỉ khớp lịch hẹn cũ đã chọn xong 1 khung giờ chủ
+                      nhà đề xuất (selectedTimeSlotId/isSelected trong timeSlots). Lịch hẹn CONFIRMED
+                      (luồng mới) dùng block riêng ngay bên dưới (viewingStartTime/viewingEndTime). */}
                   {selectedSlot && (
                     <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-xs text-emerald-900">
                       <span className="font-bold block mb-1">{t('tenantAppointments.confirmedSlotLabel')}</span>
                       <p className="text-sm font-semibold">
                         {new Date(selectedSlot.startTime).toLocaleString('vi-VN')}
                       </p>
+                    </div>
+                  )}
+
+                  {/* Lịch hẹn CONFIRMED (luồng mới — khách tự chọn slot trên lịch trống, xác nhận
+                      ngay lúc tạo) — hiện ngày giờ đã đặt + thông tin người xem/người dự kiến ở đã
+                      thu thập lúc đặt. guideContent (nếu có) đã render ở block dùng chung phía trên
+                      (không gắn theo status). */}
+                  {app.status === 'CONFIRMED' && app.viewingStartTime && (
+                    <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-xs text-emerald-900 space-y-1.5">
+                      <div>
+                        <span className="font-bold block mb-1">{t('tenantAppointments.confirmedSlotLabel')}</span>
+                        <p className="text-sm font-semibold">
+                          {/* viewingStartTime/viewingEndTime "neo UTC" — ép timeZone: 'UTC' khi
+                              format, xem cùng comment ở ViewingConfirmationPanel.tsx */}
+                          {new Date(app.viewingStartTime).toLocaleString('vi-VN', { timeZone: 'UTC' })}
+                          {app.viewingEndTime &&
+                            ` - ${new Date(app.viewingEndTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}`}
+                        </p>
+                      </div>
+                      {(app.expectedOccupantName || app.contactPhone || app.contactEmail || app.expectedOccupantsCount !== undefined) && (
+                        <div className="pt-1.5 border-t border-emerald-200/70 text-[11px] text-emerald-900 space-y-0.5">
+                          {app.expectedOccupantName && (
+                            <p>
+                              {t('tenantAppointments.occupantNameLabel')}: <span className="font-semibold">{app.expectedOccupantName}</span>
+                              {app.viewerType === 'PROXY' && <span className="ml-1 font-semibold text-amber-700">({t('viewingConfirmationPanel.proxyTag')})</span>}
+                            </p>
+                          )}
+                          {app.expectedOccupantsCount !== undefined && (
+                            <p>{t('tenantAppointments.occupantsCountLabel')}: <span className="font-semibold">{app.expectedOccupantsCount}</span></p>
+                          )}
+                          {app.contactPhone && <p>{t('tenantAppointments.contactPhoneLabel')}: <span className="font-semibold">{app.contactPhone}</span></p>}
+                          {app.contactEmail && <p>{t('tenantAppointments.contactEmailLabel')}: <span className="font-semibold">{app.contactEmail}</span></p>}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -342,7 +388,9 @@ export const TenantAppointments: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Select Slot Form if OWNER_OFFERED_TIMES */}
+                  {/* Select Slot Form if OWNER_OFFERED_TIMES — legacy: chỉ còn phát sinh từ lịch
+                      hẹn tạo trước khi đổi sang luồng tự đặt lịch trực tiếp (CONFIRMED). Lịch hẹn
+                      mới không bao giờ ở trạng thái này nên khối này tự nhiên chỉ còn khớp lịch cũ. */}
                   {app.status === 'OWNER_OFFERED_TIMES' && app.timeSlots && app.timeSlots.length > 0 && (
                     <div className="bg-indigo-50/60 border border-indigo-200 p-4 rounded-xl space-y-3">
                       <p className="text-xs font-bold text-indigo-900">
@@ -402,8 +450,10 @@ export const TenantAppointments: React.FC = () => {
                   )}
                 </div>
 
-                {/* Attendance check button */}
-                {app.status === 'USER_ACCEPTED' && !app.userAttendanceConfirmed && (
+                {/* Attendance check button — hiện cho cả USER_ACCEPTED (legacy, đã chốt lịch qua
+                    luồng cũ) lẫn CONFIRMED (luồng mới, tự đặt trực tiếp) — cả 2 đều là lịch hẹn đã
+                    chốt giờ xem thật, chỉ khác cách đi tới trạng thái đó. */}
+                {(app.status === 'USER_ACCEPTED' || app.status === 'CONFIRMED') && !app.userAttendanceConfirmed && (
                   <div className="shrink-0 flex items-center">
                     <button
                       onClick={() => handleConfirmAttendance(app.id)}
