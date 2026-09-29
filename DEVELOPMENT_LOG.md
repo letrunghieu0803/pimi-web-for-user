@@ -4,6 +4,24 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-29 — Tự làm mới access token ngầm khi gặp 401/403-CSRF, tránh lỗi hiển thị sai bản chất
+
+**Vì sao:** Phát hiện qua live-test trên server test — gửi lịch hẹn xem phòng bị 403 "Missing or
+invalid CSRF token" dù phiên đăng nhập vẫn còn. Nguyên nhân gốc: access token (cookie httpOnly)
+chỉ sống 1 ngày, ngắn hơn cookie CSRF/refresh (7 ngày) — phiên mở lâu sẽ có lúc access token hết
+hạn giữa chừng, và trước khi FE kịp gọi refresh, request mutate tiếp theo bị CsrfGuard (chạy trước
+AuthGuard) chặn nhầm bằng lỗi CSRF thay vì lỗi đúng bản chất là hết phiên. Backend tương ứng ở
+`bff-for-pimi/DEVELOPMENT_LOG.md` (2026-09-29, public hoá `GET /auth/csrf-token`).
+
+**Thay đổi:**
+- `services/axiosClient.ts`: response interceptor bắt lỗi 401 (`000127`/`000128`) hoặc 403-CSRF
+  (`000174`) — tự gọi ngầm `POST /auth/refresh-token` (dedupe qua 1 promise dùng chung), nạp lại
+  CSRF token mới, rồi thử lại đúng request gốc (guard `_retriedAfterRefresh` tránh lặp vô hạn,
+  loại trừ chính endpoint refresh-token/login). Người dùng không còn thấy lỗi mỗi khi access token
+  hết hạn tự nhiên sau 24h.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch.
+
 ## 2026-09-29 — Đặt lịch xem phòng tự chọn slot (thay nút "Yêu cầu xem phòng" đơn giản cũ)
 
 **Vì sao:** Đồng bộ backend đổi luồng lịch hẹn — khách thuê giờ tự chọn khung giờ 30 phút còn

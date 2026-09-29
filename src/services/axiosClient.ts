@@ -74,8 +74,72 @@ axiosClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Access token (cookie httpOnly) chỉ sống 1 ngày, refresh token/cookie CSRF sống 7 ngày — phiên
+// đăng nhập mở lâu (browser tab để qua đêm, hoặc quay lại app sau vài giờ) sẽ có lúc access token
+// hết hạn giữa chừng trong khi cookie CSRF vẫn còn. Trước đây gặp đúng lúc này sẽ hiện nhầm lỗi
+// "Missing or invalid CSRF token" (thay vì lỗi đúng bản chất là hết phiên) — vì CsrfGuard (chạy
+// TRƯỚC AuthGuard, đăng ký global) không phân biệt được "cookie CSRF hợp lệ nhưng access token đã
+// hết hạn" với "thiếu cookie CSRF thật sự". Tự làm mới access token NGẦM ngay khi gặp 401 (hoặc
+// đúng lỗi CSRF 403 kể trên — cùng 1 nguyên nhân gốc) rồi thử lại request gốc — người dùng không
+// thấy lỗi, không bị "đăng xuất" âm thầm mỗi ngày.
+const AUTH_ERROR_CODES = ['000127', '000128']; // thiếu / sai access token
+const CSRF_ERROR_CODE = '000174';
+
+let refreshInFlight: Promise<boolean> | null = null;
+
+async function refreshSession(): Promise<boolean> {
+  try {
+    // Cần CSRF token hợp lệ để chính request refresh-token này qua được CsrfGuard — dùng lại
+    // ensureCsrfToken() (nay endpoint GET /auth/csrf-token đã public, không còn phụ thuộc access
+    // token còn hạn hay không, xem AuthController#getCsrfToken bên BE).
+    const csrfToken = await ensureCsrfToken();
+    const res = await axios.post(
+      `${API_BASE_URL}/v1/auth/refresh-token`,
+      {},
+      {
+        withCredentials: true,
+        headers: {
+          'X-Client-App': CLIENT_APP,
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
+        }
+      }
+    );
+    setCsrfToken(res.data?.data?.csrfToken);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Response interceptor to unwrap data and normalize errors
 axiosClient.interceptors.response.use(
   (response) => response.data,
-  (error) => Promise.reject(error.response?.data?.error || error)
+  async (error) => {
+    const status = error.response?.status;
+    const code = error.response?.data?.error?.code;
+    const original = error.config;
+    const isSessionExpired = status === 401 && AUTH_ERROR_CODES.includes(code);
+    const isCsrfMismatchFromExpiry = status === 403 && code === CSRF_ERROR_CODE;
+
+    if (
+      (isSessionExpired || isCsrfMismatchFromExpiry) &&
+      original &&
+      !original._retriedAfterRefresh &&
+      !original.url?.includes('/auth/refresh-token') &&
+      !original.url?.includes('/auth/login')
+    ) {
+      original._retriedAfterRefresh = true;
+      if (!refreshInFlight) {
+        refreshInFlight = refreshSession().finally(() => {
+          refreshInFlight = null;
+        });
+      }
+      const refreshed = await refreshInFlight;
+      if (refreshed) {
+        return axiosClient(original);
+      }
+    }
+
+    return Promise.reject(error.response?.data?.error || error);
+  }
 );
