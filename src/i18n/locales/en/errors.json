@@ -136,5 +136,14 @@
   "000204": "Room report not found",
   "000215": "This account is not allowed to log in with the requested role on this app",
   "000216": "Contract end date must be after start date",
-  "000217": "Contract dates overlap with another existing contract for this room"
+  "000217": "Contract dates overlap with another existing contract for this room",
+  "000227": "This slot isn't open for viewing appointments — please choose another slot",
+  "000228": "This opening-hours rule doesn't exist",
+  "000229": "This range overlaps with another rule already configured for the same day",
+  "000230": "Invalid range — start/end must be multiples of 30 minutes and the end time must be after the start time",
+  "000231": "This locked slot doesn't exist",
+  "000232": "You don't have permission to configure the viewing schedule for this house",
+  "000233": "The date range is capped at 62 days",
+  "000234": "This appointment can't be cancelled (already cancelled/completed)",
+  "000235": "You don't have permission to cancel this appointment"
 }

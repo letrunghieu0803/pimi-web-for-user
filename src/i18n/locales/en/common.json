@@ -390,7 +390,13 @@
     "rejectReasonLabel": "Rejection reason:",
     "confirmAttendance": "Confirm I attended the viewing",
     "durationHint": "Each viewing is expected to take about 15-30 minutes.",
-    "guideLabel": "Viewing guide"
+    "guideLabel": "Viewing guide",
+    "filterConfirmed": "Booked",
+    "badgeConfirmed": "Confirmed (Direct booking)",
+    "occupantNameLabel": "Expected occupant name",
+    "occupantsCountLabel": "Expected number of occupants",
+    "contactPhoneLabel": "Contact phone",
+    "contactEmailLabel": "Contact email"
   },
   "attendanceSurveyModal": {
     "title": "Post-viewing survey",
@@ -668,5 +674,53 @@
     "toastNeedDetail": "Please enter the report detail",
     "toastNeedImage": "Please attach at least 1 evidence photo",
     "toastSuccess": "Report submitted — our team will review it shortly"
+  },
+  "viewingSlotPicker": {
+    "title": "Choose a viewing time slot",
+    "subtitle": "Pick an available day, then choose 1-2 consecutive 30-minute slots (60 minutes max).",
+    "loading": "Loading availability...",
+    "loadError": "Couldn't load availability, please try again.",
+    "legendOpen": "Available",
+    "legendSelected": "Selected",
+    "slotsForDayLabel": "Available slots on {{date}}",
+    "slotCountHint": "Pick up to 2 consecutive slots (60 minutes).",
+    "noSlotsForDay": "No viewing slots are open on this day.",
+    "selectedSummary": "Selected: {{date}}, {{start}} - {{end}}",
+    "notSelectedYet": "No time slot selected yet",
+    "nextButton": "Continue"
+  },
+  "viewingBookingForm": {
+    "title": "Viewing booking details",
+    "subtitle": "Please fill in all the details below so the owner can prepare to host you.",
+    "toastNeedPhone": "Please enter a contact phone number!",
+    "toastInvalidEmail": "Please enter a valid email address!",
+    "toastNeedOccupantName": "Please enter the expected occupant's name!",
+    "toastInvalidOccupants": "The expected number of occupants must be at least 1!",
+    "viewerTypeLabel": "Who is coming to view",
+    "viewerTypeSelf": "Myself",
+    "viewerTypeProxy": "Viewing on someone's behalf",
+    "phoneLabel": "Contact phone *",
+    "phonePlaceholder": "e.g. 0901234567",
+    "emailLabel": "Contact email *",
+    "emailPlaceholder": "e.g. you@email.com",
+    "occupantNameLabel": "Expected occupant's full name *",
+    "occupantNamePlaceholder": "Enter full name",
+    "occupantsCountLabel": "Expected number of occupants *",
+    "noteLabel": "Additional note (optional)",
+    "notePlaceholder": "e.g. I'd like to ask about car parking...",
+    "backButton": "Back",
+    "submitting": "Booking...",
+    "submitButton": "Confirm viewing booking"
+  },
+  "viewingConfirmationPanel": {
+    "title": "Viewing booked successfully!",
+    "subtitle": "Your appointment is confirmed right away — no need to wait for the owner's response.",
+    "addressLabel": "Viewing address",
+    "dateTimeLabel": "Viewing date & time",
+    "viewerNameLabel": "Viewer's name",
+    "proxyTag": "on behalf",
+    "priceLabel": "Room price",
+    "guideLabel": "How to view / Notes",
+    "closeButton": "Got it"
   }
 }
