@@ -54,6 +54,9 @@ const FavoriteRooms = lazy(() =>
 const RecentlyViewed = lazy(() =>
   import('@/pages/RecentlyViewed').then((m) => ({ default: m.RecentlyViewed })),
 );
+const InvoiceDetail = lazy(() =>
+  import('@/pages/InvoiceDetail').then((m) => ({ default: m.InvoiceDetail })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,6 +106,8 @@ export const App: React.FC = () => {
                           <Route path="/notifications" element={<NotificationsPage />} />
                           <Route path="/favorites" element={<FavoriteRooms />} />
                           <Route path="/recently-viewed" element={<RecentlyViewed />} />
+                          {/* Public — không đăng nhập, dùng cho link "Xem chi tiết" gửi qua ZNS/email */}
+                          <Route path="/invoice/:composite" element={<InvoiceDetail />} />
                         </Routes>
                       </Suspense>
                     </ErrorBoundary>

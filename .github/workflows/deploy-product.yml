@@ -1,0 +1,79 @@
+name: Deploy product to AWS
+
+# Chạy khi có push vào nhánh product (bản chính thức phục vụ người dùng thật).
+# Build ra file tĩnh (Vite) rồi đồng bộ lên S3 + xoá cache CloudFront.
+on:
+  push:
+    branches: ['product']
+
+permissions:
+  id-token: write # bắt buộc để dùng OIDC xin quyền AWS tạm thời, không cần lưu access key dài hạn
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install clean dependencies
+        run: npm ci
+
+      # Vite mặc định đọc .env.production khi chạy `vite build` (không truyền --mode) —
+      # ghi file này từ GitHub Secrets ngay trước bước build, KHÔNG commit file thật vào repo.
+      - name: Write .env.production from secrets
+        run: |
+          cat > .env.production <<EOF
+          VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}
+          VITE_SOCKET_URL=${{ secrets.VITE_SOCKET_URL }}
+          VITE_SITE_URL=${{ secrets.VITE_SITE_URL }}
+          VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+          VITE_FIREBASE_VAPID_KEY=${{ secrets.VITE_FIREBASE_VAPID_KEY }}
+          VITE_VIETMAP_API_KEY=${{ secrets.VITE_VIETMAP_API_KEY }}
+          VITE_DEFAULT_VIETMAP_API_KEY=${{ secrets.VITE_DEFAULT_VIETMAP_API_KEY }}
+          EOF
+
+      - name: Build
+        run: npm run build
+
+      - name: Configure AWS credentials (OIDC — không dùng access key dài hạn)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # File có hash trong tên (assets/*.js, *.css do Vite build) cache dài hạn, an toàn vì tên
+      # đổi mỗi lần nội dung đổi. index.html KHÔNG cache — luôn phải lấy bản mới nhất để trỏ đúng
+      # tên file asset mới nhất (nếu không, người dùng cũ có thể dính index.html cache trỏ tới
+      # asset đã bị xoá sau lần deploy kế tiếp).
+      - name: Sync static assets to S3 (long cache)
+        run: |
+          aws s3 sync dist/ s3://${{ vars.AWS_S3_BUCKET }} \
+            --delete \
+            --cache-control "public,max-age=31536000,immutable" \
+            --exclude "index.html"
+
+      - name: Upload index.html (no cache)
+        run: |
+          aws s3 cp dist/index.html s3://${{ vars.AWS_S3_BUCKET }}/index.html \
+            --cache-control "no-cache,no-store,must-revalidate"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ vars.AWS_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
