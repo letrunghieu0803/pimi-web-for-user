@@ -4,6 +4,23 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-30 — Sửa form đặt lịch: chuyển tab "Xem hộ" không xoá dữ liệu tự điền của "Chính mình"
+
+**Vì sao:** Phát hiện qua ảnh chụp thật — chọn tab "Xem hộ" vẫn còn nguyên SĐT/email/tên của
+chính tài khoản đang đăng nhập (tự điền sẵn cho tab "Chính mình" lúc mở form, `useState` chỉ khởi
+tạo 1 lần, đổi tab không đụng tới 3 field này). Sai vì SĐT/email/tên lúc xem hộ phải là của người
+sẽ đi xem thay, không phải người đặt lịch.
+
+**Thay đổi:**
+- `components/appointment/ViewingBookingForm.tsx`: thêm `handleViewerTypeChange()` — chuyển sang
+  "Chính mình" thì tự điền lại đúng thông tin tài khoản đang đăng nhập (phòng trường hợp khách đã
+  gõ đè trước đó), chuyển sang "Xem hộ" thì xoá trắng cả 3 field, bắt khách tự nhập thông tin
+  người xem hộ.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Chưa live-test qua browser (fix chỉ
+đổi state phía client, không qua API — xác minh qua đọc logic trực tiếp thay vì click-through, vì
+click-through cần tài khoản đã đăng nhập + phòng còn slot mở).
+
 ## 2026-09-30 — Trang trung chuyển cho nút "Xem chi tiết" lịch hẹn trong tin ZNS
 
 **Vì sao:** Tin ZNS "có khách đặt lịch hẹn" gửi tới chủ nhà (xem `bff-for-pimi/DEVELOPMENT_LOG.md`
