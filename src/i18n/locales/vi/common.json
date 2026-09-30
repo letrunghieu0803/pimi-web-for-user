@@ -322,6 +322,12 @@
     "invalidLink": "Liên kết không hợp lệ",
     "backToHome": "Về trang chủ"
   },
+  "appointmentPublicView": {
+    "title": "Chi tiết lịch hẹn xem phòng",
+    "notFound": "Không tìm thấy lịch hẹn hoặc liên kết đã hết hiệu lực",
+    "invalidLink": "Liên kết không hợp lệ",
+    "backToHome": "Về trang chủ"
+  },
   "bookingPayment": {
     "title": "Thanh toán đặt phòng",
     "notFound": "Không tìm thấy đơn đặt phòng",

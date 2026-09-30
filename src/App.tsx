@@ -60,6 +60,9 @@ const InvoiceDetail = lazy(() =>
 const AppointmentRedirect = lazy(() =>
   import('@/pages/AppointmentRedirect').then((m) => ({ default: m.AppointmentRedirect })),
 );
+const AppointmentPublicView = lazy(() =>
+  import('@/pages/AppointmentPublicView').then((m) => ({ default: m.AppointmentPublicView })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -112,8 +115,11 @@ export const App: React.FC = () => {
                           {/* Public — không đăng nhập, dùng cho link "Xem chi tiết" gửi qua ZNS/email */}
                           <Route path="/invoice/:composite" element={<InvoiceDetail />} />
                           {/* Public — trang trung chuyển cho nút "Xem chi tiết" lịch hẹn gửi qua ZNS
-                              (đích thật nằm ở Web-Pimi-for-owner, domain khác pimi.vn) */}
+                              cho CHỦ NHÀ (đích thật nằm ở Web-Pimi-for-owner, domain khác pimi.vn) */}
                           <Route path="/appointment/:composite" element={<AppointmentRedirect />} />
+                          {/* Public — chi tiết lịch hẹn cho NGƯỜI XEM (gửi qua ZNS), không cần đăng
+                              nhập khi xem hộ (viewerType=PROXY, có viewToken hợp lệ) */}
+                          <Route path="/appointment-view/:composite" element={<AppointmentPublicView />} />
                         </Routes>
                       </Suspense>
                     </ErrorBoundary>

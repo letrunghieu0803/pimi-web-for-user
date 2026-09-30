@@ -322,6 +322,12 @@
     "invalidLink": "Invalid link",
     "backToHome": "Back to home"
   },
+  "appointmentPublicView": {
+    "title": "Viewing Appointment Detail",
+    "notFound": "Appointment not found or the link has expired",
+    "invalidLink": "Invalid link",
+    "backToHome": "Back to home"
+  },
   "bookingPayment": {
     "title": "Booking Payment",
     "notFound": "Booking not found",

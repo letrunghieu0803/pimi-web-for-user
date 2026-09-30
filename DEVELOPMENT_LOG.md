@@ -4,6 +4,31 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-30 — Trang xem chi tiết lịch hẹn công khai cho người xem hộ (link trong tin ZNS)
+
+**Vì sao:** Backend (xem `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) thêm tin ZNS xác nhận đặt
+lịch thành công gửi tới SĐT liên hệ khách nhập lúc đặt. Nút "Xem chi tiết" trong tin đó cần 1
+trang đích: nếu "xem hộ" (viewerType=PROXY), người nhận thường không có tài khoản Pimi nên phải
+xem được KHÔNG cần đăng nhập (qua token); nếu "tự đi xem" (SELF), người nhận chính là chủ tài
+khoản đã đặt lịch, chỉ cần đưa về trang danh sách lịch hẹn đã đăng nhập sẵn.
+
+**Thay đổi:**
+- Trang mới `pages/AppointmentPublicView.tsx`, route `/appointment-view/:composite` — đọc
+  `{appointmentId}.{viewToken}.{env}` (viewToken RỖNG = SELF). Cùng cơ chế redirect-theo-môi-trường
+  với `InvoiceDetail.tsx` (domain nút ZNS khoá cứng pimi.vn, bản production chỉ gọi được
+  api.pimi.vn). Token rỗng → điều hướng `/appointments?highlight=<id>` (TenantAppointments.tsx đã
+  sẵn hỗ trợ tham số này). Token có giá trị → gọi `GET /appointments/public/:id?token=` (không cần
+  đăng nhập), tái dùng NGUYÊN `ViewingConfirmationPanel.tsx` để render (đúng layout/nội dung với
+  panel xác nhận hiện ngay lúc đặt thành công, không viết lại UI mới).
+- `services/appointmentApi.ts` thêm `getPublic(id, token)`.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch, `npm run lint` không phát sinh cảnh
+báo mới. Live-test qua Browser pane (dev server cục bộ đang chạy sẵn của người dùng + BE cục bộ,
+đã `prisma db push` áp cột `viewToken` mới): `/appointment-view/malformed` → "liên kết không hợp
+lệ"; `/appointment-view/<id>..prod` (token rỗng) → điều hướng đúng
+`/appointments?highlight=<id>`; `/appointment-view/<id>.<token>.prod` (id/token không tồn tại) →
+gọi đúng API, nhận 404, hiện đúng "lịch hẹn không tồn tại".
+
 ## 2026-09-30 — Báo rõ cho người dùng khi phiên đăng nhập đã mất thật (không chỉ để lỗi thô trồi lên)
 
 **Vì sao:** Phát hiện qua live-test cục bộ — `isAuthenticated` (AuthContext) chỉ dựa vào hồ sơ
