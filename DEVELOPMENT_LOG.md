@@ -4,6 +4,31 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-30 — Trang trung chuyển cho nút "Xem chi tiết" lịch hẹn trong tin ZNS
+
+**Vì sao:** Tin ZNS "có khách đặt lịch hẹn" gửi tới chủ nhà (xem `bff-for-pimi/DEVELOPMENT_LOG.md`
+cùng ngày) có nút "Xem chi tiết" — Zalo bắt buộc domain nút phải là domain ĐÃ XÁC THỰC khai báo cố
+định trên OA Manager. `pimi.vn` là domain duy nhất đã xác thực (dùng chung với hoá đơn), nhưng
+trang chi tiết lịch hẹn THẬT lại nằm ở Web-Pimi-for-owner (app khác, chỉ deploy trên Vercel, chưa
+có subdomain pimi.vn riêng). Cần 1 trang trung chuyển giữ domain pimi.vn rồi tự bắn sang đúng app.
+
+**Thay đổi:**
+- Trang mới `pages/AppointmentRedirect.tsx`, route `/appointment/:composite` — đọc
+  `{appointmentId}.{env}` từ URL (cùng quy ước nối chuỗi với `/invoice/:composite`), redirect toàn
+  trang (`window.location`, khác origin) sang `<OWNER_WEB_ORIGIN>/appointments?highlight=<id>` —
+  đúng route + query param `AppointmentList.tsx` bên Web-Pimi-for-owner đã dùng sẵn để cuộn tới +
+  làm nổi bật 1 lịch hẹn cụ thể. Không gọi API, không hiển thị nội dung — chỉ chuyển tiếp.
+- Domain đích đọc từ `VITE_OWNER_WEB_URL`/`VITE_OWNER_WEB_TEST_URL` (mặc định fallback về domain
+  Vercel hiện có của Web-Pimi-for-owner, CHƯA có bản test riêng nên tạm trùng bản production — set
+  `VITE_OWNER_WEB_TEST_URL` khi có bản test thật).
+- Thêm khoá i18n `appointmentRedirect.*` (vi/en).
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch, `npm run lint` không phát sinh cảnh
+báo mới. Live-test qua Browser pane: `/appointment/<id>.test` build đúng URL đích kèm query param
+đúng định dạng (redirect thật báo 404 vì bản Vercel test hiện không hoạt động — không liên quan
+logic trang này); `/appointment/malformed` (thiếu dấu `.`) hiện đúng trạng thái "liên kết không
+hợp lệ" thay vì crash.
+
 ## 2026-09-29 — Tự làm mới access token ngầm khi gặp 401/403-CSRF, tránh lỗi hiển thị sai bản chất
 
 **Vì sao:** Phát hiện qua live-test trên server test — gửi lịch hẹn xem phòng bị 403 "Missing or

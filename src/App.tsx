@@ -57,6 +57,9 @@ const RecentlyViewed = lazy(() =>
 const InvoiceDetail = lazy(() =>
   import('@/pages/InvoiceDetail').then((m) => ({ default: m.InvoiceDetail })),
 );
+const AppointmentRedirect = lazy(() =>
+  import('@/pages/AppointmentRedirect').then((m) => ({ default: m.AppointmentRedirect })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -108,6 +111,9 @@ export const App: React.FC = () => {
                           <Route path="/recently-viewed" element={<RecentlyViewed />} />
                           {/* Public — không đăng nhập, dùng cho link "Xem chi tiết" gửi qua ZNS/email */}
                           <Route path="/invoice/:composite" element={<InvoiceDetail />} />
+                          {/* Public — trang trung chuyển cho nút "Xem chi tiết" lịch hẹn gửi qua ZNS
+                              (đích thật nằm ở Web-Pimi-for-owner, domain khác pimi.vn) */}
+                          <Route path="/appointment/:composite" element={<AppointmentRedirect />} />
                         </Routes>
                       </Suspense>
                     </ErrorBoundary>

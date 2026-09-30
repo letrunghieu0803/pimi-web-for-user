@@ -317,6 +317,11 @@
     "overdueText": "This invoice is overdue, please contact the house owner.",
     "contactOwnerLabel": "Contact owner"
   },
+  "appointmentRedirect": {
+    "redirecting": "Redirecting to the appointment page...",
+    "invalidLink": "Invalid link",
+    "backToHome": "Back to home"
+  },
   "bookingPayment": {
     "title": "Booking Payment",
     "notFound": "Booking not found",

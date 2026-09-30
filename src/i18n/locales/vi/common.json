@@ -317,6 +317,11 @@
     "overdueText": "Hoá đơn đã quá hạn thanh toán, vui lòng liên hệ chủ nhà.",
     "contactOwnerLabel": "Liên hệ chủ nhà"
   },
+  "appointmentRedirect": {
+    "redirecting": "Đang chuyển tới trang lịch hẹn...",
+    "invalidLink": "Liên kết không hợp lệ",
+    "backToHome": "Về trang chủ"
+  },
   "bookingPayment": {
     "title": "Thanh toán đặt phòng",
     "notFound": "Không tìm thấy đơn đặt phòng",
