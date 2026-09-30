@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { axiosClient, setCsrfToken } from '@/services/axiosClient';
+import { axiosClient, setCsrfToken, SESSION_EXPIRED_EVENT } from '@/services/axiosClient';
 import { getApiErrorMessage } from '@/utils/apiError';
+import { useToast } from './ToastContext';
 
 // ERR_MSG_NEED_VERIFY_EMAIL in bff-for-pimi's error constants.
 const ERR_CODE_NEED_VERIFY_EMAIL = '000006';
@@ -41,6 +42,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { t } = useTranslation();
+  const toast = useToast();
   // accessToken/refreshToken không còn lưu ở localStorage nữa — nằm trong cookie httpOnly do
   // backend set (JS không đọc/ghi được, xem `axiosClient.ts`). `user` (không nhạy cảm) vẫn lưu
   // như trước để hiển thị UI ngay không cần chờ network; sự tồn tại của nó cũng là gợi ý "đã
@@ -64,6 +66,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.removeItem(AUTH_USER_KEY);
     }
   }, [user]);
+
+  // Đọc được trong closure của listener bên dưới mà không cần đăng ký lại effect mỗi lần `user`
+  // đổi — chỉ cần giá trị MỚI NHẤT tại thời điểm sự kiện bắn ra.
+  const userRef = useRef(user);
+  userRef.current = user;
+
+  // axiosClient.ts bắn sự kiện này khi phát hiện phiên đã mất thật (refresh ngầm cũng thất bại,
+  // không chỉ access token hết hạn tạm thời) — trước đây UI vẫn hiện "đã đăng nhập" (dựa vào cache
+  // localStorage, xem comment ở khai báo `user` phía trên) cho tới khi người dùng tình cờ thao tác
+  // trúng 1 API cần xác thực và thấy lỗi thô ngay tại chỗ đó (vd giữa chừng 1 form dài). Giờ dọn
+  // sạch state (navbar tự chuyển về "chưa đăng nhập") + báo rõ ràng ngay khi phát hiện, thay vì im
+  // lặng để lỗi trồi lên đúng chỗ request đang thất bại. Chỉ báo khi TRƯỚC ĐÓ đang tưởng đã đăng
+  // nhập — tránh làm phiền khách vãng lai (chưa đăng nhập) khi có API public nào đó lỡ trả 401.
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      if (userRef.current) {
+        setUser(null);
+        toast.warning(t('authContext.sessionExpired'));
+      }
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+  }, [t, toast]);
 
   // Dùng chung cho login() VÀ completeEmailVerification() — cả 2 endpoint backend
   // (/auth/login, /auth/verify-email) giờ trả cùng 1 hình dạng response {accessToken,

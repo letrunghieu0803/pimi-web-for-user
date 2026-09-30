@@ -4,6 +4,32 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-30 — Báo rõ cho người dùng khi phiên đăng nhập đã mất thật (không chỉ để lỗi thô trồi lên)
+
+**Vì sao:** Phát hiện qua live-test cục bộ — `isAuthenticated` (AuthContext) chỉ dựa vào hồ sơ
+cache trong `localStorage`, không xác thực lại với server, nên navbar vẫn hiện "đã đăng nhập" dù
+cookie phiên thật đã mất (hết hạn cả access lẫn refresh, hoặc bị xoá). Hệ quả: người dùng điền hết
+1 form dài (vd đặt lịch xem phòng) rồi mới thấy lỗi thô "Thiếu token xác thực" — không có hướng
+dẫn gì để biết cần làm gì tiếp theo.
+
+**Thay đổi:**
+- `services/axiosClient.ts`: thêm `SESSION_EXPIRED_EVENT` — bắn ra (qua `window.dispatchEvent`,
+  1 lần duy nhất cho tới khi có phiên mới) đúng lúc luồng tự làm mới token ngầm (thêm hôm
+  2026-09-29) xác nhận phiên đã mất THẬT (refresh cũng thất bại), không phải chỉ access token hết
+  hạn tạm thời.
+- `context/AuthContext.tsx`: lắng nghe sự kiện trên — dọn sạch `user` (navbar tự chuyển về "chưa
+  đăng nhập", xoá cache localStorage) + hiện toast rõ ràng "Phiên đăng nhập đã hết hạn, vui lòng
+  đăng nhập lại". Chỉ báo khi trước đó đang tưởng đã đăng nhập (tránh làm phiền khách vãng lai).
+- `i18n/locales/{vi,en}/errors.json`: sửa lại text 000127/000128 (trước đây dịch thô "Thiếu token
+  xác thực"/"Token xác thực không hợp lệ") thành cùng 1 câu hướng dẫn hành động rõ ràng — 2 mã này
+  luôn cùng ý nghĩa "chưa xác thực", không cần phân biệt.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch, `npm run lint` không phát sinh cảnh
+báo mới. Live-test qua Browser pane (dev server cục bộ của chính người dùng, port 5174): tiêm hồ
+sơ giả vào `localStorage` rồi reload — xác nhận toast hiện đúng câu, navbar tự chuyển về "Đăng
+nhập/Đăng ký", `localStorage` được dọn sạch, và dù nhiều lời gọi nền cùng lúc thất bại 401
+(unread-count gọi từ nhiều nơi) chỉ hiện đúng 1 toast (không spam).
+
 ## 2026-09-30 — Sửa form đặt lịch: chuyển tab "Xem hộ" không xoá dữ liệu tự điền của "Chính mình"
 
 **Vì sao:** Phát hiện qua ảnh chụp thật — chọn tab "Xem hộ" vẫn còn nguyên SĐT/email/tên của

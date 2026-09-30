@@ -605,7 +605,8 @@
   "authContext": {
     "loginSuccess": "Đăng nhập tài khoản thành công!",
     "needVerifyEmail": "Tài khoản của bạn chưa được xác thực email. Vui lòng nhập mã OTP để xác thực!",
-    "registerSuccess": "Đăng ký tài khoản thành công! Vui lòng nhập mã OTP xác thực email."
+    "registerSuccess": "Đăng ký tài khoản thành công! Vui lòng nhập mã OTP xác thực email.",
+    "sessionExpired": "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại"
   },
   "seo": {
     "roomListDescription": "Danh sách phòng trọ, chung cư mini, căn hộ dịch vụ chính chủ đã xác thực trên toàn hệ thống Pimi — lọc theo khu vực, giá thuê, loại hình phù hợp nhu cầu của bạn.",

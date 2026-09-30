@@ -605,7 +605,8 @@
   "authContext": {
     "loginSuccess": "Signed in successfully!",
     "needVerifyEmail": "Your account's email is not verified yet. Please enter the OTP to verify!",
-    "registerSuccess": "Account created successfully! Please enter the OTP to verify your email."
+    "registerSuccess": "Account created successfully! Please enter the OTP to verify your email.",
+    "sessionExpired": "Your session has expired — please log in again"
   },
   "seo": {
     "roomListDescription": "Browse verified boarding rooms, mini apartments, and service apartments across the Pimi platform — filter by area, price, and property type to find the right fit.",

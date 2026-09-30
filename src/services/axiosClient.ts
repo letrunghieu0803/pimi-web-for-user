@@ -20,8 +20,21 @@ const CLIENT_APP = 'user';
 let csrfTokenMemory: string | null = null;
 let csrfTokenFetchPromise: Promise<string | null> | null = null;
 
+// `isAuthenticated` ở AuthContext.tsx chỉ dựa vào hồ sơ cache trong localStorage, không xác thực
+// lại với server — nên navbar có thể vẫn hiện "đã đăng nhập" dù cookie phiên thật đã mất (hết
+// hạn cả access lẫn refresh, hoặc bị xoá), khiến lỗi "thiếu token" chỉ lộ ra giữa chừng 1 thao
+// tác (vd sau khi điền hết form đặt lịch) thay vì được báo trước rõ ràng. Sự kiện này bắn ra
+// đúng lúc phát hiện được điều đó (refresh ngầm bên dưới cũng thất bại — xác nhận phiên đã mất
+// thật, không phải chỉ access token hết hạn tạm thời) để AuthContext tự dọn state + báo cho
+// người dùng biết, thay vì im lặng để lỗi trồi lên ở đúng chỗ request đang thất bại.
+export const SESSION_EXPIRED_EVENT = 'pimi:session-expired';
+let sessionExpiredNotified = false;
+
 export const setCsrfToken = (token: string | null | undefined) => {
   csrfTokenMemory = token || null;
+  // Có token mới (đăng nhập/refresh vừa thành công) — phiên đang sống lại bình thường, cho phép
+  // bắn lại sự kiện hết phiên nếu sau này lại xảy ra lần nữa.
+  if (token) sessionExpiredNotified = false;
 };
 
 const ensureCsrfToken = async (): Promise<string | null> => {
@@ -137,6 +150,14 @@ axiosClient.interceptors.response.use(
       const refreshed = await refreshInFlight;
       if (refreshed) {
         return axiosClient(original);
+      }
+
+      // Refresh ngầm cũng thất bại — không chỉ access token hết hạn tạm thời, mà cả phiên (kể cả
+      // refresh token) đã mất thật. Báo 1 lần duy nhất cho tới lúc có phiên mới (xem
+      // sessionExpiredNotified/setCsrfToken ở trên).
+      if (!sessionExpiredNotified) {
+        sessionExpiredNotified = true;
+        window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
       }
     }
 
