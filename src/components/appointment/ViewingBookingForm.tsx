@@ -53,6 +53,22 @@ export const ViewingBookingForm: React.FC<ViewingBookingFormProps> = ({
   const [expectedOccupantName, setExpectedOccupantName] = useState(defaultOccupantName || '');
   const [note, setNote] = useState('');
 
+  // "Chính mình" → auto-fill lại đúng thông tin tài khoản đang đăng nhập (khách có thể đã tự gõ
+  // đè lên trước đó); "Xem hộ" → xoá trắng, KHÔNG giữ lại thông tin của tài khoản đang đăng nhập,
+  // vì SĐT/email/tên lúc này phải là của người sẽ đi xem hộ, không phải người đặt lịch.
+  const handleViewerTypeChange = (type: AppointmentViewerType) => {
+    setViewerType(type);
+    if (type === 'SELF') {
+      setContactPhone(defaultContactPhone || '');
+      setContactEmail(defaultContactEmail || '');
+      setExpectedOccupantName(defaultOccupantName || '');
+    } else {
+      setContactPhone('');
+      setContactEmail('');
+      setExpectedOccupantName('');
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -122,7 +138,7 @@ export const ViewingBookingForm: React.FC<ViewingBookingFormProps> = ({
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setViewerType('SELF')}
+                onClick={() => handleViewerTypeChange('SELF')}
                 className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-colors ${
                   viewerType === 'SELF'
                     ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
@@ -133,7 +149,7 @@ export const ViewingBookingForm: React.FC<ViewingBookingFormProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => setViewerType('PROXY')}
+                onClick={() => handleViewerTypeChange('PROXY')}
                 className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-colors ${
                   viewerType === 'PROXY'
                     ? 'border-indigo-600 bg-indigo-50 text-indigo-700'

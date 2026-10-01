@@ -317,6 +317,17 @@
     "overdueText": "This invoice is overdue, please contact the house owner.",
     "contactOwnerLabel": "Contact owner"
   },
+  "appointmentRedirect": {
+    "redirecting": "Redirecting to the appointment page...",
+    "invalidLink": "Invalid link",
+    "backToHome": "Back to home"
+  },
+  "appointmentPublicView": {
+    "title": "Viewing Appointment Detail",
+    "notFound": "Appointment not found or the link has expired",
+    "invalidLink": "Invalid link",
+    "backToHome": "Back to home"
+  },
   "bookingPayment": {
     "title": "Booking Payment",
     "notFound": "Booking not found",
@@ -600,7 +611,8 @@
   "authContext": {
     "loginSuccess": "Signed in successfully!",
     "needVerifyEmail": "Your account's email is not verified yet. Please enter the OTP to verify!",
-    "registerSuccess": "Account created successfully! Please enter the OTP to verify your email."
+    "registerSuccess": "Account created successfully! Please enter the OTP to verify your email.",
+    "sessionExpired": "Your session has expired — please log in again"
   },
   "seo": {
     "roomListDescription": "Browse verified boarding rooms, mini apartments, and service apartments across the Pimi platform — filter by area, price, and property type to find the right fit.",

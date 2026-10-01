@@ -110,6 +110,12 @@ export const appointmentApi = {
     return axiosClient.get(`/v1/appointments/${id}`);
   },
 
+  // Xem chi tiết lịch hẹn KHÔNG cần đăng nhập — dùng cho link "Xem chi tiết" gửi qua ZNS tới
+  // người xem hộ (viewerType=PROXY), xem pages/AppointmentPublicView.tsx.
+  getPublic: (id: string, token: string) => {
+    return axiosClient.get(`/v1/appointments/public/${id}`, { params: { token } });
+  },
+
   userConfirm: (id: string, payload: { action: 'ACCEPT' | 'REJECT'; selectedTimeSlotId?: string; rejectReason?: string }) => {
     return axiosClient.put(`/v1/appointments/${id}/user-confirm`, payload);
   },

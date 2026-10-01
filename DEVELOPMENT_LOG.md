@@ -4,6 +4,117 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-09-30 — Trang xem chi tiết lịch hẹn công khai cho người xem hộ (link trong tin ZNS)
+
+**Vì sao:** Backend (xem `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) thêm tin ZNS xác nhận đặt
+lịch thành công gửi tới SĐT liên hệ khách nhập lúc đặt. Nút "Xem chi tiết" trong tin đó cần 1
+trang đích: nếu "xem hộ" (viewerType=PROXY), người nhận thường không có tài khoản Pimi nên phải
+xem được KHÔNG cần đăng nhập (qua token); nếu "tự đi xem" (SELF), người nhận chính là chủ tài
+khoản đã đặt lịch, chỉ cần đưa về trang danh sách lịch hẹn đã đăng nhập sẵn.
+
+**Thay đổi:**
+- Trang mới `pages/AppointmentPublicView.tsx`, route `/appointment-view/:composite` — đọc
+  `{appointmentId}.{viewToken}.{env}` (viewToken RỖNG = SELF). Cùng cơ chế redirect-theo-môi-trường
+  với `InvoiceDetail.tsx` (domain nút ZNS khoá cứng pimi.vn, bản production chỉ gọi được
+  api.pimi.vn). Token rỗng → điều hướng `/appointments?highlight=<id>` (TenantAppointments.tsx đã
+  sẵn hỗ trợ tham số này). Token có giá trị → gọi `GET /appointments/public/:id?token=` (không cần
+  đăng nhập), tái dùng NGUYÊN `ViewingConfirmationPanel.tsx` để render (đúng layout/nội dung với
+  panel xác nhận hiện ngay lúc đặt thành công, không viết lại UI mới).
+- `services/appointmentApi.ts` thêm `getPublic(id, token)`.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch, `npm run lint` không phát sinh cảnh
+báo mới. Live-test qua Browser pane (dev server cục bộ đang chạy sẵn của người dùng + BE cục bộ,
+đã `prisma db push` áp cột `viewToken` mới): `/appointment-view/malformed` → "liên kết không hợp
+lệ"; `/appointment-view/<id>..prod` (token rỗng) → điều hướng đúng
+`/appointments?highlight=<id>`; `/appointment-view/<id>.<token>.prod` (id/token không tồn tại) →
+gọi đúng API, nhận 404, hiện đúng "lịch hẹn không tồn tại".
+
+## 2026-09-30 — Báo rõ cho người dùng khi phiên đăng nhập đã mất thật (không chỉ để lỗi thô trồi lên)
+
+**Vì sao:** Phát hiện qua live-test cục bộ — `isAuthenticated` (AuthContext) chỉ dựa vào hồ sơ
+cache trong `localStorage`, không xác thực lại với server, nên navbar vẫn hiện "đã đăng nhập" dù
+cookie phiên thật đã mất (hết hạn cả access lẫn refresh, hoặc bị xoá). Hệ quả: người dùng điền hết
+1 form dài (vd đặt lịch xem phòng) rồi mới thấy lỗi thô "Thiếu token xác thực" — không có hướng
+dẫn gì để biết cần làm gì tiếp theo.
+
+**Thay đổi:**
+- `services/axiosClient.ts`: thêm `SESSION_EXPIRED_EVENT` — bắn ra (qua `window.dispatchEvent`,
+  1 lần duy nhất cho tới khi có phiên mới) đúng lúc luồng tự làm mới token ngầm (thêm hôm
+  2026-09-29) xác nhận phiên đã mất THẬT (refresh cũng thất bại), không phải chỉ access token hết
+  hạn tạm thời.
+- `context/AuthContext.tsx`: lắng nghe sự kiện trên — dọn sạch `user` (navbar tự chuyển về "chưa
+  đăng nhập", xoá cache localStorage) + hiện toast rõ ràng "Phiên đăng nhập đã hết hạn, vui lòng
+  đăng nhập lại". Chỉ báo khi trước đó đang tưởng đã đăng nhập (tránh làm phiền khách vãng lai).
+- `i18n/locales/{vi,en}/errors.json`: sửa lại text 000127/000128 (trước đây dịch thô "Thiếu token
+  xác thực"/"Token xác thực không hợp lệ") thành cùng 1 câu hướng dẫn hành động rõ ràng — 2 mã này
+  luôn cùng ý nghĩa "chưa xác thực", không cần phân biệt.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch, `npm run lint` không phát sinh cảnh
+báo mới. Live-test qua Browser pane (dev server cục bộ của chính người dùng, port 5174): tiêm hồ
+sơ giả vào `localStorage` rồi reload — xác nhận toast hiện đúng câu, navbar tự chuyển về "Đăng
+nhập/Đăng ký", `localStorage` được dọn sạch, và dù nhiều lời gọi nền cùng lúc thất bại 401
+(unread-count gọi từ nhiều nơi) chỉ hiện đúng 1 toast (không spam).
+
+## 2026-09-30 — Sửa form đặt lịch: chuyển tab "Xem hộ" không xoá dữ liệu tự điền của "Chính mình"
+
+**Vì sao:** Phát hiện qua ảnh chụp thật — chọn tab "Xem hộ" vẫn còn nguyên SĐT/email/tên của
+chính tài khoản đang đăng nhập (tự điền sẵn cho tab "Chính mình" lúc mở form, `useState` chỉ khởi
+tạo 1 lần, đổi tab không đụng tới 3 field này). Sai vì SĐT/email/tên lúc xem hộ phải là của người
+sẽ đi xem thay, không phải người đặt lịch.
+
+**Thay đổi:**
+- `components/appointment/ViewingBookingForm.tsx`: thêm `handleViewerTypeChange()` — chuyển sang
+  "Chính mình" thì tự điền lại đúng thông tin tài khoản đang đăng nhập (phòng trường hợp khách đã
+  gõ đè trước đó), chuyển sang "Xem hộ" thì xoá trắng cả 3 field, bắt khách tự nhập thông tin
+  người xem hộ.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Chưa live-test qua browser (fix chỉ
+đổi state phía client, không qua API — xác minh qua đọc logic trực tiếp thay vì click-through, vì
+click-through cần tài khoản đã đăng nhập + phòng còn slot mở).
+
+## 2026-09-30 — Trang trung chuyển cho nút "Xem chi tiết" lịch hẹn trong tin ZNS
+
+**Vì sao:** Tin ZNS "có khách đặt lịch hẹn" gửi tới chủ nhà (xem `bff-for-pimi/DEVELOPMENT_LOG.md`
+cùng ngày) có nút "Xem chi tiết" — Zalo bắt buộc domain nút phải là domain ĐÃ XÁC THỰC khai báo cố
+định trên OA Manager. `pimi.vn` là domain duy nhất đã xác thực (dùng chung với hoá đơn), nhưng
+trang chi tiết lịch hẹn THẬT lại nằm ở Web-Pimi-for-owner (app khác, chỉ deploy trên Vercel, chưa
+có subdomain pimi.vn riêng). Cần 1 trang trung chuyển giữ domain pimi.vn rồi tự bắn sang đúng app.
+
+**Thay đổi:**
+- Trang mới `pages/AppointmentRedirect.tsx`, route `/appointment/:composite` — đọc
+  `{appointmentId}.{env}` từ URL (cùng quy ước nối chuỗi với `/invoice/:composite`), redirect toàn
+  trang (`window.location`, khác origin) sang `<OWNER_WEB_ORIGIN>/appointments?highlight=<id>` —
+  đúng route + query param `AppointmentList.tsx` bên Web-Pimi-for-owner đã dùng sẵn để cuộn tới +
+  làm nổi bật 1 lịch hẹn cụ thể. Không gọi API, không hiển thị nội dung — chỉ chuyển tiếp.
+- Domain đích đọc từ `VITE_OWNER_WEB_URL`/`VITE_OWNER_WEB_TEST_URL` (mặc định fallback về domain
+  Vercel hiện có của Web-Pimi-for-owner, CHƯA có bản test riêng nên tạm trùng bản production — set
+  `VITE_OWNER_WEB_TEST_URL` khi có bản test thật).
+- Thêm khoá i18n `appointmentRedirect.*` (vi/en).
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch, `npm run lint` không phát sinh cảnh
+báo mới. Live-test qua Browser pane: `/appointment/<id>.test` build đúng URL đích kèm query param
+đúng định dạng (redirect thật báo 404 vì bản Vercel test hiện không hoạt động — không liên quan
+logic trang này); `/appointment/malformed` (thiếu dấu `.`) hiện đúng trạng thái "liên kết không
+hợp lệ" thay vì crash.
+
+## 2026-09-29 — Tự làm mới access token ngầm khi gặp 401/403-CSRF, tránh lỗi hiển thị sai bản chất
+
+**Vì sao:** Phát hiện qua live-test trên server test — gửi lịch hẹn xem phòng bị 403 "Missing or
+invalid CSRF token" dù phiên đăng nhập vẫn còn. Nguyên nhân gốc: access token (cookie httpOnly)
+chỉ sống 1 ngày, ngắn hơn cookie CSRF/refresh (7 ngày) — phiên mở lâu sẽ có lúc access token hết
+hạn giữa chừng, và trước khi FE kịp gọi refresh, request mutate tiếp theo bị CsrfGuard (chạy trước
+AuthGuard) chặn nhầm bằng lỗi CSRF thay vì lỗi đúng bản chất là hết phiên. Backend tương ứng ở
+`bff-for-pimi/DEVELOPMENT_LOG.md` (2026-09-29, public hoá `GET /auth/csrf-token`).
+
+**Thay đổi:**
+- `services/axiosClient.ts`: response interceptor bắt lỗi 401 (`000127`/`000128`) hoặc 403-CSRF
+  (`000174`) — tự gọi ngầm `POST /auth/refresh-token` (dedupe qua 1 promise dùng chung), nạp lại
+  CSRF token mới, rồi thử lại đúng request gốc (guard `_retriedAfterRefresh` tránh lặp vô hạn,
+  loại trừ chính endpoint refresh-token/login). Người dùng không còn thấy lỗi mỗi khi access token
+  hết hạn tự nhiên sau 24h.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch.
+
 ## 2026-09-29 — Đặt lịch xem phòng tự chọn slot (thay nút "Yêu cầu xem phòng" đơn giản cũ)
 
 **Vì sao:** Đồng bộ backend đổi luồng lịch hẹn — khách thuê giờ tự chọn khung giờ 30 phút còn
