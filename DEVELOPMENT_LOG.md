@@ -4,6 +4,25 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-02 — Giới hạn cửa sổ đặt lịch xem phòng: cách hiện tại 30 phút - 7 ngày
+
+**Vì sao:** Backend (xem `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) thêm giới hạn: slot chỉ đặt
+được nếu cách hiện tại ít nhất 30 phút và trong vòng 7 ngày tới. `ViewingSlotPicker.tsx` (lịch chọn
+slot) đọc `isOpen` thẳng từ API public grid — field này giờ backend đã tự lọc đúng theo giới hạn
+mới, nên **không cần sửa logic component nào cả**, slot/ngày ngoài cửa sổ tự động hiện khoá/gạch
+ngang như khi chủ nhà khoá riêng.
+
+**Thay đổi:**
+- `services/appointmentAvailabilityApi.ts`: chỉ cập nhật comment giải thích `isOpen: false` giờ có
+  2 nguyên nhân (chủ nhà khoá riêng HOẶC ngoài cửa sổ đặt lịch), không đổi code.
+- `i18n/locales/{vi,en}/errors.json`: thêm bản dịch lỗi `000236` — phòng trường hợp slot hết hạn
+  ngay lúc khách đang điền form (lưới đã tải trước đó, "now" trôi qua trong lúc thao tác), submit
+  sẽ bị BE từ chối với thông báo rõ ràng thay vì lỗi chung chung.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Không cần live-test riêng UI — logic
+lọc nằm hoàn toàn ở BE (đã verify qua API thật, xem log BE), FE chỉ đọc lại đúng field `isOpen` sẵn
+có, hành vi UI (khoá/gạch ngang slot và ngày) đã được component xử lý từ trước.
+
 ## 2026-09-30 — Trang xem chi tiết lịch hẹn công khai cho người xem hộ (link trong tin ZNS)
 
 **Vì sao:** Backend (xem `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) thêm tin ZNS xác nhận đặt

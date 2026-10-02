@@ -145,5 +145,6 @@
   "000232": "You don't have permission to configure the viewing schedule for this house",
   "000233": "The date range is capped at 62 days",
   "000234": "This appointment can't be cancelled (already cancelled/completed)",
-  "000235": "You don't have permission to cancel this appointment"
+  "000235": "You don't have permission to cancel this appointment",
+  "000236": "Viewing appointments can only be booked at least 30 minutes from now and within the next 7 days"
 }
