@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import DOMPurify from 'dompurify';
-import { CheckCircle2, MapPin, CalendarClock, User, Wallet, BookOpen, X } from 'lucide-react';
+import { CheckCircle2, Clock, MapPin, CalendarClock, User, Wallet, BookOpen, X } from 'lucide-react';
 import { Appointment } from '@/services/appointmentApi';
 
 interface ViewingConfirmationPanelProps {
@@ -42,6 +42,11 @@ export const ViewingConfirmationPanel: React.FC<ViewingConfirmationPanelProps> =
 
   const dateTimeLabel = formatDateTimeRange(appointment.viewingStartTime, appointment.viewingEndTime);
   const priceLabel = formatPrice(appointment.rentRoom?.price);
+  // Nhà chưa cấu hình giờ mở cửa xem phòng — lịch hẹn đặt vào khung giờ mặc định cần chủ nhà
+  // duyệt (xem AppointmentsService.create() `usedFallback`), KHÔNG được xác nhận ngay như bình
+  // thường. Panel vẫn hiện (khách cần lưu lại thông tin đã gửi) nhưng đổi hẳn tông "đã xong" sang
+  // "đang chờ" — guideContent chắc chắn null ở trạng thái này (chỉ snapshot khi chủ nhà duyệt).
+  const isPendingApproval = appointment.status === 'PENDING_APPROVAL';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
@@ -50,11 +55,15 @@ export const ViewingConfirmationPanel: React.FC<ViewingConfirmationPanelProps> =
           <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-xl hover:bg-slate-100 text-slate-500">
             <X className="w-5 h-5" />
           </button>
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
-            <CheckCircle2 className="w-8 h-8" />
+          <div className={`w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-3 ${isPendingApproval ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>
+            {isPendingApproval ? <Clock className="w-8 h-8" /> : <CheckCircle2 className="w-8 h-8" />}
           </div>
-          <h2 className="text-lg font-bold text-slate-900 font-heading">{t('viewingConfirmationPanel.title')}</h2>
-          <p className="text-xs text-slate-500 mt-1">{t('viewingConfirmationPanel.subtitle')}</p>
+          <h2 className="text-lg font-bold text-slate-900 font-heading">
+            {isPendingApproval ? t('viewingConfirmationPanel.pendingTitle') : t('viewingConfirmationPanel.title')}
+          </h2>
+          <p className="text-xs text-slate-500 mt-1">
+            {isPendingApproval ? t('viewingConfirmationPanel.pendingSubtitle') : t('viewingConfirmationPanel.subtitle')}
+          </p>
         </div>
 
         <div className="p-6 space-y-4 overflow-y-auto">

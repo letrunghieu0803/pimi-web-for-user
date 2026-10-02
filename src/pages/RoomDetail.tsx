@@ -85,7 +85,13 @@ export const RoomDetail: React.FC = () => {
         const matchesRoom = currentRoom.roomGroupId
           ? app.rentRoom?.roomGroupId === currentRoom.roomGroupId
           : app.rentRoomId === targetId;
-        return matchesRoom && ['PENDING_OWNER', 'OWNER_OFFERED_TIMES', 'USER_ACCEPTED'].includes(app.status);
+        // PENDING_APPROVAL — đặt vào khung giờ mặc định (nhà chưa cấu hình giờ mở cửa), đang chờ
+        // chủ nhà duyệt — CŨNG phải chặn đặt lại/hiện đúng trạng thái "đang chờ" như PENDING_OWNER,
+        // khác CONFIRMED (cố tình không chặn, xem comment ở handleRequestViewing()).
+        return (
+          matchesRoom &&
+          ['PENDING_OWNER', 'PENDING_APPROVAL', 'OWNER_OFFERED_TIMES', 'USER_ACCEPTED'].includes(app.status)
+        );
       });
       setActiveAppointment(found || null);
     } catch (err) {
@@ -216,11 +222,11 @@ export const RoomDetail: React.FC = () => {
   };
 
   // Mở bước 1 (chọn slot) của luồng đặt lịch xem nhà tự chọn — thay cho việc tạo lịch hẹn ngay
-  // (hành vi cũ). activeAppointment ở đây chỉ còn khớp lịch hẹn LEGACY (PENDING_OWNER/
-  // OWNER_OFFERED_TIMES/USER_ACCEPTED, xem filter trong fetchActiveAppointment) — cố tình KHÔNG
-  // mở rộng để khớp cả CONFIRMED, vì sản phẩm cho phép đặt nhiều lần/nhiều khung giờ khác nhau
-  // không giới hạn ở luồng mới (chỉ chặn trùng slot ở phía server khi cùng 1 slot, không chặn đặt
-  // thêm slot khác).
+  // (hành vi cũ). activeAppointment ở đây khớp lịch hẹn LEGACY (PENDING_OWNER/OWNER_OFFERED_TIMES/
+  // USER_ACCEPTED) + PENDING_APPROVAL (luồng mới, đặt vào khung giờ mặc định — đang chờ chủ nhà
+  // duyệt, xem filter trong fetchActiveAppointment) — cố tình KHÔNG mở rộng để khớp cả CONFIRMED,
+  // vì sản phẩm cho phép đặt nhiều lần/nhiều khung giờ khác nhau không giới hạn ở luồng mới (chỉ
+  // chặn trùng slot ở phía server khi cùng 1 slot, không chặn đặt thêm slot khác).
   const handleRequestViewing = () => {
     if (!isAuthenticated) {
       toast.warning(t('roomDetail.toastNeedLogin'));
@@ -426,6 +432,13 @@ export const RoomDetail: React.FC = () => {
       <div className="w-full py-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed text-center px-3">
         <Clock className="w-4 h-4 text-amber-600 shrink-0" />
         <span>{t('roomDetail.statusPending')}</span>
+      </div>
+    ) : /* Khung giờ mặc định (nhà chưa cấu hình giờ mở cửa) — đang chờ chủ nhà duyệt, KHÔNG
+           được rơi vào nhánh "statusConfirmed" bên dưới (sẽ báo sai là đã xác nhận). */
+    activeAppointment.status === 'PENDING_APPROVAL' ? (
+      <div className="w-full py-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed text-center px-3">
+        <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+        <span>{t('roomDetail.statusPendingApproval')}</span>
       </div>
     ) : activeAppointment.status === 'OWNER_OFFERED_TIMES' ? (
       <button
