@@ -4,6 +4,22 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-04 — Đổi favicon sang logo chim cánh cụt
+
+**Vì sao:** Thay favicon cũ bằng logo mới (chim cánh cụt) cho 3 trang production (pimi.vn,
+bizpimi.vn, piminest.com).
+
+**Thay đổi:**
+- Thêm `favicon.png` (512), `favicon-32.png`, `apple-touch-icon.png` (180) từ ảnh gốc, sửa thẻ
+  `<link rel="icon">` trong `index.html`, xoá `favicon.svg` cũ.
+- `firebase-messaging-sw.js` (icon thông báo đẩy) + logo trong JSON-LD (`Home.tsx`,
+  `NewsDetail.tsx`) đổi `/favicon.svg` → `/favicon.png`.
+- Bản đang chạy trên S3 được vá trực tiếp (index.html + service worker + file icon, invalidate
+  CloudFront) thay vì build lại, nên JSON-LD trong bundle vẫn trỏ `/favicon.svg` (file cũ còn trên
+  S3) cho tới lần deploy build mới.
+
+**Đã kiểm tra:** `npx tsc --noEmit` không đụng tới (chỉ sửa chuỗi). Live: pimi.vn trả đúng thẻ icon mới, 3 file PNG HTTP 200.
+
 ## 2026-10-02 — Giới hạn cửa sổ đặt lịch xem phòng: cách hiện tại 30 phút - 7 ngày
 
 **Vì sao:** Backend (xem `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) thêm giới hạn: slot chỉ đặt

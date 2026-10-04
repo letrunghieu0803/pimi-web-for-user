@@ -21,7 +21,7 @@ messaging.onBackgroundMessage((payload) => {
   const { title, body } = payload.notification || {};
   self.registration.showNotification(title || 'Pimi', {
     body: body || '',
-    icon: '/favicon.svg',
+    icon: '/favicon.png',
     data: payload.data,
   });
 });
