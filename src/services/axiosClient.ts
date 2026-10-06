@@ -1,4 +1,13 @@
 import axios from 'axios';
+import {
+  clearBearerSession,
+  dropLoginCandidates,
+  getBearerSession,
+  isBearerMode,
+  extractTokens,
+  setBearerSession,
+  trySwitchToBearer,
+} from './bearerSession';
 
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT || 'http://localhost:3333/api';
 
@@ -74,8 +83,25 @@ export const axiosClient = axios.create({
 // httpOnly (`pimi_at_user`). Double-submit CSRF: mọi request có thể đổi dữ liệu phải echo lại
 // cookie `pimi_csrf_user` (không httpOnly, JS đọc được) qua header `X-CSRF-Token` — backend đối
 // chiếu 2 giá trị phải khớp nhau (xem CsrfGuard ở bff-for-pimi).
+// Chế độ Bearer fallback (xem bearerSession.ts): trình duyệt chặn cookie cross-site thì gắn
+// `Authorization: Bearer <accessToken>` thay cookie, và KHÔNG cần CSRF (CsrfGuard bỏ qua request
+// có header Authorization). Login/verify-email/register không gắn Bearer cũ (nếu còn sót).
+const NO_BEARER_URLS = ['/auth/login', '/auth/verify-email', '/auth/register'];
+
 axiosClient.interceptors.request.use(
   async (config) => {
+    // Logout tự mang Authorization (đọc từ storage trước khi xoá) — giữ nguyên, bỏ qua CSRF. Các
+    // request khác LUÔN gắn lại access token mới nhất: request thử lại sau refresh còn dính header
+    // Authorization cũ từ lần gửi đầu, giữ nguyên sẽ dùng lại token đã hết hạn.
+    if (config.headers?.Authorization && config.url?.includes('/auth/logout')) {
+      return config;
+    }
+    const bearer = getBearerSession();
+    if (bearer && !NO_BEARER_URLS.some((u) => config.url?.includes(u))) {
+      config.headers['Authorization'] = `Bearer ${bearer.accessToken}`;
+      delete config.headers['X-CSRF-Token'];
+      return config;
+    }
     if (config.method && MUTATING_METHODS.includes(config.method.toLowerCase())) {
       const csrfToken = await ensureCsrfToken();
       if (csrfToken) {
@@ -105,6 +131,29 @@ async function refreshSession(): Promise<boolean> {
     // Cần CSRF token hợp lệ để chính request refresh-token này qua được CsrfGuard — dùng lại
     // ensureCsrfToken() (nay endpoint GET /auth/csrf-token đã public, không còn phụ thuộc access
     // token còn hạn hay không, xem AuthController#getCsrfToken bên BE).
+    // Bearer mode: refresh token đi qua header Authorization (backend nhận Bearer REFRESH token ở
+    // route này), không cần CSRF; token mới lưu lại vào localStorage.
+    const bearer = getBearerSession();
+    if (bearer) {
+      const res = await axios.post(
+        `${API_BASE_URL}/v1/auth/refresh-token`,
+        {},
+        {
+          withCredentials: true,
+          headers: {
+            'X-Client-App': CLIENT_APP,
+            Authorization: `Bearer ${bearer.refreshToken}`,
+          },
+        }
+      );
+      const tokens = extractTokens(res.data);
+      if (!tokens) {
+        clearBearerSession();
+        return false;
+      }
+      setBearerSession(tokens);
+      return true;
+    }
     const csrfToken = await ensureCsrfToken();
     const res = await axios.post(
       `${API_BASE_URL}/v1/auth/refresh-token`,
@@ -120,17 +169,49 @@ async function refreshSession(): Promise<boolean> {
     setCsrfToken(res.data?.data?.csrfToken);
     return true;
   } catch {
+    // Refresh hỏng ở bearer mode = phiên mất thật — dọn token để lần sau đăng nhập dò lại từ đầu.
+    clearBearerSession();
     return false;
   }
 }
 
 // Response interceptor to unwrap data and normalize errors
+//
+// Phát hiện cookie bị chặn (xem bearerSession.ts): ngay sau đăng nhập mà gặp 401 000127 ("thiếu
+// token" — trình duyệt không gửi cookie lên) và còn token ứng viên của lần đăng nhập đó thì chuyển
+// sang Bearer mode rồi thử lại request gốc ĐÚNG 1 lần. Ngược lại, request hồ sơ sau đăng nhập
+// (`/users/me`) thành công = cookie hoạt động bình thường -> bỏ ứng viên, không bao giờ ghi token
+// xuống localStorage.
+const COOKIE_CONFIRM_URL = '/users/me';
+
 axiosClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    if (response.config?.url?.includes(COOKIE_CONFIRM_URL) && !isBearerMode()) {
+      dropLoginCandidates();
+    }
+    return response.data;
+  },
   async (error) => {
     const status = error.response?.status;
     const code = error.response?.data?.error?.code;
     const original = error.config;
+
+    if (
+      status === 401 &&
+      code === '000127' &&
+      original &&
+      !original._bearerRetried &&
+      !original.url?.includes('/auth/refresh-token') &&
+      !original.url?.includes('/auth/login')
+    ) {
+      // Request đã đi KHÔNG kèm Authorization mà lúc này đã ở bearer mode (request song song khác
+      // vừa chuyển chế độ xong) cũng chỉ cần thử lại, không phải refresh.
+      const sentWithoutBearer = !original.headers?.Authorization;
+      if ((isBearerMode() && sentWithoutBearer) || trySwitchToBearer()) {
+        original._bearerRetried = true;
+        return axiosClient(original);
+      }
+    }
     const isSessionExpired = status === 401 && AUTH_ERROR_CODES.includes(code);
     const isCsrfMismatchFromExpiry = status === 403 && code === CSRF_ERROR_CODE;
 
@@ -139,7 +220,8 @@ axiosClient.interceptors.response.use(
       original &&
       !original._retriedAfterRefresh &&
       !original.url?.includes('/auth/refresh-token') &&
-      !original.url?.includes('/auth/login')
+      !original.url?.includes('/auth/login') &&
+      !original.url?.includes('/auth/logout')
     ) {
       original._retriedAfterRefresh = true;
       if (!refreshInFlight) {

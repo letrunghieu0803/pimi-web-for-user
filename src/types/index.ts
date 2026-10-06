@@ -56,24 +56,8 @@ export interface RoomService {
   note?: string;
 }
 
-export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
-
-export interface ViewingRequest {
-  id?: string;
-  roomId: string;
-  roomName?: string;
-  tenantName: string;
-  tenantPhone: string;
-  tenantEmail?: string;
-  preferredDate: string;
-  preferredTime: string;
-  notes?: string;
-  status?: BookingStatus;
-  createdAt?: string;
-}
-
 export interface FilterState {
-  district: string;
+  district: string; // tên quận/huyện lấy từ search-facets; '' = tất cả quận/huyện
   priceRange: string; // 'ALL' | '0-3m' | '3m-5m' | '5m-8m' | '8m+'
   roomType: string; // 'ALL' | RoomType
   hasMezzanine: boolean | null;

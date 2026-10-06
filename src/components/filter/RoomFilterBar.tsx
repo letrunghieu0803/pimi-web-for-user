@@ -3,7 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { FilterState } from '@/types';
-import { DISTRICTS, AMENITIES_LIST } from '@/data/mockData';
+import { useSearchFacets } from '@/hooks/useSearchFacets';
+import { useToast } from '@/context/ToastContext';
+import { formatRoomTypeLabel } from '@/utils/roomType';
 import { Search, MapPin, DollarSign, Home, SlidersHorizontal, RotateCcw, Layers, Check, Sparkles, Zap, Calendar, X } from 'lucide-react';
 
 interface RoomFilterBarProps {
@@ -19,6 +21,7 @@ interface RoomFilterBarProps {
 
 export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, onSubmit, onReset }) => {
   const { t } = useTranslation();
+  const toast = useToast();
 
   // Trước đây MỌI thay đổi (gõ ô tìm kiếm, đổi quận/huyện, bấm tiện ích...) đều gọi thẳng
   // onChange -> RoomList refetch API NGAY LẬP TỨC — tự động tìm kiếm liên tục, không lưu lại
@@ -33,6 +36,16 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
   useEffect(() => {
     setDraft(appliedFilters);
   }, [appliedFilters]);
+
+  // Khu vực / loại phòng / tiện ích lấy từ backend theo loại hình đang chọn trong bản nháp (đổi
+  // Ngắn hạn <-> Dài hạn thì danh sách đổi theo) — xem GET /rent-rooms/public/search-facets.
+  const { facets, isLoading: facetsLoading, isError: facetsError } = useSearchFacets(draft.rentalTermType);
+
+  // Giữ lại lựa chọn đang áp dụng dù nó không còn trong facets (vd link cũ/đổi loại hình thuê) để ô
+  // chọn không hiện sai giá trị rỗng.
+  const knownDistricts = new Set(facets?.locations.flatMap((loc) => loc.districts.map((d) => d.name)) ?? []);
+  const knownRoomTypes = new Set(facets?.roomTypes.map((rt) => rt.type) ?? []);
+  const amenityOptions = Array.from(new Set([...(facets?.amenities ?? []), ...draft.amenities]));
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -82,7 +95,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
   // Badge số lượng filter — phản ánh bộ lọc ĐANG ÁP DỤNG THẬT (đã submit), không phải bản nháp
   // đang gõ dở, để khớp đúng với kết quả đang hiển thị trên trang.
   const activeFilterCount =
-    (appliedFilters.district && appliedFilters.district !== DISTRICTS[0] ? 1 : 0) +
+    (appliedFilters.district ? 1 : 0) +
     (appliedFilters.roomType !== 'ALL' ? 1 : 0) +
     (appliedFilters.hasMezzanine === true ? 1 : 0) +
     (appliedFilters.isRecommended === true ? 1 : 0) +
@@ -97,7 +110,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
   const SearchSubmitButton = ({ className }: { className?: string }) => (
     <button type="submit" className={className}>
       <Search className="w-4 h-4" />
-      <span>{t('roomFilterBar.searchButton', { defaultValue: 'Tìm kiếm' })}</span>
+      <span>{t('roomFilterBar.searchButton')}</span>
     </button>
   );
 
@@ -118,12 +131,22 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
             onChange={handleDistrictChange}
             className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
           >
-            {DISTRICTS.map((dist) => (
-              <option key={dist} value={dist}>
-                {dist}
-              </option>
+            <option value="">{t('roomFilterBar.districtAll')}</option>
+            {draft.district && !knownDistricts.has(draft.district) && (
+              <option value={draft.district}>{draft.district}</option>
+            )}
+            {facets?.locations.map((loc) => (
+              <optgroup key={loc.province} label={`${loc.province} (${loc.roomCount})`}>
+                {loc.districts.map((d) => (
+                  <option key={`${loc.province}-${d.name}`} value={d.name}>
+                    {d.name} ({d.roomCount})
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
+          {facetsLoading && <p className="text-[11px] text-slate-400 mt-1">{t('roomFilterBar.facetsLoading')}</p>}
+          {facetsError && <p className="text-[11px] text-rose-500 mt-1">{t('roomFilterBar.facetsError')}</p>}
         </div>
 
         {/* Room Type */}
@@ -138,9 +161,14 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
             className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
           >
             <option value="ALL">{t('roomFilterBar.roomTypeAll')}</option>
-            <option value="APARTMENT">{t('roomFilterBar.roomTypeApartment')}</option>
-            <option value="MINI_APARTMENT">{t('roomFilterBar.roomTypeMiniApartment')}</option>
-            <option value="BOARDING_HOUSE">{t('roomFilterBar.roomTypeBoarding')}</option>
+            {draft.roomType !== 'ALL' && !knownRoomTypes.has(draft.roomType) && (
+              <option value={draft.roomType}>{formatRoomTypeLabel(draft.roomType, t)}</option>
+            )}
+            {facets?.roomTypes.map((rt) => (
+              <option key={rt.type} value={rt.type}>
+                {formatRoomTypeLabel(rt.type, t)} ({rt.roomCount})
+              </option>
+            ))}
           </select>
         </div>
 
@@ -153,13 +181,18 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
           <button
             type="button"
             onClick={handleMezzanineToggle}
-            className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all border flex items-center justify-between ${
+            // Backend báo không có phòng gác xép nào đang công khai thì không cho bật (ra 0 kết quả).
+            disabled={!!facets && facets.mezzanineCount === 0 && draft.hasMezzanine !== true}
+            className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all border flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed ${
               draft.hasMezzanine === true
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20'
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            <span>{t('roomFilterBar.mezzanineToggle')}</span>
+            <span>
+              {t('roomFilterBar.mezzanineToggle')}
+              {facets && facets.mezzanineCount > 0 ? ` (${facets.mezzanineCount})` : ''}
+            </span>
             {draft.hasMezzanine === true && <Check className="w-4 h-4" />}
           </button>
         </div>
@@ -168,7 +201,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
         <div>
           <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Đề Cử Admin</span>
+            <span>{t('roomFilterBar.recommendedLabel')}</span>
           </label>
           <button
             type="button"
@@ -179,7 +212,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            <span>⭐ Phòng Đề Cử</span>
+            <span>{t('roomFilterBar.recommendedToggle')}</span>
             {draft.isRecommended === true && <Check className="w-4 h-4" />}
           </button>
         </div>
@@ -192,7 +225,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
             type="button"
             onClick={() => {
               if (!navigator.geolocation) {
-                alert('Trình duyệt của bạn không hỗ trợ lấy vị trí GPS.');
+                toast.error(t('roomFilterBar.gpsUnsupported'));
                 return;
               }
               navigator.geolocation.getCurrentPosition(
@@ -206,7 +239,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
                 },
                 (err) => {
                   console.warn('Geolocation error:', err);
-                  alert('Không thể lấy vị trí của bạn. Vui lòng cho phép truy cập GPS trên trình duyệt.');
+                  toast.error(t('roomFilterBar.gpsDenied'));
                 },
                 { enableHighAccuracy: true, timeout: 10000 }
               );
@@ -220,8 +253,8 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
             <MapPin className="w-4 h-4 animate-bounce" />
             <span>
               {draft.userLat && draft.userLng
-                ? 'Đã chọn vị trí của tôi 📍'
-                : 'Dùng vị trí hiện tại của tôi'}
+                ? t('roomFilterBar.gpsSelected')
+                : t('roomFilterBar.gpsUseCurrent')}
             </span>
           </button>
 
@@ -238,7 +271,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
               }
               className="text-xs text-rose-600 hover:underline font-semibold"
             >
-              Xóa vị trí
+              {t('roomFilterBar.gpsClear')}
             </button>
           )}
         </div>
@@ -247,7 +280,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
         {draft.userLat && draft.userLng && (
           <div className="flex items-center gap-2 w-full md:w-auto">
             <span className="text-xs font-bold text-slate-700 whitespace-nowrap">
-              Bán kính:
+              {t('roomFilterBar.radiusLabel')}
             </span>
             <select
               value={draft.radiusInKm || 'ALL'}
@@ -260,12 +293,12 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
               }}
               className="bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
             >
-              <option value="ALL">Tất cả bán kính</option>
-              <option value="1">Dưới 1 km</option>
-              <option value="3">Dưới 3 km</option>
-              <option value="5">Dưới 5 km</option>
-              <option value="10">Dưới 10 km</option>
-              <option value="20">Dưới 20 km</option>
+              <option value="ALL">{t('roomFilterBar.radiusAll')}</option>
+              {[1, 3, 5, 10, 20].map((km) => (
+                <option key={km} value={km}>
+                  {t('roomFilterBar.radiusUnder', { km })}
+                </option>
+              ))}
             </select>
           </div>
         )}
@@ -308,7 +341,12 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
           <span>{t('roomFilterBar.amenitiesLabel')}</span>
         </label>
         <div className="flex flex-wrap gap-2">
-          {AMENITIES_LIST.map((amt) => {
+          {amenityOptions.length === 0 && (
+            <p className="text-xs text-slate-400">
+              {facetsLoading ? t('roomFilterBar.facetsLoading') : t('roomFilterBar.amenitiesEmpty')}
+            </p>
+          )}
+          {amenityOptions.map((amt) => {
             const active = draft.amenities.includes(amt);
             return (
               <button
@@ -363,7 +401,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
           }`}
         >
           <Zap className="w-4 h-4 text-slate-950 fill-amber-300" />
-          <span>⚡ Thuê Ngắn Hạn (Ngày/Giờ)</span>
+          <span>{t('roomFilterBar.shortTermTab')}</span>
         </button>
 
         <button
@@ -376,7 +414,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
           }`}
         >
           <Calendar className="w-4 h-4" />
-          <span>📅 Thuê Dài Hạn (Tháng/Năm)</span>
+          <span>{t('roomFilterBar.longTermTab')}</span>
         </button>
       </div>
 
@@ -407,7 +445,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
           className="relative w-full py-3 rounded-2xl bg-white border border-slate-200 text-slate-800 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
         >
           <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
-          <span>{t('roomFilterBar.moreFiltersButton', { defaultValue: 'Bộ lọc' })}</span>
+          <span>{t('roomFilterBar.moreFiltersButton')}</span>
           {activeFilterCount > 0 && (
             <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-indigo-600 text-white text-[11px] font-bold">
               {activeFilterCount}
@@ -421,7 +459,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-slate-200 shrink-0">
             <h2 className="text-base font-bold text-slate-900 font-heading">
-              {t('roomFilterBar.moreFiltersButton', { defaultValue: 'Bộ lọc' })}
+              {t('roomFilterBar.moreFiltersButton')}
             </h2>
             <button
               type="button"
@@ -457,7 +495,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
               className="flex-1 py-3 rounded-2xl gradient-bg text-white font-bold text-sm shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2"
             >
               <Search className="w-4 h-4" />
-              <span>{t('roomFilterBar.searchButton', { defaultValue: 'Tìm kiếm' })}</span>
+              <span>{t('roomFilterBar.searchButton')}</span>
             </button>
           </div>
         </div>,

@@ -70,7 +70,7 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
             {room.isRecommended && (
               <span className="badge-tag bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black backdrop-blur-md shadow-md">
                 <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
-                <span>⭐ Đề Cử</span>
+                <span>{t('roomCard.recommendedBadge')}</span>
               </span>
             )}
             <span className="badge-tag bg-emerald-500/90 text-white backdrop-blur-md shadow-sm">
@@ -109,7 +109,7 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
               </span>
               <span className="text-[11px] text-slate-300">
                 / {room.shortTermDurationValue && room.shortTermDurationValue > 1 ? `${room.shortTermDurationValue} ` : ''}
-                {room.shortTermPriceUnit === 'PER_HOUR' ? 'giờ' : 'ngày'}
+                {room.shortTermPriceUnit === 'PER_HOUR' ? t('roomCard.unitHour') : t('roomCard.unitDay')}
               </span>
             </>
           ) : (
@@ -119,7 +119,7 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
               </span>
               <span className="text-[11px] text-slate-300">
                 / {room.longTermDurationValue && room.longTermDurationValue > 1 ? `${room.longTermDurationValue} ` : ''}
-                {room.longTermPriceUnit === 'PER_YEAR' ? 'năm' : 'tháng'}
+                {room.longTermPriceUnit === 'PER_YEAR' ? t('roomCard.unitYear') : t('roomCard.unitMonth')}
               </span>
             </>
           )}

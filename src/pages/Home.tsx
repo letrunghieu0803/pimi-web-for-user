@@ -9,7 +9,7 @@ import { HotLocationsSlider } from '@/components/home/HotLocationsSlider';
 import { BannerSlider } from '@/components/home/BannerSlider';
 import { NewsArticlesSlider } from '@/components/home/NewsArticlesSlider';
 import { Search, ShieldCheck, Zap, PhoneCall, Sparkles, Building2, ChevronRight, HeartHandshake, MapPin, History, Calendar } from 'lucide-react';
-import { DISTRICTS } from '@/data/mockData';
+import { useSearchFacets } from '@/hooks/useSearchFacets';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
 import { Seo } from '@/components/common/Seo';
 import { JsonLd } from '@/components/common/JsonLd';
@@ -79,7 +79,10 @@ export const Home: React.FC = () => {
   // Đọc thẳng từ localStorage lúc mount — không qua API nào, xem src/utils/recentlyViewed.ts.
   const [recentlyViewed] = useState(() => recentlyViewedApi.getAll());
 
-  const [searchDistrict, setSearchDistrict] = useState('Tất cả quận/huyện');
+  // Rỗng = tất cả quận/huyện. Danh sách quận lấy từ search-facets (ô tìm nhanh dẫn tới /rooms mặc định
+  // ngắn hạn nên dùng facets ngắn hạn); lỗi/đang tải thì ô chọn chỉ có mục "Tất cả" — vẫn tìm được.
+  const [searchDistrict, setSearchDistrict] = useState('');
+  const { facets } = useSearchFacets('SHORT_TERM');
   const [searchPrice, setSearchPrice] = useState('ALL');
 
   useEffect(() => {
@@ -140,7 +143,7 @@ export const Home: React.FC = () => {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 transition-all hover:scale-105"
               >
                 <MapPin className="w-3.5 h-3.5" />
-                <span>📍 Tìm trọ quanh đây</span>
+                <span>📍 {t('home.nearbyButton')}</span>
               </Link>
             </div>
 
@@ -163,10 +166,15 @@ export const Home: React.FC = () => {
                   onChange={(e) => setSearchDistrict(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
                 >
-                  {DISTRICTS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
+                  <option value="">{t('roomFilterBar.districtAll')}</option>
+                  {facets?.locations.map((loc) => (
+                    <optgroup key={loc.province} label={loc.province}>
+                      {loc.districts.map((d) => (
+                        <option key={`${loc.province}-${d.name}`} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </div>
@@ -188,28 +196,17 @@ export const Home: React.FC = () => {
               </div>
 
               <Link
-                to={`/rooms?district=${encodeURIComponent(searchDistrict)}&priceRange=${searchPrice}`}
+                to={`/rooms?${[
+                  searchDistrict ? `district=${encodeURIComponent(searchDistrict)}` : '',
+                  `priceRange=${searchPrice}`,
+                ]
+                  .filter(Boolean)
+                  .join('&')}`}
                 className="w-full sm:w-auto gradient-bg text-white px-8 py-3.5 rounded-2xl text-sm font-bold shadow-lg shadow-indigo-500/25 hover:scale-105 transition-all flex items-center justify-center gap-2 shrink-0"
               >
                 <Search className="w-4 h-4" />
                 <span>{t('home.searchNow')}</span>
               </Link>
-            </div>
-
-            {/* Key Trust Stats */}
-            <div className="pt-6 grid grid-cols-3 gap-4 max-w-lg mx-auto border-t border-slate-200/60 text-center">
-              <div>
-                <span className="text-2xl font-black text-slate-900 font-heading">1.200+</span>
-                <span className="block text-xs text-slate-500 font-semibold">{t('home.statsRoomsAvailable')}</span>
-              </div>
-              <div>
-                <span className="text-2xl font-black text-indigo-600 font-heading">100%</span>
-                <span className="block text-xs text-slate-500 font-semibold">{t('home.statsVerifiedOwners')}</span>
-              </div>
-              <div>
-                <span className="text-2xl font-black text-emerald-600 font-heading">0đ</span>
-                <span className="block text-xs text-slate-500 font-semibold">{t('home.statsFreeViewing')}</span>
-              </div>
             </div>
 
           </div>

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useSocket } from '@/context/SocketContext';
+import { useToast } from '@/context/ToastContext';
 import { Home, Search, Menu, X, Building2, HelpCircle, Info, LogIn, UserPlus, User, CalendarCheck, LogOut, ChevronDown, Bell, CheckCheck, Languages, Newspaper, Heart, History } from 'lucide-react';
 import { notificationApi, NotificationItem, getNotificationLink } from '@/services/notificationApi';
 
@@ -26,6 +27,11 @@ const NotificationBell: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const socket = useSocket();
+  const toast = useToast();
+  // Giữ toast/t mới nhất trong ref để effect lắng nghe socket không phải đăng ký lại mỗi lần render
+  // (ToastContext tạo object mới ở mỗi lần render).
+  const notifyRef = useRef({ toast, t });
+  notifyRef.current = { toast, t };
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [recentNotifications, setRecentNotifications] = useState<NotificationItem[]>([]);
@@ -56,6 +62,8 @@ const NotificationBell: React.FC = () => {
     const handleNewNotification = (notification: NotificationItem) => {
       setUnreadCount(prev => prev + 1);
       setRecentNotifications(prev => [notification, ...prev].slice(0, 5));
+      // Báo nhẹ khi có thông báo mới lúc đang mở web (chuông ở navbar luôn mounted ở mọi trang).
+      notifyRef.current.toast.info(notifyRef.current.t('notifications.newToast', { title: notification.title }));
     };
 
     socket.on('notification:new', handleNewNotification);

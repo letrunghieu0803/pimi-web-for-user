@@ -1,36 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Mail, Phone, MapPin, Send, MessageSquare, Clock, CheckCircle } from 'lucide-react';
-import { useToast } from '@/context/ToastContext';
+import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { Seo } from '@/components/common/Seo';
 
+// Trang liên hệ chỉ hiện thông tin liên hệ tĩnh — trước đây có form gửi tin nhưng không có backend nào
+// nhận (chỉ giả lập thành công bằng setTimeout rồi xoá form), nên bỏ hẳn thay vì lừa người dùng là đã gửi.
 export const Contact: React.FC = () => {
   const { t } = useTranslation();
-  const toast = useToast();
-  const [loading, setLoading] = useState(false);
-
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [message, setMessage] = useState('');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!fullName || !phone || !message) {
-      toast.warning(t('contact.toastMissingFields'));
-      return;
-    }
-
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      toast.success(t('contact.toastSuccess'));
-      setFullName('');
-      setEmail('');
-      setPhone('');
-      setMessage('');
-    }, 500);
-  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
@@ -49,87 +25,8 @@ export const Contact: React.FC = () => {
         </p>
       </div>
 
-      {/* Main Grid: Form + Info Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        {/* Contact Form */}
-        <div className="lg:col-span-2 glass-panel p-8 rounded-3xl border border-slate-200/90 shadow-xl space-y-6">
-          <h2 className="text-xl font-bold text-slate-900 font-heading flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-indigo-600" />
-            <span>{t('contact.formTitle')}</span>
-          </h2>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  {t('contact.fullNameLabel')}
-                </label>
-                <input
-                  type="text"
-                  placeholder={t('contact.fullNamePlaceholder')}
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  {t('contact.phoneLabel')}
-                </label>
-                <input
-                  type="tel"
-                  placeholder="0987654321"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                {t('contact.emailLabel')}
-              </label>
-              <input
-                type="email"
-                placeholder="youremail@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                {t('contact.messageLabel')}
-              </label>
-              <textarea
-                rows={4}
-                placeholder={t('contact.messagePlaceholder')}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="gradient-bg text-white px-8 py-3.5 rounded-2xl text-sm font-bold shadow-lg shadow-indigo-500/25 hover:scale-105 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <Send className="w-4 h-4" />
-              <span>{loading ? t('contact.sending') : t('contact.submitButton')}</span>
-            </button>
-          </form>
-        </div>
-
-        {/* Contact Info Sidebar */}
-        <div className="space-y-6">
+      {/* Contact Info */}
+      <div className="max-w-2xl mx-auto">
           <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-xl space-y-6">
             <h3 className="text-lg font-bold font-heading">{t('contact.infoTitle')}</h3>
 
@@ -169,8 +66,6 @@ export const Contact: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
-
       </div>
 
     </div>
