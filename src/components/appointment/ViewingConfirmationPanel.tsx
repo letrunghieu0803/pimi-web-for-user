@@ -3,21 +3,15 @@ import { useTranslation } from 'react-i18next';
 import DOMPurify from 'dompurify';
 import { CheckCircle2, Clock, MapPin, CalendarClock, User, Wallet, BookOpen, X } from 'lucide-react';
 import { Appointment } from '@/services/appointmentApi';
+import { formatVnd } from '@/utils/money';
 
 interface ViewingConfirmationPanelProps {
   appointment: Appointment;
   onClose: () => void;
 }
 
-// BE trả rentRoom.price là Prisma Decimal — serialize JSON thành STRING (vd "5600000"), không
-// phải number dù type khai báo là `number` — ép Number() trước khi toLocaleString(), nếu không
-// String.prototype.toLocaleString() chỉ trả nguyên chuỗi, mất dấu phân cách hàng nghìn.
-const formatPrice = (price?: number | string) => {
-  if (price === undefined || price === null) return null;
-  const numeric = Number(price);
-  if (Number.isNaN(numeric)) return null;
-  return `${numeric.toLocaleString('vi-VN')}đ`;
-};
+// BE trả rentRoom.price là Prisma Decimal — serialize JSON thành STRING (vd "5600000"); formatVnd tự ép số.
+const formatPrice = (price?: number | string) => (price === undefined || price === null ? null : formatVnd(price));
 
 // viewingStartTime/viewingEndTime là DateTime "neo UTC" (giờ hiển thị được BE cộng thẳng vào UTC
 // midnight, không mang ý nghĩa múi giờ thật — xem AppointmentsService.create() và

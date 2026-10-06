@@ -17,6 +17,7 @@ import { Seo } from '@/components/common/Seo';
 import { JsonLd } from '@/components/common/JsonLd';
 import { absoluteUrl } from '@/config/seo';
 import { DISTRICTS } from '@/data/mockData';
+import { formatVnd } from '@/utils/money';
 
 const PAGE_SIZE = 10;
 
@@ -152,10 +153,7 @@ const RoomsMapView: React.FC<RoomsMapViewProps> = ({ rooms, userLat, userLng }) 
     rooms.forEach((room) => {
       if (!room.latitude || !room.longitude) return;
 
-      const priceLabel =
-        room.price >= 1000000
-          ? `${(room.price / 1000000).toFixed(1)} tr`
-          : `${room.price.toLocaleString()}đ`;
+      const priceLabel = formatVnd(room.price);
 
       const roomIcon = L.divIcon({
         className: 'custom-room-marker',

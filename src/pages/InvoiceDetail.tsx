@@ -5,8 +5,9 @@ import { CheckCircle2, AlertTriangle, Loader2, Receipt } from 'lucide-react';
 import { invoiceApi, Invoice } from '@/services/invoiceApi';
 import { getApiErrorMessage } from '@/utils/apiError';
 import { Seo } from '@/components/common/Seo';
+import { formatMoney as fmtMoney } from '@/utils/money';
 
-const formatMoney = (n: string | number) => `${Number(n).toLocaleString('vi-VN')} đ`;
+const formatMoney = (n: string | number) => `${fmtMoney(n)} đ`;
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 

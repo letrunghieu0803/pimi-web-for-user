@@ -6,6 +6,7 @@ import { MapPin, Maximize2, Users, ShieldCheck, Layers, Navigation, Sparkles, He
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useToast } from '@/context/ToastContext';
+import { formatVnd } from '@/utils/money';
 
 interface RoomCardProps {
   room: Room;
@@ -41,12 +42,8 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room }) => {
       toast.error(t('roomCard.favoriteError'));
     }
   };
-  const formatPrice = (price: number) => {
-    if (price >= 1000000) {
-      return `${(price / 1000000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${t('roomCard.million')}`;
-    }
-    return `${price.toLocaleString('vi-VN')}đ`;
-  };
+  // Luôn hiển thị đủ dạng 3.500.000đ — không rút gọn "3,5 triệu".
+  const formatPrice = (price: number) => formatVnd(price);
 
   const detailLink = room.roomGroupId ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`;
 

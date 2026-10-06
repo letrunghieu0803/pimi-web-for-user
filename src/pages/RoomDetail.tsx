@@ -25,6 +25,8 @@ import { getApiErrorMessage } from '@/utils/apiError';
 import { Seo } from '@/components/common/Seo';
 import { JsonLd } from '@/components/common/JsonLd';
 import { absoluteUrl } from '@/config/seo';
+import { formatVnd } from '@/utils/money';
+import { formatMoney } from '@/utils/money';
 
 export const RoomDetail: React.FC = () => {
   const { t } = useTranslation();
@@ -212,9 +214,7 @@ export const RoomDetail: React.FC = () => {
     );
   }
 
-  const formatPrice = (price: number) => {
-    return `${(price / 1000000).toLocaleString('vi-VN')} ${t('roomCard.million')}`;
-  };
+  const formatPrice = (price: number) => formatVnd(price);
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -407,7 +407,7 @@ export const RoomDetail: React.FC = () => {
                   </span>
                 )}
               </span>
-              <span className="font-black text-slate-900">{quote.amount.toLocaleString('vi-VN')}đ</span>
+              <span className="font-black text-slate-900">{formatVnd(quote.amount)}</span>
             </div>
           ) : null}
         </div>
@@ -722,7 +722,7 @@ export const RoomDetail: React.FC = () => {
                     <div>
                       <p className="text-sm font-bold text-slate-800">{svc.name}</p>
                       <p className="text-xs text-emerald-600 font-semibold">
-                        {svc.price !== undefined ? `${svc.price.toLocaleString('vi-VN')} ${t('roomDetail.currency')}` : t('roomDetail.contactOwner')}
+                        {svc.price !== undefined ? `${formatMoney(svc.price)} ${t('roomDetail.currency')}` : t('roomDetail.contactOwner')}
                       </p>
                       {svc.note && <p className="text-[11px] text-slate-400 mt-0.5">{svc.note}</p>}
                     </div>

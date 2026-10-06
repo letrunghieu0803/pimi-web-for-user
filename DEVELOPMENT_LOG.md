@@ -4,6 +4,18 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-06 — Số tiền luôn hiển thị đủ dạng 3.500.000đ
+
+**Vì sao:** Giá phòng đang rút gọn "3,5 triệu" / "3.5 tr" (thẻ phòng, chi tiết phòng, lịch sử, bản đồ),
+yêu cầu thống nhất mọi số tiền dạng chấm ngăn cách hàng nghìn.
+
+**Thay đổi:** thêm `utils/money.ts` (`formatMoney`/`formatVnd`); `RoomCard`, `RoomDetail`,
+`BookingHistory`, `ViewingConfirmationPanel`, nhãn giá trên bản đồ `RoomList`, `BookingPayment`,
+`InvoiceDetail` đều dùng chung; nhãn khoảng giá bộ lọc ("Dưới 3 triệu"...) đổi sang số đầy đủ (vi/en);
+dữ liệu mẫu địa điểm hot.  Khoá i18n `roomCard.million` không còn được dùng ở code (chưa xoá khỏi file dịch).
+
+**Đã kiểm tra:** `npx tsc --noEmit` sạch.
+
 ## 2026-10-04 — Đổi favicon sang logo chim cánh cụt
 
 **Vì sao:** Thay favicon cũ bằng logo mới (chim cánh cụt) cho 3 trang production (pimi.vn,

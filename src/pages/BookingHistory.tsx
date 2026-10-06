@@ -23,6 +23,7 @@ import { bookingApi, Booking } from '@/services/bookingApi';
 import { collaboratorApi, HouseCollaborator } from '@/services/collaboratorApi';
 import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
 import { ReportRoomButton } from '@/components/room/ReportRoomButton';
+import { formatVnd } from '@/utils/money';
 
 // Lịch sử thuê hợp nhất từ 2 nguồn dữ liệu thật, khác hẳn nhau về bản chất — không còn khái
 // niệm "xác nhận trực tiếp với chủ nhà" (mock cũ tự bịa, hệ thống thật không có luồng này):
@@ -126,9 +127,7 @@ export const BookingHistory: React.FC = () => {
     return true;
   });
 
-  const formatPrice = (price: number) => {
-    return `${(price / 1000000).toLocaleString('vi-VN')} ${t('roomCard.million')}`;
-  };
+  const formatPrice = (price: number) => formatVnd(price);
 
   const openContactModal = async (houseId: string) => {
     setContactHouseId(houseId);
