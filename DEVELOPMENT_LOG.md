@@ -4,6 +4,16 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-06 — Khoảng giá theo loại hình tìm kiếm
+
+**Vì sao:** Backend giờ lọc/sắp xếp tìm ngắn hạn theo giá ngắn hạn (đồng/ngày-giờ); các nút khoảng giá cũ (<3tr…>8tr) là giá tháng nên không còn hợp.
+
+**Thay đổi:** `utils/priceRanges.ts` (mới): ngắn hạn `<300k / 300–500k / 500k–1tr / >1tr` (id `s0-300k`…), dài hạn giữ nguyên id cũ (`0-3m`…, URL cũ chạy tiếp).
+`RoomFilterBar` hiện bộ khoảng giá theo công tắc ngắn/dài hạn và reset về "tất cả" khi đổi loại hình; `Home` ô tìm nhanh (dẫn tới danh sách ngắn hạn) dùng khoảng giá ngắn hạn;
+`roomApi` quy đổi theo loại hình (id không thuộc loại hình đang tìm = không lọc). i18n `home.shortPrice*`.
+
+**Đã kiểm tra:** `tsc` sạch; chạy thật: `/rooms?priceRange=s300k-500k` gọi API với `minPrice=300000&maxPrice=500000&rentalTermType=SHORT_TERM`, bộ lọc hiện nhãn ngắn hạn.
+
 ## 2026-10-06 — Thông báo khi thanh toán thành công + thẻ phòng đúng giá theo loại hình
 
 **Vì sao:** Khi webhook xác nhận, trang thanh toán chỉ lặng lẽ đổi giao diện — khách đang nhìn app ngân hàng/tab

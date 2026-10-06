@@ -1,3 +1,4 @@
+import { priceBucketToMinMax } from '@/utils/priceRanges';
 import { Room, ViewingRequest } from '@/types';
 import { axiosClient } from './axiosClient';
 
@@ -135,20 +136,6 @@ interface PublicFeedResult {
   hadError?: boolean;
 }
 
-const priceRangeToMinMax = (priceRange?: string): { minPrice?: number; maxPrice?: number } => {
-  switch (priceRange) {
-    case '0-3m':
-      return { maxPrice: 3000000 };
-    case '3m-5m':
-      return { minPrice: 3000000, maxPrice: 5000000 };
-    case '5m-8m':
-      return { minPrice: 5000000, maxPrice: 8000000 };
-    case '8m+':
-      return { minPrice: 8000000 };
-    default:
-      return {};
-  }
-};
 
 // In-flight deduplication promise maps
 const inFlightFeedPromises = new Map<string, Promise<PublicFeedResult>>();
@@ -292,7 +279,7 @@ export const roomApi = {
     pageSize?: number;
     sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'distance';
   }): Promise<PublicFeedResult> => {
-    const { minPrice, maxPrice } = priceRangeToMinMax(params?.priceRange);
+    const { minPrice, maxPrice } = priceBucketToMinMax(params?.priceRange, params?.rentalTermType || 'SHORT_TERM');
     return fetchPublicFeed({
       district: params?.district,
       search: params?.keyword,

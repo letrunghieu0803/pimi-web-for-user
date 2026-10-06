@@ -36,7 +36,11 @@
     "shortTermTitle": "Nhà Ở Ngắn Hạn",
     "longTermTag": "Thuê Theo Tháng/Năm",
     "longTermTitle": "Nhà Ở Dài Hạn",
-    "viewMore": "Xem thêm"
+    "viewMore": "Xem thêm",
+    "shortPriceUnder300": "Dưới 300.000đ",
+    "shortPrice300to500": "300.000 - 500.000đ",
+    "shortPrice500to1m": "500.000 - 1.000.000đ",
+    "shortPriceOver1m": "Trên 1.000.000đ"
   },
   "login": {
     "title": "Đăng Nhập Tài Khoản",
