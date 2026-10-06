@@ -316,7 +316,8 @@
     "referenceLabel": "Nội dung chuyển khoản",
     "paidText": "Hoá đơn này đã được thanh toán.",
     "overdueText": "Hoá đơn đã quá hạn thanh toán, vui lòng liên hệ chủ nhà.",
-    "contactOwnerLabel": "Liên hệ chủ nhà"
+    "contactOwnerLabel": "Liên hệ chủ nhà",
+    "paidToast": "Thanh toán thành công! Đã nhận {{amount}} đ cho hoá đơn này."
   },
   "appointmentRedirect": {
     "redirecting": "Đang chuyển tới trang lịch hẹn...",
@@ -343,7 +344,8 @@
     "expiredTitle": "Đơn đặt phòng đã hết hạn",
     "expiredText": "Mã QR đã hết hạn do chưa nhận được thanh toán. Vui lòng quay lại và đặt phòng lại nếu vẫn muốn thuê.",
     "backToRoomButton": "Quay lại trang phòng",
-    "stayPeriodLabel": "Thời gian ở"
+    "stayPeriodLabel": "Thời gian ở",
+    "paidToast": "Thanh toán thành công! Đã nhận {{amount}} đ cho phòng {{room}}."
   },
   "booking": {
     "calendarTitle": "Chọn ngày nhận/trả phòng",

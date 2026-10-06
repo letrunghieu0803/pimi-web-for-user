@@ -316,7 +316,8 @@
     "referenceLabel": "Transfer note",
     "paidText": "This invoice has been paid.",
     "overdueText": "This invoice is overdue, please contact the house owner.",
-    "contactOwnerLabel": "Contact owner"
+    "contactOwnerLabel": "Contact owner",
+    "paidToast": "Payment successful! We received {{amount}} đ for this invoice."
   },
   "appointmentRedirect": {
     "redirecting": "Redirecting to the appointment page...",
@@ -343,7 +344,8 @@
     "expiredTitle": "Booking expired",
     "expiredText": "The QR code has expired without receiving payment. Go back and book again if you still want this room.",
     "backToRoomButton": "Back to room",
-    "stayPeriodLabel": "Stay period"
+    "stayPeriodLabel": "Stay period",
+    "paidToast": "Payment successful! We received {{amount}} đ for room {{room}}."
   },
   "booking": {
     "calendarTitle": "Select check-in/check-out dates",

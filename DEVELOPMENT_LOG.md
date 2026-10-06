@@ -4,6 +4,21 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-06 — Thông báo khi thanh toán thành công + thẻ phòng đúng giá theo loại hình
+
+**Vì sao:** Khi webhook xác nhận, trang thanh toán chỉ lặng lẽ đổi giao diện — khách đang nhìn app ngân hàng/tab
+khác dễ bỏ lỡ. Thẻ phòng trong mục dài hạn có thể hiện giá ngắn hạn của phòng toà "cả hai".
+
+**Thay đổi:** `BookingPayment.tsx` và `InvoiceDetail.tsx` hiện toast "Thanh toán thành công! Đã nhận X đ…" đúng lúc
+trạng thái chuyển từ chờ thanh toán sang đã thanh toán (không báo khi mở lại đơn đã thanh toán từ trước); chuông
+thông báo vẫn nhận thông báo từ backend qua socket như cũ. `RoomCard` thêm prop `priceTerm` — mục ngắn hạn hiện giá
+ngắn hạn, mục dài hạn hiện giá dài hạn (`RoomList`, `Home` truyền vào; yêu thích/đã xem giữ cách cũ). Danh sách ngắn
+hạn chỉ còn phòng có giá ngắn hạn do backend lọc (xem log bff cùng ngày).
+
+**Đã kiểm tra:** `tsc` sạch; chạy thật trang hoá đơn công khai với backend cục bộ: đổi hoá đơn sang PAID trong DB →
+toast "Payment successful! We received 2.500.000 đ for this invoice." xuất hiện, trang chuyển sang "đã thanh toán".
+Chưa thử luồng `BookingPayment` trên giao diện (cần đăng nhập người thuê; cùng cơ chế toast) và `RoomCard`/`priceTerm`.
+
 ## 2026-10-06 — Trang hoá đơn công khai tự cập nhật khi khách đã thanh toán
 
 **Vì sao:** Trang `/invoice/:token` chỉ tải 1 lần nên khách quét QR trả tiền xong vẫn thấy mã QR cho tới khi tải lại
