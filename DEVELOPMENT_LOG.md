@@ -4,6 +4,19 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-06 — Trang hoá đơn công khai tự cập nhật khi khách đã thanh toán
+
+**Vì sao:** Trang `/invoice/:token` chỉ tải 1 lần nên khách quét QR trả tiền xong vẫn thấy mã QR cho tới khi tải lại
+(trang đặt phòng và các màn app/owner đã có poll, riêng trang này thiếu).
+
+**Thay đổi:** `pages/InvoiceDetail.tsx` — hoá đơn `PENDING_PAYMENT`/`OVERDUE` tự hỏi lại server mỗi 5 giây (bỏ
+qua khi tab ẩn, lỗi mạng thoáng qua giữ nguyên dữ liệu đang hiển thị) và làm mới ngay khi tab hiện lại (khách
+quay từ app ngân hàng về).
+
+**Đã kiểm tra:** `tsc` sạch; chạy thật với backend cục bộ: mở trang hoá đơn chờ thanh toán, đổi hoá đơn sang PAID
+trong DB, trang tự chuyển "hoá đơn đã được thanh toán" sau ~4 giây không cần tải lại. (Pane trình duyệt ở trạng
+thái tab ẩn nên phải giả lập `document.hidden=false` khi thử.)
+
 ## 2026-10-06 — Số tiền luôn hiển thị đủ dạng 3.500.000đ
 
 **Vì sao:** Giá phòng đang rút gọn "3,5 triệu" / "3.5 tr" (thẻ phòng, chi tiết phòng, lịch sử, bản đồ),
