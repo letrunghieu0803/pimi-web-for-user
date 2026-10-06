@@ -6,6 +6,7 @@ import { bookingApi, Booking } from '@/services/bookingApi';
 import { getApiErrorMessage } from '@/utils/apiError';
 import { Seo } from '@/components/common/Seo';
 import { formatMoney as fmtMoney } from '@/utils/money';
+import { useToast } from '@/context/ToastContext';
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -21,6 +22,7 @@ export const BookingPayment: React.FC = () => {
   const { t } = useTranslation();
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +59,18 @@ export const BookingPayment: React.FC = () => {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking?.status]);
+
+  // Báo ngay khi webhook xác nhận xong trong lúc khách đang đứng ở trang này (chuyển từ chờ thanh toán
+  // sang đã thanh toán) — không báo khi khách mở lại 1 đơn vốn đã thanh toán từ trước.
+  const prevStatusRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = booking?.status;
+    if (prev === 'PENDING_PAYMENT' && booking && ['PAID', 'CHECKED_IN', 'PAYOUT_COMPLETED'].includes(booking.status)) {
+      toast.success(t('bookingPayment.paidToast', { room: booking.roomName, amount: fmtMoney(booking.amount) }));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking?.status]);
 

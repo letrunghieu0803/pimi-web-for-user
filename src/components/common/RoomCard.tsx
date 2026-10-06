@@ -10,6 +10,10 @@ import { formatVnd } from '@/utils/money';
 
 interface RoomCardProps {
   room: Room;
+  // Loại hình đang tìm/xem — danh sách ngắn hạn hiện giá ngắn hạn, danh sách dài hạn hiện giá dài
+  // hạn (phòng toà nhà "cả hai" có đủ 2 giá, không được lấy giá ngắn hạn đặt vào mục dài hạn).
+  // Bỏ trống (yêu thích, đã xem...) thì giữ cách cũ: có giá ngắn hạn thì hiện giá ngắn hạn.
+  priceTerm?: 'SHORT_TERM' | 'LONG_TERM';
 }
 
 // React.memo: RoomCard được render lặp lại rất nhiều lần trong 1 danh sách (RoomList/Home/...) —
@@ -18,7 +22,7 @@ interface RoomCardProps {
 // mounted re-render khi có 1 phòng BẤT KỲ được toggle yêu thích (FavoritesContext broadcast theo
 // Context API, không phân biệt theo từng roomId) — đó là hạn chế kiến trúc sâu hơn, cần tách
 // context theo từng item mới giải quyết triệt để, ngoài phạm vi sửa nhanh này.
-const RoomCardComponent: React.FC<RoomCardProps> = ({ room }) => {
+const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const toast = useToast();
@@ -98,7 +102,7 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room }) => {
 
         {/* Price Tag Overlay */}
         <div className="absolute bottom-3 left-3 bg-slate-900/85 backdrop-blur-md text-white px-3.5 py-1.5 rounded-2xl shadow-lg flex items-baseline gap-1">
-          {room.shortTermPrice ? (
+          {room.shortTermPrice && priceTerm !== 'LONG_TERM' ? (
             <>
               <span className="text-lg font-black text-emerald-400 font-heading">
                 {formatPrice(room.shortTermPrice)}
