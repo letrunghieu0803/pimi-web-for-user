@@ -1,3 +1,4 @@
+import { PRICE_BUCKETS } from '@/utils/priceRanges';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -177,9 +178,12 @@ export const Home: React.FC = () => {
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
                 >
                   <option value="ALL">{t('home.priceAll')}</option>
-                  <option value="0-3m">{t('home.price0to3')}</option>
-                  <option value="3m-5m">{t('home.price3to5')}</option>
-                  <option value="5m-8m">{t('home.price5to8')}</option>
+                  {/* Ô tìm nhanh dẫn tới /rooms mặc định ngắn hạn nên dùng khoảng giá ngắn hạn. */}
+                  {PRICE_BUCKETS.SHORT_TERM.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {t(b.labelKey)}
+                    </option>
+                  ))}
                 </select>
               </div>
 

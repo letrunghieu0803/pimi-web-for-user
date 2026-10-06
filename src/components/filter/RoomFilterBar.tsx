@@ -1,3 +1,4 @@
+import { PRICE_BUCKETS } from '@/utils/priceRanges';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -279,10 +280,10 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
         <div className="flex flex-wrap gap-2">
           {[
             { id: 'ALL', label: t('roomFilterBar.priceAll') },
-            { id: '0-3m', label: t('home.price0to3') },
-            { id: '3m-5m', label: t('home.price3to5') },
-            { id: '5m-8m', label: t('home.price5to8') },
-            { id: '8m+', label: t('roomFilterBar.priceOver8') },
+            ...PRICE_BUCKETS[draft.rentalTermType === 'LONG_TERM' ? 'LONG_TERM' : 'SHORT_TERM'].map((b) => ({
+              id: b.id,
+              label: t(b.labelKey),
+            })),
           ].map((item) => (
             <button
               key={item.id}
@@ -354,7 +355,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
       <div className="flex items-center justify-center p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/80">
         <button
           type="button"
-          onClick={() => setDraft((prev) => ({ ...prev, rentalTermType: 'SHORT_TERM' }))}
+          onClick={() => setDraft((prev) => ({ ...prev, rentalTermType: 'SHORT_TERM', priceRange: 'ALL' }))}
           className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
             draft.rentalTermType === 'SHORT_TERM'
               ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
@@ -367,7 +368,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
 
         <button
           type="button"
-          onClick={() => setDraft((prev) => ({ ...prev, rentalTermType: 'LONG_TERM' }))}
+          onClick={() => setDraft((prev) => ({ ...prev, rentalTermType: 'LONG_TERM', priceRange: 'ALL' }))}
           className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
             draft.rentalTermType === 'LONG_TERM'
               ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
