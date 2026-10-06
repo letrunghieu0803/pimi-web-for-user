@@ -145,5 +145,6 @@
   "000232": "Bạn không có quyền cấu hình lịch xem nhà của toà nhà này",
   "000233": "Khoảng thời gian xem lịch tối đa 62 ngày",
   "000234": "Lịch hẹn này không thể huỷ (đã huỷ/đã hoàn tất trước đó)",
-  "000235": "Bạn không có quyền huỷ lịch hẹn này"
+  "000235": "Bạn không có quyền huỷ lịch hẹn này",
+  "000236": "Chỉ có thể đặt lịch xem nhà cách hiện tại ít nhất 30 phút và trong vòng 7 ngày tới"
 }

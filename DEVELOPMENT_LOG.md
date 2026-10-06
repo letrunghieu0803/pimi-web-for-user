@@ -4,6 +4,53 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-06 — Số tiền luôn hiển thị đủ dạng 3.500.000đ
+
+**Vì sao:** Giá phòng đang rút gọn "3,5 triệu" / "3.5 tr" (thẻ phòng, chi tiết phòng, lịch sử, bản đồ),
+yêu cầu thống nhất mọi số tiền dạng chấm ngăn cách hàng nghìn.
+
+**Thay đổi:** thêm `utils/money.ts` (`formatMoney`/`formatVnd`); `RoomCard`, `RoomDetail`,
+`BookingHistory`, `ViewingConfirmationPanel`, nhãn giá trên bản đồ `RoomList`, `BookingPayment`,
+`InvoiceDetail` đều dùng chung; nhãn khoảng giá bộ lọc ("Dưới 3 triệu"...) đổi sang số đầy đủ (vi/en);
+dữ liệu mẫu địa điểm hot.  Khoá i18n `roomCard.million` không còn được dùng ở code (chưa xoá khỏi file dịch).
+
+**Đã kiểm tra:** `npx tsc --noEmit` sạch.
+
+## 2026-10-04 — Đổi favicon sang logo chim cánh cụt
+
+**Vì sao:** Thay favicon cũ bằng logo mới (chim cánh cụt) cho 3 trang production (pimi.vn,
+bizpimi.vn, piminest.com).
+
+**Thay đổi:**
+- Thêm `favicon.png` (512), `favicon-32.png`, `apple-touch-icon.png` (180) từ ảnh gốc, sửa thẻ
+  `<link rel="icon">` trong `index.html`, xoá `favicon.svg` cũ.
+- `firebase-messaging-sw.js` (icon thông báo đẩy) + logo trong JSON-LD (`Home.tsx`,
+  `NewsDetail.tsx`) đổi `/favicon.svg` → `/favicon.png`.
+- Bản đang chạy trên S3 được vá trực tiếp (index.html + service worker + file icon, invalidate
+  CloudFront) thay vì build lại, nên JSON-LD trong bundle vẫn trỏ `/favicon.svg` (file cũ còn trên
+  S3) cho tới lần deploy build mới.
+
+**Đã kiểm tra:** `npx tsc --noEmit` không đụng tới (chỉ sửa chuỗi). Live: pimi.vn trả đúng thẻ icon mới, 3 file PNG HTTP 200.
+
+## 2026-10-02 — Giới hạn cửa sổ đặt lịch xem phòng: cách hiện tại 30 phút - 7 ngày
+
+**Vì sao:** Backend (xem `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) thêm giới hạn: slot chỉ đặt
+được nếu cách hiện tại ít nhất 30 phút và trong vòng 7 ngày tới. `ViewingSlotPicker.tsx` (lịch chọn
+slot) đọc `isOpen` thẳng từ API public grid — field này giờ backend đã tự lọc đúng theo giới hạn
+mới, nên **không cần sửa logic component nào cả**, slot/ngày ngoài cửa sổ tự động hiện khoá/gạch
+ngang như khi chủ nhà khoá riêng.
+
+**Thay đổi:**
+- `services/appointmentAvailabilityApi.ts`: chỉ cập nhật comment giải thích `isOpen: false` giờ có
+  2 nguyên nhân (chủ nhà khoá riêng HOẶC ngoài cửa sổ đặt lịch), không đổi code.
+- `i18n/locales/{vi,en}/errors.json`: thêm bản dịch lỗi `000236` — phòng trường hợp slot hết hạn
+  ngay lúc khách đang điền form (lưới đã tải trước đó, "now" trôi qua trong lúc thao tác), submit
+  sẽ bị BE từ chối với thông báo rõ ràng thay vì lỗi chung chung.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Không cần live-test riêng UI — logic
+lọc nằm hoàn toàn ở BE (đã verify qua API thật, xem log BE), FE chỉ đọc lại đúng field `isOpen` sẵn
+có, hành vi UI (khoá/gạch ngang slot và ngày) đã được component xử lý từ trước.
+
 ## 2026-09-30 — Trang xem chi tiết lịch hẹn công khai cho người xem hộ (link trong tin ZNS)
 
 **Vì sao:** Backend (xem `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) thêm tin ZNS xác nhận đặt

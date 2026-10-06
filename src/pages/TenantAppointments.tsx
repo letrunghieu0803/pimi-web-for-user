@@ -24,10 +24,12 @@ import { Seo } from '@/components/common/Seo';
 import { AttendanceSurveyModal } from '@/components/appointment/AttendanceSurveyModal';
 
 const PAGE_SIZE = 10;
-// 'CONFIRMED' — lịch hẹn tự đặt trực tiếp (luồng mới, xác nhận ngay lúc tạo). Các trạng thái còn
-// lại là của luồng cũ (yêu cầu → chủ nhà đề xuất giờ → khách chọn) — vẫn giữ hiển thị vì lịch hẹn
-// cũ tạo trước khi đổi luồng có thể vẫn còn tồn tại ở các trạng thái này.
-const STATUS_KEYS = ['ALL', 'CONFIRMED', 'OWNER_OFFERED_TIMES', 'PENDING_OWNER', 'USER_ACCEPTED', 'COMPLETED'];
+// 'CONFIRMED'/'PENDING_APPROVAL' — lịch hẹn tự đặt trực tiếp (luồng mới). PENDING_APPROVAL chỉ
+// phát sinh khi đặt vào khung giờ MẶC ĐỊNH (toà nhà chưa cấu hình giờ mở cửa), cần chủ nhà duyệt
+// trước khi thành CONFIRMED. Các trạng thái còn lại là của luồng cũ (yêu cầu → chủ nhà đề xuất giờ
+// → khách chọn) — vẫn giữ hiển thị vì lịch hẹn cũ tạo trước khi đổi luồng có thể vẫn còn tồn tại
+// ở các trạng thái này.
+const STATUS_KEYS = ['ALL', 'CONFIRMED', 'PENDING_APPROVAL', 'OWNER_OFFERED_TIMES', 'PENDING_OWNER', 'USER_ACCEPTED', 'COMPLETED'];
 
 export const TenantAppointments: React.FC = () => {
   const { t } = useTranslation();
@@ -134,6 +136,7 @@ export const TenantAppointments: React.FC = () => {
   const filterTabs = [
     { key: 'ALL', label: t('tenantAppointments.filterAll'), count: statusCounts.ALL ?? 0 },
     { key: 'CONFIRMED', label: t('tenantAppointments.filterConfirmed'), count: statusCounts.CONFIRMED ?? 0 },
+    { key: 'PENDING_APPROVAL', label: t('tenantAppointments.filterPendingApproval'), count: statusCounts.PENDING_APPROVAL ?? 0 },
     { key: 'OWNER_OFFERED_TIMES', label: t('tenantAppointments.filterOffered'), count: statusCounts.OWNER_OFFERED_TIMES ?? 0 },
     { key: 'PENDING_OWNER', label: t('tenantAppointments.filterPending'), count: statusCounts.PENDING_OWNER ?? 0 },
     { key: 'USER_ACCEPTED', label: t('tenantAppointments.filterAccepted'), count: statusCounts.USER_ACCEPTED ?? 0 },
@@ -218,6 +221,12 @@ export const TenantAppointments: React.FC = () => {
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1.5 w-fit">
             <Clock className="w-3.5 h-3.5" /> {t('tenantAppointments.badgePending')}
+          </span>
+        );
+      case 'PENDING_APPROVAL':
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1.5 w-fit">
+            <Clock className="w-3.5 h-3.5" /> {t('tenantAppointments.badgePendingApproval')}
           </span>
         );
       case 'OWNER_OFFERED_TIMES':
@@ -338,14 +347,23 @@ export const TenantAppointments: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Lịch hẹn CONFIRMED (luồng mới — khách tự chọn slot trên lịch trống, xác nhận
-                      ngay lúc tạo) — hiện ngày giờ đã đặt + thông tin người xem/người dự kiến ở đã
-                      thu thập lúc đặt. guideContent (nếu có) đã render ở block dùng chung phía trên
-                      (không gắn theo status). */}
-                  {app.status === 'CONFIRMED' && app.viewingStartTime && (
-                    <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-xs text-emerald-900 space-y-1.5">
+                  {/* Lịch hẹn CONFIRMED/PENDING_APPROVAL (luồng mới — khách tự chọn slot trên lịch
+                      trống) — hiện ngày giờ đã đặt + thông tin người xem/người dự kiến ở đã thu
+                      thập lúc đặt. guideContent (nếu có) đã render ở block dùng chung phía trên
+                      (không gắn theo status). PENDING_APPROVAL dùng tông amber (đang chờ) thay vì
+                      emerald (đã xong) + có thêm dòng nhắc đang chờ chủ nhà duyệt. */}
+                  {(app.status === 'CONFIRMED' || app.status === 'PENDING_APPROVAL') && app.viewingStartTime && (
+                    <div
+                      className={`border p-3 rounded-xl text-xs space-y-1.5 ${
+                        app.status === 'PENDING_APPROVAL'
+                          ? 'bg-amber-50 border-amber-200 text-amber-900'
+                          : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                      }`}
+                    >
                       <div>
-                        <span className="font-bold block mb-1">{t('tenantAppointments.confirmedSlotLabel')}</span>
+                        <span className="font-bold block mb-1">
+                          {t(app.status === 'PENDING_APPROVAL' ? 'tenantAppointments.requestedSlotLabel' : 'tenantAppointments.confirmedSlotLabel')}
+                        </span>
                         <p className="text-sm font-semibold">
                           {/* viewingStartTime/viewingEndTime "neo UTC" — ép timeZone: 'UTC' khi
                               format, xem cùng comment ở ViewingConfirmationPanel.tsx */}
@@ -354,8 +372,11 @@ export const TenantAppointments: React.FC = () => {
                             ` - ${new Date(app.viewingEndTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}`}
                         </p>
                       </div>
+                      {app.status === 'PENDING_APPROVAL' && (
+                        <p className="text-[11px] font-semibold">{t('tenantAppointments.pendingApprovalNotice')}</p>
+                      )}
                       {(app.expectedOccupantName || app.contactPhone || app.contactEmail || app.expectedOccupantsCount !== undefined) && (
-                        <div className="pt-1.5 border-t border-emerald-200/70 text-[11px] text-emerald-900 space-y-0.5">
+                        <div className={`pt-1.5 border-t text-[11px] space-y-0.5 ${app.status === 'PENDING_APPROVAL' ? 'border-amber-200/70' : 'border-emerald-200/70'}`}>
                           {app.expectedOccupantName && (
                             <p>
                               {t('tenantAppointments.occupantNameLabel')}: <span className="font-semibold">{app.expectedOccupantName}</span>

@@ -100,7 +100,7 @@ export const Home: React.FC = () => {
           '@type': 'Organization',
           name: SITE_NAME,
           url: SITE_URL,
-          logo: `${SITE_URL}/favicon.svg`,
+          logo: `${SITE_URL}/favicon.png`,
           description: DEFAULT_SEO.description,
         }}
       />

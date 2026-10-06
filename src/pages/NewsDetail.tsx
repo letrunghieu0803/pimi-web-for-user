@@ -97,7 +97,7 @@ export const NewsDetail: React.FC = () => {
           image: article.image ? [article.image] : undefined,
           datePublished: article.createdAt,
           author: { '@type': 'Organization', name: 'Pimi' },
-          publisher: { '@type': 'Organization', name: 'Pimi', logo: { '@type': 'ImageObject', url: absoluteUrl('/favicon.svg') } },
+          publisher: { '@type': 'Organization', name: 'Pimi', logo: { '@type': 'ImageObject', url: absoluteUrl('/favicon.png') } },
           mainEntityOfPage: absoluteUrl(newsPath),
         }}
       />

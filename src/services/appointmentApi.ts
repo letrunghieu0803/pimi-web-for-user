@@ -17,9 +17,11 @@ export type AppointmentViewerType = 'SELF' | 'PROXY';
 export interface Appointment {
   id: string;
   // 'CONFIRMED' — MỚI, lịch hẹn khách tự đặt trực tiếp trên lịch trống, xác nhận ngay lúc tạo
-  // (không qua bước chủ nhà đề xuất giờ). Các giá trị còn lại là legacy — chỉ còn phát sinh từ
-  // lịch hẹn tạo trước khi đổi luồng.
-  status: 'PENDING_OWNER' | 'OWNER_REJECTED' | 'OWNER_OFFERED_TIMES' | 'USER_ACCEPTED' | 'USER_REJECTED' | 'EXPIRED_CANCELLED' | 'COMPLETED' | 'CONFIRMED';
+  // (không qua bước chủ nhà đề xuất giờ). 'PENDING_APPROVAL' — MỚI, khách đặt vào khung giờ MẶC
+  // ĐỊNH (toà nhà chưa cấu hình giờ mở cửa nào, xem AppointmentAvailabilityService), cần chủ nhà
+  // duyệt trước khi xác nhận (xem appointmentApi.approve bên dưới). Các giá trị còn lại là legacy
+  // — chỉ còn phát sinh từ lịch hẹn tạo trước khi đổi luồng.
+  status: 'PENDING_OWNER' | 'OWNER_REJECTED' | 'OWNER_OFFERED_TIMES' | 'USER_ACCEPTED' | 'USER_REJECTED' | 'EXPIRED_CANCELLED' | 'COMPLETED' | 'CONFIRMED' | 'PENDING_APPROVAL';
   note?: string;
   rejectReason?: string;
   tenantId: string;
