@@ -14,6 +14,17 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 **Đã kiểm tra:** `tsc` sạch; chạy thật: `/rooms?priceRange=s300k-500k` gọi API với `minPrice=300000&maxPrice=500000&rentalTermType=SHORT_TERM`, bộ lọc hiện nhãn ngắn hạn.
 
+## 2026-10-06 — Huỷ đặt phòng ngắn hạn + theo dõi hoàn tiền
+
+**Vì sao:** Đặt phòng ngắn hạn đã thanh toán chưa có cách huỷ/hoàn tiền (xem log bff cùng ngày).
+
+**Thay đổi:** `CancelBookingModal` — xem trước hậu quả: đơn CHƯA thanh toán huỷ ngay; đơn ĐÃ thanh toán hiện mức hoàn GỢI Ý theo chính sách (2 giờ đầu + còn ≥ 4 giờ: 100%; ≥ 3 ngày: 100%; ≥ 1 ngày: 50%; còn lại: không hoàn — mốc tô đậm), nhập tài khoản nhận hoàn, gửi yêu cầu cho Pimi
+(ghi rõ mức chính thức do Pimi xác nhận, phòng vẫn giữ cho tới khi duyệt). `RefundStatusNote` hiện trạng thái: chờ xem xét / đã duyệt (X% = Y) / đã hoàn (mã giao dịch) / bị từ chối. Trang thanh toán đặt phòng: nút huỷ cho đơn chờ thanh toán và đã thanh toán, khối "đã huỷ"; lịch sử thuê: đơn đã
+huỷ nhưng từng thanh toán vẫn hiện kèm trạng thái hoàn tiền, nút "Huỷ đặt phòng" cho đơn PAID chưa có yêu cầu. i18n `bookingCancel.*`.
+
+**Đã kiểm tra:** `tsc` sạch; chạy thật với backend cục bộ: đơn đặt 1 giờ trước, nhận phòng sau 5 ngày → gợi ý 100% (tô đậm dòng 2 giờ đầu) → gửi yêu cầu → thẻ đổi thành "đang chờ Pimi xem xét"; đơn đã duyệt 50% hiện "hoàn 50% = 500.000đ".
+Chưa thử trên UI: huỷ ngay đơn chưa thanh toán ở trang thanh toán.
+
 ## 2026-10-06 — Thông báo khi thanh toán thành công + thẻ phòng đúng giá theo loại hình
 
 **Vì sao:** Khi webhook xác nhận, trang thanh toán chỉ lặng lẽ đổi giao diện — khách đang nhìn app ngân hàng/tab

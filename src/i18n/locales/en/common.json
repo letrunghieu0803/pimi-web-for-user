@@ -537,7 +537,8 @@
     "bookingStatus": {
       "PAID": "Paid",
       "CHECKED_IN": "Checked in",
-      "PAYOUT_COMPLETED": "Completed"
+      "PAYOUT_COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
     },
     "monthlyRent": "Monthly rent",
     "totalPaid": "Amount paid",
@@ -747,5 +748,45 @@
     "priceLabel": "Room price",
     "guideLabel": "How to view / Notes",
     "closeButton": "Got it"
+  },
+  "bookingCancel": {
+    "title": "Cancel booking",
+    "loadError": "Could not load cancellation details.",
+    "cannotCancel": "This booking can no longer be cancelled (checked in, cancelled or expired).",
+    "immediateInfo": "This booking is unpaid, so it will be cancelled immediately with nothing to refund.",
+    "suggestionTitle": "Suggested refund by policy",
+    "suggestionValue": "Refund {{percent}}% = {{amount}}",
+    "suggestionNote": "This is only a SUGGESTION. Pimi will review and confirm the final refund.",
+    "policyTitle": "Refund policy",
+    "rule": {
+      "GRACE_PERIOD": "Cancel within 2 hours of booking and at least 4 hours before check-in: 100% refund",
+      "BEFORE_3_DAYS": "Cancel 3 or more days before check-in: 100% refund",
+      "BEFORE_1_DAY": "Cancel 1 or more days before check-in: 50% refund",
+      "NO_REFUND": "All other cases: no refund",
+      "NO_CHECK_IN_DATE": "Legacy booking without check-in time: reviewed individually"
+    },
+    "bankTitle": "Refund account",
+    "bankName": "Bank (e.g. Vietcombank)",
+    "accountNumber": "Account number",
+    "accountHolder": "Account holder name",
+    "reasonPlaceholder": "Reason (optional)",
+    "reviewNote": "The room stays reserved for you until Pimi reviews the request. You will be notified of the result.",
+    "keepBooking": "Keep booking",
+    "sendRequest": "Send cancellation request",
+    "confirmCancel": "Cancel booking",
+    "sending": "Sending...",
+    "requestSent": "Cancellation request sent to Pimi",
+    "cancelled": "Booking cancelled",
+    "cancelButton": "Cancel booking",
+    "cancelledTitle": "Booking cancelled",
+    "cancelledText": "This booking has been cancelled. If you already paid, see the refund status above.",
+    "reference": "Refund transaction reference",
+    "status": {
+      "REQUESTED": "Cancellation request sent — waiting for Pimi to review. Suggested refund: {{percent}}% ({{amount}}).",
+      "APPROVED": "Pimi approved the cancellation — refund {{percent}}% = {{amount}}, being transferred to your account.",
+      "COMPLETED": "Pimi has refunded {{amount}} to you.",
+      "COMPLETED_NO_REFUND": "Booking cancelled — no refund under the policy.",
+      "REJECTED": "The cancellation request was not accepted — your booking remains valid."
+    }
   }
 }

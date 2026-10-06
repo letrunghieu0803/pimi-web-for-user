@@ -7,6 +7,8 @@ import { getApiErrorMessage } from '@/utils/apiError';
 import { Seo } from '@/components/common/Seo';
 import { formatMoney as fmtMoney } from '@/utils/money';
 import { useToast } from '@/context/ToastContext';
+import { CancelBookingModal } from '@/components/booking/CancelBookingModal';
+import { RefundStatusNote } from '@/components/booking/RefundStatusNote';
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -27,6 +29,7 @@ export const BookingPayment: React.FC = () => {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showCancel, setShowCancel] = useState(false);
   const [remainingMs, setRemainingMs] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -113,6 +116,8 @@ export const BookingPayment: React.FC = () => {
 
   const isPending = booking.status === 'PENDING_PAYMENT';
   const isExpired = booking.status === 'EXPIRED';
+  const isCancelled = booking.status === 'CANCELLED';
+  const canRequestCancel = (isPending || booking.status === 'PAID') && !booking.refund;
   const isPaidOrLater = ['PAID', 'CHECKED_IN', 'PAYOUT_COMPLETED'].includes(booking.status);
 
   return (
@@ -180,6 +185,33 @@ export const BookingPayment: React.FC = () => {
           </div>
         )}
 
+        {booking.refund && <RefundStatusNote refund={booking.refund} />}
+
+        {isCancelled && (
+          <div className="text-center space-y-3 py-4">
+            <AlertTriangle className="w-12 h-12 text-slate-400 mx-auto" />
+            <h2 className="text-lg font-bold text-slate-900">{t('bookingCancel.cancelledTitle')}</h2>
+            <p className="text-sm text-slate-500">{t('bookingCancel.cancelledText')}</p>
+            <Link
+              to={`/rooms/${booking.rentRoomId}`}
+              className="inline-block mt-2 px-6 py-3 rounded-2xl gradient-bg text-white font-bold text-sm"
+            >
+              {t('bookingPayment.backToRoomButton')}
+            </Link>
+          </div>
+        )}
+
+        {canRequestCancel && (
+          <div className="text-center">
+            <button
+              onClick={() => setShowCancel(true)}
+              className="text-xs font-bold text-rose-600 hover:underline"
+            >
+              {t('bookingCancel.cancelButton')}
+            </button>
+          </div>
+        )}
+
         {isExpired && (
           <div className="text-center space-y-3 py-4">
             <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto" />
@@ -194,6 +226,14 @@ export const BookingPayment: React.FC = () => {
           </div>
         )}
       </div>
+      {showCancel && (
+        <CancelBookingModal
+          bookingId={booking.id}
+          roomName={booking.roomName}
+          onClose={() => setShowCancel(false)}
+          onDone={() => fetchBooking()}
+        />
+      )}
     </div>
   );
 };

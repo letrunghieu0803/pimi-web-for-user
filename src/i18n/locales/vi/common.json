@@ -537,7 +537,8 @@
     "bookingStatus": {
       "PAID": "Đã thanh toán",
       "CHECKED_IN": "Đã nhận phòng",
-      "PAYOUT_COMPLETED": "Đã hoàn tất"
+      "PAYOUT_COMPLETED": "Đã hoàn tất",
+      "CANCELLED": "Đã huỷ"
     },
     "monthlyRent": "Giá thuê hàng tháng",
     "totalPaid": "Số tiền đã thanh toán",
@@ -747,5 +748,45 @@
     "priceLabel": "Giá phòng",
     "guideLabel": "Cách thức xem phòng / Lưu ý",
     "closeButton": "Đã hiểu"
+  },
+  "bookingCancel": {
+    "title": "Huỷ đặt phòng",
+    "loadError": "Không tải được thông tin huỷ đơn.",
+    "cannotCancel": "Đơn này không thể huỷ ở trạng thái hiện tại (đã nhận phòng, đã huỷ hoặc đã hết hạn).",
+    "immediateInfo": "Đơn chưa thanh toán nên sẽ được huỷ ngay, không phát sinh khoản hoàn tiền nào.",
+    "suggestionTitle": "Mức hoàn gợi ý theo chính sách",
+    "suggestionValue": "Hoàn {{percent}}% = {{amount}}",
+    "suggestionNote": "Đây chỉ là mức GỢI Ý. Pimi sẽ xem xét và xác nhận mức hoàn chính thức cho bạn.",
+    "policyTitle": "Chính sách hoàn tiền",
+    "rule": {
+      "GRACE_PERIOD": "Huỷ trong 2 giờ sau khi đặt và còn ít nhất 4 giờ tới giờ nhận phòng: hoàn 100%",
+      "BEFORE_3_DAYS": "Huỷ trước giờ nhận phòng từ 3 ngày: hoàn 100%",
+      "BEFORE_1_DAY": "Huỷ trước giờ nhận phòng từ 1 ngày: hoàn 50%",
+      "NO_REFUND": "Các trường hợp còn lại: không hoàn tiền",
+      "NO_CHECK_IN_DATE": "Đơn cũ không có giờ nhận phòng: Pimi sẽ xem xét riêng"
+    },
+    "bankTitle": "Tài khoản nhận tiền hoàn",
+    "bankName": "Ngân hàng (vd Vietcombank)",
+    "accountNumber": "Số tài khoản",
+    "accountHolder": "Tên chủ tài khoản",
+    "reasonPlaceholder": "Lý do huỷ (không bắt buộc)",
+    "reviewNote": "Phòng vẫn được giữ cho bạn cho tới khi Pimi duyệt yêu cầu. Bạn sẽ nhận thông báo khi có kết quả.",
+    "keepBooking": "Giữ đơn",
+    "sendRequest": "Gửi yêu cầu huỷ",
+    "confirmCancel": "Huỷ đơn",
+    "sending": "Đang gửi...",
+    "requestSent": "Đã gửi yêu cầu huỷ cho Pimi",
+    "cancelled": "Đã huỷ đơn đặt phòng",
+    "cancelButton": "Huỷ đặt phòng",
+    "cancelledTitle": "Đơn đặt phòng đã huỷ",
+    "cancelledText": "Đơn này đã được huỷ. Nếu bạn đã thanh toán, xem trạng thái hoàn tiền ở trên.",
+    "reference": "Mã giao dịch hoàn tiền",
+    "status": {
+      "REQUESTED": "Đã gửi yêu cầu huỷ — đang chờ Pimi xem xét. Mức hoàn gợi ý: {{percent}}% ({{amount}}).",
+      "APPROVED": "Pimi đã duyệt huỷ — hoàn {{percent}}% = {{amount}}, đang chuyển về tài khoản của bạn.",
+      "COMPLETED": "Pimi đã hoàn {{amount}} cho bạn.",
+      "COMPLETED_NO_REFUND": "Đơn đã huỷ — theo chính sách không có khoản hoàn.",
+      "REJECTED": "Yêu cầu huỷ chưa được chấp nhận — đơn của bạn vẫn còn hiệu lực."
+    }
   }
 }

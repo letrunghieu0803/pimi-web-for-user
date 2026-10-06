@@ -2,7 +2,7 @@ import { axiosClient } from './axiosClient';
 
 export interface Booking {
   id: string;
-  status: 'PENDING_PAYMENT' | 'EXPIRED' | 'PAID' | 'CHECKED_IN' | 'PAYOUT_COMPLETED';
+  status: 'PENDING_PAYMENT' | 'EXPIRED' | 'PAID' | 'CHECKED_IN' | 'PAYOUT_COMPLETED' | 'CANCELLED';
   roomName: string;
   amount: string | number;
   commissionPercent: string | number;
@@ -19,11 +19,48 @@ export interface Booking {
   checkOutDate?: string | null;
   rentRoomId: string;
   rentHouseId: string;
+  refund?: BookingRefund | null;
   [key: string]: unknown;
 }
 
 // Khoảng ngày phòng đang bận — từ Booking ngắn hạn còn sống hoặc Contract dài hạn đang hiệu lực
 // (xem RentRoomsService.getRoomAvailability phía backend). Dùng để tô xám ngày trong lịch chọn.
+export type RefundStatus = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+
+// Yêu cầu huỷ + hoàn tiền của đơn đã thanh toán. Mức hoàn trong `suggested*` chỉ là GỢI Ý theo chính sách —
+// mức chính thức (`approved*`) do Pimi quyết định.
+export interface BookingRefund {
+  id?: string;
+  status: RefundStatus;
+  suggestedPolicy?: string;
+  suggestedPercent?: number;
+  suggestedAmount?: string | number;
+  approvedPercent?: number | null;
+  approvedAmount?: string | number | null;
+  adminNote?: string | null;
+  refundReference?: string | null;
+  refundBankName?: string;
+  refundAccountNumber?: string;
+}
+
+export interface CancelPreview {
+  bookingId: string;
+  status: Booking['status'];
+  amount: number;
+  checkInDate?: string | null;
+  // IMMEDIATE: chưa thanh toán → huỷ ngay. REQUEST: đã thanh toán → gửi yêu cầu cho Pimi. null: không huỷ được.
+  mode: 'IMMEDIATE' | 'REQUEST' | null;
+  suggestion: { policy: string; percent: number; amount: number } | null;
+  rules: Array<{ key: string; percent: number }>;
+}
+
+export interface CancelBookingPayload {
+  reason?: string;
+  refundBankName?: string;
+  refundAccountNumber?: string;
+  refundAccountHolder?: string;
+}
+
 export interface BusyRange {
   start: string;
   end: string;
@@ -53,6 +90,14 @@ export const bookingApi = {
 
   getOne: (id: string) => {
     return axiosClient.get(`/v1/bookings/${id}`);
+  },
+
+  getCancelPreview: (id: string) => {
+    return axiosClient.get(`/v1/bookings/${id}/cancel-preview`);
+  },
+
+  cancel: (id: string, payload: CancelBookingPayload) => {
+    return axiosClient.post(`/v1/bookings/${id}/cancel`, payload);
   },
 
   getTenantBookings: (params?: { status?: string; pageNumber?: number; pageSize?: number }) => {

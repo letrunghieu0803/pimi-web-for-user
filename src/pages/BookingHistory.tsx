@@ -24,6 +24,8 @@ import { collaboratorApi, HouseCollaborator } from '@/services/collaboratorApi';
 import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
 import { ReportRoomButton } from '@/components/room/ReportRoomButton';
 import { formatVnd } from '@/utils/money';
+import { CancelBookingModal } from '@/components/booking/CancelBookingModal';
+import { RefundStatusNote } from '@/components/booking/RefundStatusNote';
 
 // Lịch sử thuê hợp nhất từ 2 nguồn dữ liệu thật, khác hẳn nhau về bản chất — không còn khái
 // niệm "xác nhận trực tiếp với chủ nhà" (mock cũ tự bịa, hệ thống thật không có luồng này):
@@ -48,6 +50,10 @@ interface HistoryItem {
 
 const SUCCESSFUL_BOOKING_STATUSES = ['PAID', 'CHECKED_IN', 'PAYOUT_COMPLETED'];
 
+// Đơn đã huỷ vẫn hiện nếu từng thanh toán — để khách theo dõi việc hoàn tiền (đơn huỷ khi chưa trả không hiện).
+const shouldShowBooking = (b: Booking) =>
+  SUCCESSFUL_BOOKING_STATUSES.includes(b.status) || (b.status === 'CANCELLED' && !!b.paidAt);
+
 const toNumber = (v: unknown): number => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -64,6 +70,8 @@ export const BookingHistory: React.FC = () => {
   const [contactHouseId, setContactHouseId] = useState<string | null>(null);
   const [contactCollaborators, setContactCollaborators] = useState<HouseCollaborator[]>([]);
   const [loadingCollaborators, setLoadingCollaborators] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<{ id: string; roomName: string } | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -92,7 +100,7 @@ export const BookingHistory: React.FC = () => {
         }));
 
         const bookingItems: HistoryItem[] = bookings
-          .filter((b) => SUCCESSFUL_BOOKING_STATUSES.includes(b.status))
+          .filter(shouldShowBooking)
           .map((b) => ({
             id: `booking-${b.id}`,
             kind: 'BOOKING',
@@ -119,7 +127,7 @@ export const BookingHistory: React.FC = () => {
     };
 
     fetchHistory();
-  }, [t]);
+  }, [t, reloadKey]);
 
   const filtered = items.filter((item) => {
     if (filterType === 'CONTRACT') return item.kind === 'CONTRACT';
@@ -317,6 +325,8 @@ export const BookingHistory: React.FC = () => {
                     </div>
                   </div>
 
+                  {item.kind === 'BOOKING' && item.booking?.refund && <RefundStatusNote refund={item.booking.refund} />}
+
                   {/* Footer Actions */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
                     <div className="flex items-center gap-4">
@@ -336,6 +346,14 @@ export const BookingHistory: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {item.kind === 'BOOKING' && item.booking?.status === 'PAID' && !item.booking.refund && (
+                        <button
+                          onClick={() => setCancelTarget({ id: item.booking!.id, roomName: item.roomName })}
+                          className="px-3.5 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 font-bold text-xs transition-colors"
+                        >
+                          {t('bookingCancel.cancelButton')}
+                        </button>
+                      )}
                       <button
                         onClick={() => openContactModal(item.houseId)}
                         className="px-3.5 py-2 rounded-xl bg-[#0068ff]/10 text-[#0068ff] hover:bg-[#0068ff]/20 font-bold text-xs border border-[#0068ff]/20 transition-colors flex items-center gap-1.5"
@@ -444,6 +462,15 @@ export const BookingHistory: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {cancelTarget && (
+        <CancelBookingModal
+          bookingId={cancelTarget.id}
+          roomName={cancelTarget.roomName}
+          onClose={() => setCancelTarget(null)}
+          onDone={() => setReloadKey((k) => k + 1)}
+        />
       )}
 
       {/* Contact Collaborator Modal */}
