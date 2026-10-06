@@ -6,6 +6,12 @@ import { useToast } from '@/context/ToastContext';
 import { getApiErrorMessage } from '@/utils/apiError';
 import { Building2, Phone, Lock, LogIn, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { Seo } from '@/components/common/Seo';
+import { ReactivateAccountModal } from '@/components/auth/ReactivateAccountModal';
+
+// Mã lỗi backend trả khi đăng nhập vào tài khoản đã bị vô hiệu hoá: 000045 là mã thật AuthService.login()
+// ném (ERR_MSG_ACCOUNT_IS_DEACTIVATED); 000058 là mã app di động đang bắt (signIn/hooks.ts) — bắt cả hai
+// để luôn gợi ý được luồng kích hoạt lại.
+const REACTIVATE_ERROR_CODES = ['000045', '000058'];
 
 export const Login: React.FC = () => {
   const { t } = useTranslation();
@@ -18,6 +24,7 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showReactivate, setShowReactivate] = useState(false);
 
   // Check if redirect query param or location state exists
   const searchParams = new URLSearchParams(location.search);
@@ -48,7 +55,13 @@ export const Login: React.FC = () => {
         }
       }
     } catch (err: any) {
-      toast.error(getApiErrorMessage(err));
+      if (REACTIVATE_ERROR_CODES.includes(err?.code)) {
+        // Tài khoản đang bị vô hiệu hoá — gợi ý kích hoạt lại bằng OTP thay vì chỉ báo lỗi chung.
+        toast.warning(t('login.toastAccountDeactivated'));
+        setShowReactivate(true);
+      } else {
+        toast.error(getApiErrorMessage(err));
+      }
     } finally {
       setLoading(false);
     }
@@ -122,20 +135,6 @@ export const Login: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs pt-1">
-            <span className="text-slate-500">{t('login.quickFillLabel')}</span>
-            <button
-              type="button"
-              onClick={() => {
-                setUsernameOrPhone('0988776655');
-                setPassword('123456');
-              }}
-              className="text-indigo-600 font-bold hover:underline"
-            >
-              {t('login.quickFillButton')}
-            </button>
-          </div>
-
           <button
             type="submit"
             disabled={loading}
@@ -162,6 +161,17 @@ export const Login: React.FC = () => {
         </div>
 
       </div>
+
+      {showReactivate && (
+        <ReactivateAccountModal
+          initialEmail={usernameOrPhone.includes('@') ? usernameOrPhone.trim() : ''}
+          onClose={() => setShowReactivate(false)}
+          onReactivated={() => {
+            setShowReactivate(false);
+            setPassword('');
+          }}
+        />
+      )}
     </div>
   );
 };

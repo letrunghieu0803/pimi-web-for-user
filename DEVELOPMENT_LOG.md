@@ -4,6 +4,14 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-06 — Đồng bộ với app: hồ sơ thật, bảo mật tài khoản, bộ lọc từ backend, bỏ dữ liệu giả
+
+**Vì sao:** Rà soát web↔app. Hồ sơ chỉ lưu localStorage (giả), bộ lọc/khu vực hot dùng danh sách cứng, nhiều chỗ mock.
+
+**Thay đổi:** `Profile` đọc/lưu thật (`/users/me`), huy hiệu xác thực theo `isVerified`, số lịch hẹn thật; đổi mật khẩu, đổi email (OTP), khoá tài khoản, kích hoạt lại ở Login. Quận/loại phòng/tiện ích/khu vực hot lấy từ `search-facets` (lọc theo `city`). Bỏ: form Liên hệ giả, số liệu Home cứng, nút điền tài khoản mẫu, fallback tin tức mock, `mockData.ts`, `NewsArticleModal`. Thông báo cập nhật realtime (`notification:new`); chuỗi tiếng Việt cứng → i18n vi/en, `alert()` GPS → toast. **Bỏ qua KYC khách thuê:** backend chặn RENT_USER ở `POST /images/list`.
+
+**Đã kiểm tra:** `tsc -p tsconfig.app.json` sạch; `vite build` OK. CHƯA chạy trên trình duyệt.
+
 ## 2026-10-06 — Khoảng giá theo loại hình tìm kiếm
 
 **Vì sao:** Backend giờ lọc/sắp xếp tìm ngắn hạn theo giá ngắn hạn (đồng/ngày-giờ); các nút khoảng giá cũ (<3tr…>8tr) là giá tháng nên không còn hợp.

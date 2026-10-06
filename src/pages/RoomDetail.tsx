@@ -644,15 +644,15 @@ export const RoomDetail: React.FC = () => {
             <div className="space-y-1">
               <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.rentPrice')}</span>
               <span className="text-lg font-black text-emerald-600 font-heading">
-                {formatPrice(room.price)} / {room.longTermDurationValue && room.longTermDurationValue > 1 ? `${room.longTermDurationValue} ` : ''}{room.longTermPriceUnit === 'PER_YEAR' ? 'năm' : 'tháng'}
+                {formatPrice(room.price)} / {room.longTermDurationValue && room.longTermDurationValue > 1 ? `${room.longTermDurationValue} ` : ''}{room.longTermPriceUnit === 'PER_YEAR' ? t('roomCard.unitYear') : t('roomCard.unitMonth')}
               </span>
             </div>
 
             {room.shortTermPrice ? (
               <div className="space-y-1">
-                <span className="text-xs text-slate-500 font-semibold block">Giá ngắn hạn</span>
+                <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.shortTermPrice')}</span>
                 <span className="text-base font-bold text-amber-600 font-heading">
-                  {formatPrice(room.shortTermPrice)} / {room.shortTermDurationValue && room.shortTermDurationValue > 1 ? `${room.shortTermDurationValue} ` : ''}{room.shortTermPriceUnit === 'PER_HOUR' ? 'giờ' : 'ngày'}
+                  {formatPrice(room.shortTermPrice)} / {room.shortTermDurationValue && room.shortTermDurationValue > 1 ? `${room.shortTermDurationValue} ` : ''}{room.shortTermPriceUnit === 'PER_HOUR' ? t('roomCard.unitHour') : t('roomCard.unitDay')}
                 </span>
               </div>
             ) : (
@@ -673,9 +673,11 @@ export const RoomDetail: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-semibold block">Thời hạn HĐ tối thiểu</span>
+              <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.minContractTerm')}</span>
               <span className="text-sm font-bold text-indigo-600">
-                {room.minContractTermMonths ? `${room.minContractTermMonths} tháng` : 'Linh hoạt'}
+                {room.minContractTermMonths
+                  ? t('roomDetail.minContractMonths', { count: room.minContractTermMonths })
+                  : t('roomDetail.minContractFlexible')}
               </span>
             </div>
 

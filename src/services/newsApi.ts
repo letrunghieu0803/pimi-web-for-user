@@ -1,120 +1,81 @@
 import { axiosClient } from './axiosClient';
-import { NEWS_ARTICLES, NewsArticle } from '@/data/mockData';
 
+// Backend (NewsArticle) chỉ có title/content/coverImageLink/createdAt — không có chuyên mục, thời gian
+// đọc hay tóm tắt riêng, nên các trường hiển thị còn lại (excerpt, readMinutes) được suy ra từ nội dung.
 export interface NewsItem {
   id: string;
   title: string;
-  category: string;
-  date: string;
-  readTime: string;
-  image: string;
   excerpt: string;
   content: string;
-  coverImageLink?: string;
+  // null khi bài không có ảnh bìa — UI tự hiện khung thay thế thay vì ảnh stock giả như trước.
+  image: string | null;
   createdAt?: string;
+  readMinutes: number;
 }
 
+const WORDS_PER_MINUTE = 200;
+const EXCERPT_MAX_LENGTH = 150;
+
+const stripHtml = (html: string): string => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
 const mapBackendNewsToNewsItem = (item: any): NewsItem => {
-  const coverImage =
-    item.coverImageLink ||
-    item.image ||
-    'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80';
-
-  const rawContent = item.content || '';
-  // Strip HTML tags for clean text excerpt if needed
-  const strippedText = rawContent.replace(/<[^>]+>/g, '');
-  const excerpt = item.excerpt || (strippedText.length > 150 ? `${strippedText.substring(0, 150)}...` : strippedText) || 'Cẩm nang kinh nghiệm thuê nhà trọ hữu ích từ Pimi.';
-
-  const formattedDate = item.createdAt
-    ? new Date(item.createdAt).toLocaleDateString('vi-VN')
-    : 'Mới cập nhật';
+  const rawContent: string = item.content || '';
+  const plainText = stripHtml(rawContent);
+  const excerpt = plainText.length > EXCERPT_MAX_LENGTH ? `${plainText.substring(0, EXCERPT_MAX_LENGTH)}...` : plainText;
+  const wordCount = plainText ? plainText.split(' ').length : 0;
 
   return {
     id: item.id,
-    title: item.title || 'Tin tức mới từ Pimi',
-    category: item.category || 'Tin Tức',
-    date: formattedDate,
-    readTime: item.readTime || '4 phút đọc',
-    image: coverImage,
+    title: item.title || '',
     excerpt,
-    content: rawContent || item.excerpt || '',
-    coverImageLink: item.coverImageLink,
+    content: rawContent,
+    image: item.coverImageLink || null,
     createdAt: item.createdAt,
+    readMinutes: Math.max(1, Math.ceil(wordCount / WORDS_PER_MINUTE)),
   };
 };
 
+// Ngày đăng theo ngôn ngữ đang chọn — format tại chỗ hiển thị (không "đóng băng" trong mapper) để đổi
+// ngôn ngữ là đổi theo ngay.
+export const formatNewsDate = (createdAt: string | undefined, lang: string): string => {
+  if (!createdAt) return '';
+  return new Date(createdAt).toLocaleDateString(lang?.startsWith('en') ? 'en-GB' : 'vi-VN');
+};
+
 export const newsApi = {
-  // Get public feed of news articles with fallback to mock data
+  // Danh sách tin công khai. Lỗi mạng/server được ném lên cho nơi gọi hiện trạng thái lỗi thật (trước
+  // đây âm thầm trả về bài viết mẫu), danh sách rỗng nghĩa là thật sự chưa có bài nào.
   getPublicNews: async (params?: {
     search?: string;
     pageNumber?: number;
     pageSize?: number;
   }): Promise<{ items: NewsItem[]; totalItems: number; totalPages: number }> => {
-    try {
-      const response: any = await axiosClient.get('/v1/news/public/feed', {
-        params: {
-          audience: 'RENT_USER',
-          search: params?.search || undefined,
-          pageNumber: params?.pageNumber || 1,
-          pageSize: params?.pageSize || 10,
-        },
-      });
+    const response: any = await axiosClient.get('/v1/news/public/feed', {
+      params: {
+        audience: 'RENT_USER',
+        search: params?.search || undefined,
+        pageNumber: params?.pageNumber || 1,
+        pageSize: params?.pageSize || 10,
+      },
+    });
 
-      const rawItems = response?.data || [];
-      const metadata = response?.metadata || {};
-
-      if (Array.isArray(rawItems) && rawItems.length > 0) {
-        return {
-          items: rawItems.map(mapBackendNewsToNewsItem),
-          totalItems: metadata.totalItems ?? rawItems.length,
-          totalPages: metadata.totalPages ?? 1,
-        };
-      }
-    } catch (error) {
-      console.warn('Failed to fetch public news from API, using fallback data:', error);
-    }
-
-    // Fallback mock data if API is empty or offline
-    let filteredMock: NewsArticle[] = [...NEWS_ARTICLES];
-    if (params?.search && params.search.trim()) {
-      const q = params.search.toLowerCase();
-      filteredMock = filteredMock.filter(
-        (a) => a.title.toLowerCase().includes(q) || a.excerpt.toLowerCase().includes(q)
-      );
-    }
-
-    const page = params?.pageNumber || 1;
-    const size = params?.pageSize || 10;
-    const paged = filteredMock.slice((page - 1) * size, page * size);
+    const rawItems = response?.data || [];
+    const metadata = response?.metadata || {};
+    const list: any[] = Array.isArray(rawItems) ? rawItems : [];
 
     return {
-      items: paged.map(mapBackendNewsToNewsItem),
-      totalItems: filteredMock.length,
-      totalPages: Math.ceil(filteredMock.length / size) || 1,
+      items: list.map(mapBackendNewsToNewsItem),
+      totalItems: metadata.totalItems ?? list.length,
+      totalPages: metadata.totalPages ?? (list.length > 0 ? 1 : 0),
     };
   },
 
-  // Get detail of a specific news article
+  // Chi tiết 1 bài viết. Trả null nếu backend không có bài (response không có id); lỗi khác được ném lên.
   getNewsById: async (id: string): Promise<NewsItem | null> => {
-    // 1. Check if mock article first
-    const mock = NEWS_ARTICLES.find((a) => a.id === id);
-    if (mock) {
-      return mapBackendNewsToNewsItem(mock);
-    }
-
-    // 2. Fetch from backend API
-    try {
-      const response: any = await axiosClient.get(`/v1/news/public/${id}`, {
-        params: { audience: 'RENT_USER' },
-      });
-      const raw = response?.data || response;
-      if (raw && raw.id) {
-        return mapBackendNewsToNewsItem(raw);
-      }
-    } catch (error) {
-      console.warn(`Failed to fetch news detail for id ${id}:`, error);
-    }
-
-    return null;
+    const response: any = await axiosClient.get(`/v1/news/public/${id}`, {
+      params: { audience: 'RENT_USER' },
+    });
+    const raw = response?.data || response;
+    return raw && raw.id ? mapBackendNewsToNewsItem(raw) : null;
   },
 };

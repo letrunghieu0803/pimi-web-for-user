@@ -126,7 +126,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       email: rawUser.email,
       avatar: rawUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
       role: 'RENT_USER',
-      isVerified: true,
+      // Lấy đúng cờ KYC thật từ /users/me — trước đây luôn gán true nên huy hiệu "đã xác thực" ở
+      // trang Hồ sơ hiện cho mọi tài khoản dù chưa qua xác minh nào.
+      isVerified: !!rawUser.isVerified,
       createdAt: rawUser.createdAt || new Date().toISOString(),
     };
 

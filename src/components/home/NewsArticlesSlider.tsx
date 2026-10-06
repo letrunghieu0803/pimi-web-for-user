@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import { newsApi, NewsItem } from '@/services/newsApi';
+import { newsApi, NewsItem, formatNewsDate } from '@/services/newsApi';
+import { NewsCover } from '@/components/home/NewsCover';
 import { Newspaper, ChevronLeft, ChevronRight, Calendar, Clock, ArrowRight } from 'lucide-react';
 
 export const NewsArticlesSlider: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -28,6 +31,10 @@ export const NewsArticlesSlider: React.FC = () => {
   // con số này (không phải hardcode), và tự ẩn khi không còn bài nào khác để xem thêm.
   const remainingCount = Math.max(totalItems - articles.length, 0);
 
+  // Tải xong mà lỗi/chưa có bài nào thì ẩn hẳn cả mục (không còn bài viết mẫu thay thế như trước) — trang
+  // /news vẫn hiện trạng thái lỗi/rỗng đầy đủ cho ai muốn xem.
+  if (!loading && articles.length === 0) return null;
+
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
       const scrollAmount = direction === 'left' ? -340 : 340;
@@ -43,13 +50,13 @@ export const NewsArticlesSlider: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">
             <Newspaper className="w-4 h-4 text-indigo-600" />
-            <span>Tin Tức & Cẩm Nang Thuê Nhà</span>
+            <span>{t('news.sliderTag')}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
-            Kinh Nghiệm Bỏ Túi Cho Người Đi Thuê
+            {t('news.sliderTitle')}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Cập nhật luật thuê nhà, mẹo chọn phòng và quy trình ký hợp đồng an toàn nhất
+            {t('news.sliderSubtitle')}
           </p>
         </div>
 
@@ -60,7 +67,7 @@ export const NewsArticlesSlider: React.FC = () => {
               to="/news"
               className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200/80 text-xs font-bold hover:bg-indigo-100 transition-colors"
             >
-              <span>Xem thêm {remainingCount} bài viết</span>
+              <span>{t('news.viewMore', { count: remainingCount })}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           )}
@@ -69,14 +76,14 @@ export const NewsArticlesSlider: React.FC = () => {
             <button
               onClick={() => scroll('left')}
               className="w-10 h-10 rounded-2xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 flex items-center justify-center shadow-sm transition-all active:scale-95"
-              aria-label="Scroll left"
+              aria-label={t('home.scrollLeft')}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={() => scroll('right')}
               className="w-10 h-10 rounded-2xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 flex items-center justify-center shadow-sm transition-all active:scale-95"
-              aria-label="Scroll right"
+              aria-label={t('home.scrollRight')}
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -105,18 +112,12 @@ export const NewsArticlesSlider: React.FC = () => {
             >
               {/* Article Image Container */}
               <div className="relative h-48 w-full bg-slate-100 overflow-hidden">
-                <img
-                  src={article.image}
+                <NewsCover
+                  image={article.image}
                   alt={article.title}
                   className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
-                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-
-                {/* Category Badge */}
-                <span className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full bg-indigo-600/90 text-white text-[11px] font-bold shadow-md backdrop-blur-md">
-                  {article.category}
-                </span>
               </div>
 
               {/* Content Container */}
@@ -126,12 +127,12 @@ export const NewsArticlesSlider: React.FC = () => {
                   <div className="flex items-center gap-3 text-[11px] font-semibold text-slate-400">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5 text-indigo-500" />
-                      <span>{article.date}</span>
+                      <span>{formatNewsDate(article.createdAt, i18n.language)}</span>
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-emerald-500" />
-                      <span>{article.readTime}</span>
+                      <span>{t('news.readTime', { count: article.readMinutes })}</span>
                     </span>
                   </div>
 
@@ -148,7 +149,7 @@ export const NewsArticlesSlider: React.FC = () => {
 
                 {/* Footer Read Action */}
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-indigo-600 group-hover:text-indigo-700">
-                  <span>Đọc bài viết chi tiết</span>
+                  <span>{t('news.readArticle')}</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
@@ -164,7 +165,7 @@ export const NewsArticlesSlider: React.FC = () => {
             to="/news"
             className="inline-flex items-center gap-2 gradient-bg text-white px-6 py-2.5 rounded-2xl text-xs font-bold shadow-md"
           >
-            <span>Xem thêm {remainingCount} bài viết</span>
+            <span>{t('news.viewMore', { count: remainingCount })}</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
