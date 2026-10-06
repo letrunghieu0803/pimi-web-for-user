@@ -4,6 +4,14 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-07 — Chế độ Bearer dự phòng khi trình duyệt chặn cookie (văng sau đăng nhập trên điện thoại)
+
+**Vì sao:** Phản hồi: đăng nhập trên web bằng điện thoại bị văng ngay. Phiên web nằm hoàn toàn trong cookie httpOnly do API (domain khác site với web) set — iOS Safari/WebKit và webview chặn cookie bên thứ ba nên sau khi đăng nhập cookie không được lưu → `GET /users/me` 401 `000127` → refresh cũng hỏng → bị đăng xuất.
+
+**Thay đổi:** Thêm chế độ Bearer dự phòng (`src/services/bearerSession.ts`): token từ body login giữ trong bộ nhớ làm "ứng viên"; nếu request có xác thực đầu tiên trả 401 `000127` thì lưu token vào localStorage (`pimi_bearer_session_user`) và thử lại với `Authorization: Bearer` (backend bỏ qua CSRF khi có header). Refresh dùng Bearer refresh token, logout gửi `{refreshToken}` rồi xoá phiên, socket gửi `auth.token`. Trình duyệt dùng cookie được thì giữ nguyên hành vi cũ (ứng viên bị bỏ khi `GET /users/me` thành công, token không bao giờ vào localStorage). Đánh đổi: ở chế độ Bearer token nằm trong localStorage nên lộ nếu có XSS — chỉ áp dụng khi cookie không dùng được. Giải pháp lâu dài: đưa API về cùng site với từng web (CloudFront `/api/*`).
+
+**Đã kiểm tra:** `tsc -p tsconfig.app.json` sạch, `vite build` OK. Sửa thêm: request thử lại sau refresh luôn gắn lại access token mới (không giữ header cũ). CHƯA thử trên iPhone/Safari thật (backend: e2e `sessions.e2e-spec.ts` có ca Bearer thuần, 8/8).
+
 ## 2026-10-06 — Đồng bộ với app: hồ sơ thật, bảo mật tài khoản, bộ lọc từ backend, bỏ dữ liệu giả
 
 **Vì sao:** Rà soát web↔app. Hồ sơ chỉ lưu localStorage (giả), bộ lọc/khu vực hot dùng danh sách cứng, nhiều chỗ mock.
