@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.phongtroapp",
+      "sha256_cert_fingerprints": [
+        "E4:C9:A7:D0:1E:22:8C:ED:FA:77:41:BB:C2:00:E4:BD:83:4B:AD:A5:7C:0C:66:70:7E:13:1D:EC:2C:45:90:E9"
+      ]
+    }
+  }
+]
