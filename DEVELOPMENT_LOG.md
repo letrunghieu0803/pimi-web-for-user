@@ -4,6 +4,16 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-07 — File xác thực domain cho deep link vào app (Universal Links / App Links)
+
+**Vì sao:** Để link pimi.vn mở thẳng app Pimi khi đã cài (xem log phongtroapp cùng ngày).
+
+**Thay đổi:** `public/.well-known/apple-app-site-association` (appID `H3HQ9LLS3Q.com.piminest.prod`; chỉ `/rooms/*`, `/room-groups/*`, `/news/*`, `/payment/*`, `/bookings`, `/appointments`, `/appointment/*` — không có `/invoice/*`) và `public/.well-known/assetlinks.json` (package `com.phongtroapp`, chỉ fingerprint SHA-256 chứng chỉ release; cố tình KHÔNG thêm fingerprint debug vì keystore debug mặc định ai cũng có).
+
+**Khi deploy (quan trọng):** `apple-app-site-association` không có đuôi file — phải upload lên S3 với `Content-Type: application/json` (mặc định S3 gán octet-stream thì iOS có thể từ chối); không được redirect. Hiện `https://pimi.vn/.well-known/...` trả 200 `text/html` (SPA fallback về index.html) nên trước khi deploy file là chưa hoạt động. Sau deploy kiểm tra: `curl -I https://pimi.vn/.well-known/apple-app-site-association` phải 200 + `application/json`. iOS cache AASA qua CDN của Apple (có thể trễ vài giờ–1 ngày); Android xác minh lúc cài/cập nhật app.
+
+**Đã kiểm tra:** `vite build` đưa cả 2 file vào output; JSON hợp lệ.
+
 ## 2026-10-07 — Chế độ Bearer dự phòng khi trình duyệt chặn cookie (văng sau đăng nhập trên điện thoại)
 
 **Vì sao:** Phản hồi: đăng nhập trên web bằng điện thoại bị văng ngay. Phiên web nằm hoàn toàn trong cookie httpOnly do API (domain khác site với web) set — iOS Safari/WebKit và webview chặn cookie bên thứ ba nên sau khi đăng nhập cookie không được lưu → `GET /users/me` 401 `000127` → refresh cũng hỏng → bị đăng xuất.
