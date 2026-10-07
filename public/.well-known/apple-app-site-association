@@ -10,7 +10,8 @@
           { "/": "/payment/*", "comment": "Thanh toán đặt phòng" },
           { "/": "/bookings", "comment": "Lịch sử đặt phòng" },
           { "/": "/appointments", "comment": "Lịch hẹn xem phòng" },
-          { "/": "/appointment/*", "comment": "Link ZNS lịch hẹn (/appointment/{id}.{env})" }
+          { "/": "/appointment/*", "comment": "Link ZNS lịch hẹn (/appointment/{id}.{env})" },
+          { "/": "/invoice/*", "comment": "Link ZNS/email hoá đơn (/invoice/{id}.{token}.{env})" }
         ]
       }
     ]

@@ -4,6 +4,12 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-07 — AASA: nhận thêm link hoá đơn /invoice/*
+
+**Thay đổi:** `public/.well-known/apple-app-site-association` thêm `/invoice/*` (app đã có màn xem hoá đơn công khai). `assetlinks.json` không đổi (Android lọc theo đường dẫn ở `AndroidManifest.xml`).
+
+**Đã kiểm tra:** JSON hợp lệ. Nhắc lại: phải deploy với `Content-Type: application/json` cho file không có đuôi (xem mục cùng ngày bên dưới).
+
 ## 2026-10-07 — File xác thực domain cho deep link vào app (Universal Links / App Links)
 
 **Vì sao:** Để link pimi.vn mở thẳng app Pimi khi đã cài (xem log phongtroapp cùng ngày).
