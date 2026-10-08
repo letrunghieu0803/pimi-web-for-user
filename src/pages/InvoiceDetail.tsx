@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import { CheckCircle2, AlertTriangle, Loader2, Receipt } from 'lucide-react';
 import { invoiceApi, Invoice } from '@/services/invoiceApi';
 import { getApiErrorMessage } from '@/utils/apiError';
 import { Seo } from '@/components/common/Seo';
+import { formatMoney as fmtMoney } from '@/utils/money';
+import { useToast } from '@/context/ToastContext';
 
-const formatMoney = (n: string | number) => `${Number(n).toLocaleString('vi-VN')} đ`;
+const INVOICE_POLL_INTERVAL_MS = 5000;
+
+const formatMoney = (n: string | number) => `${fmtMoney(n)} đ`;
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
@@ -31,6 +35,7 @@ const parseComposite = (composite: string | undefined) => {
 // biệt, chỉ cần đúng token nhúng trong `composite`.
 export const InvoiceDetail: React.FC = () => {
   const { t } = useTranslation();
+  const toast = useToast();
   const { composite } = useParams<{ composite: string }>();
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
@@ -67,6 +72,42 @@ export const InvoiceDetail: React.FC = () => {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [composite, t]);
+
+  // Còn chờ thanh toán (kể cả quá hạn — khách vẫn quét QR trả muộn được) thì webhook có thể xác nhận
+  // bất kỳ lúc nào: tự làm mới nhẹ để khách thấy "đã thanh toán" mà không phải tải lại trang. Lỗi
+  // mạng thoáng qua bị bỏ qua (giữ nguyên hoá đơn đang hiển thị), không tải khi tab đang ẩn.
+  // Báo ngay khi hoá đơn vừa chuyển sang đã thanh toán trong lúc khách đang mở trang (không báo khi mở
+  // lại hoá đơn vốn đã thanh toán từ trước).
+  const prevStatusRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = invoice?.status;
+    if (invoice && (prev === 'PENDING_PAYMENT' || prev === 'OVERDUE') && ['PAID', 'PAYOUT_COMPLETED'].includes(invoice.status)) {
+      toast.success(t('invoiceDetail.paidToast', { amount: fmtMoney(invoice.totalAmount) }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoice?.status]);
+
+  const awaitingPayment = invoice?.status === 'PENDING_PAYMENT' || invoice?.status === 'OVERDUE';
+  useEffect(() => {
+    if (!awaitingPayment || !parsed) return;
+    const refresh = () => {
+      if (document.hidden) return;
+      invoiceApi
+        .getPublic(parsed.invoiceId, parsed.token)
+        .then((res: any) => setInvoice(res?.data || res))
+        .catch(() => undefined);
+    };
+    const timer = setInterval(refresh, INVOICE_POLL_INTERVAL_MS);
+    // Khách hay rời trang sang app ngân hàng để trả tiền rồi quay lại — làm mới ngay khi tab hiện lại
+    // thay vì đợi nhịp poll kế tiếp.
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitingPayment, composite]);
 
   if (loading) {
     return (

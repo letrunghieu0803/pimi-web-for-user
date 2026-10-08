@@ -16,7 +16,8 @@ import { vietmapService } from '@/services/vietmapService';
 import { Seo } from '@/components/common/Seo';
 import { JsonLd } from '@/components/common/JsonLd';
 import { absoluteUrl } from '@/config/seo';
-import { DISTRICTS } from '@/data/mockData';
+import { useToast } from '@/context/ToastContext';
+import { formatVnd } from '@/utils/money';
 
 const PAGE_SIZE = 10;
 
@@ -29,14 +30,17 @@ const SORT_TO_BACKEND: Record<SortKey, 'newest' | 'price_asc' | 'price_desc' | '
   DISTANCE: 'distance',
 };
 
-const DEFAULT_DISTRICT = DISTRICTS[0];
+// Rỗng = "tất cả quận/huyện" (danh sách quận thật lấy từ backend nên không còn mục "Tất cả" cứng trong
+// danh sách). LEGACY_ALL_DISTRICTS là chuỗi cũ từng nằm trong URL (link/bookmark đã lưu) — coi như rỗng.
+const DEFAULT_DISTRICT = '';
+const LEGACY_ALL_DISTRICTS = 'Tất cả quận/huyện';
 
 // Đọc toàn bộ trạng thái tìm kiếm (filter + sort + trang) từ query string — cho phép 1 URL đại
 // diện chính xác cho 1 lượt tìm kiếm cụ thể, dùng để: (1) chia sẻ link kèm đúng kết quả đang xem,
 // (2) vào thẳng URL đã lưu/bookmark ra đúng kết quả đó, (3) Google index/hiển thị link có ngữ
 // cảnh (kèm ?search=... khi phù hợp) thay vì luôn chỉ mỗi "/rooms" trần.
 const filtersFromSearchParams = (sp: URLSearchParams): FilterState => ({
-  district: sp.get('district') || DEFAULT_DISTRICT,
+  district: sp.get('district') === LEGACY_ALL_DISTRICTS ? DEFAULT_DISTRICT : sp.get('district') || DEFAULT_DISTRICT,
   priceRange: sp.get('priceRange') || 'ALL',
   roomType: sp.get('roomType') || 'ALL',
   hasMezzanine: sp.get('hasMezzanine') === 'true' ? true : null,
@@ -62,14 +66,14 @@ const pageFromSearchParams = (sp: URLSearchParams): number => {
 };
 
 // Chiều ngược lại: state hiện tại -> query string. Bỏ qua field đang ở giá trị mặc định để URL
-// gọn, dễ đọc (không lộ ?district=Tất+cả...&roomType=ALL&page=1... cho 1 lượt tìm kiếm trống).
+// gọn, dễ đọc (không lộ ?roomType=ALL&page=1... cho 1 lượt tìm kiếm trống).
 const buildSearchParams = (
   filters: FilterState,
   sortBy: SortKey,
   pageNumber: number
 ): Record<string, string> => {
   const params: Record<string, string> = {};
-  if (filters.district && filters.district !== DEFAULT_DISTRICT) params.district = filters.district;
+  if (filters.district) params.district = filters.district;
   if (filters.priceRange !== 'ALL') params.priceRange = filters.priceRange;
   if (filters.roomType !== 'ALL') params.roomType = filters.roomType;
   if (filters.hasMezzanine === true) params.hasMezzanine = 'true';
@@ -94,6 +98,7 @@ interface RoomsMapViewProps {
 }
 
 const RoomsMapView: React.FC<RoomsMapViewProps> = ({ rooms, userLat, userLng }) => {
+  const { t } = useTranslation();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
 
@@ -145,17 +150,14 @@ const RoomsMapView: React.FC<RoomsMapViewProps> = ({ rooms, userLat, userLng }) 
 
       L.marker([userLat, userLng], { icon: userIcon })
         .addTo(map)
-        .bindPopup('<strong style="font-size: 12px;">Vị trí của bạn 📍</strong>');
+        .bindPopup(`<strong style="font-size: 12px;">${t('roomList.mapYourLocation')} 📍</strong>`);
     }
 
     // Add Room Markers
     rooms.forEach((room) => {
       if (!room.latitude || !room.longitude) return;
 
-      const priceLabel =
-        room.price >= 1000000
-          ? `${(room.price / 1000000).toFixed(1)} tr`
-          : `${room.price.toLocaleString()}đ`;
+      const priceLabel = formatVnd(room.price);
 
       const roomIcon = L.divIcon({
         className: 'custom-room-marker',
@@ -184,13 +186,13 @@ const RoomsMapView: React.FC<RoomsMapViewProps> = ({ rooms, userLat, userLng }) 
           <div style="font-family: inherit; width: 180px; padding: 2px;">
             <img src="${room.images[0]}" style="width: 100%; height: 95px; object-fit: cover; border-radius: 8px; margin-bottom: 6px;" />
             <strong style="display: block; font-size: 12px; line-height: 1.3; margin-bottom: 4px; color: #0F172A;">${room.name}</strong>
-            <div style="color: #059669; font-weight: 800; font-size: 13px;">${priceLabel}/tháng</div>
-            ${room.distanceInKm !== undefined ? `<div style="color: #D97706; font-size: 11px; font-weight: bold; margin-top: 2px;">📍 Cách bạn ${room.distanceInKm} km</div>` : ''}
-            <a href="${detailUrl}" style="display: block; margin-top: 8px; padding: 6px; background: #4F46E5; color: white; text-align: center; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold;">Xem chi tiết</a>
+            <div style="color: #059669; font-weight: 800; font-size: 13px;">${priceLabel}${t('roomCard.perMonth')}</div>
+            ${room.distanceInKm !== undefined ? `<div style="color: #D97706; font-size: 11px; font-weight: bold; margin-top: 2px;">📍 ${t('roomList.mapDistanceFromYou', { km: room.distanceInKm })}</div>` : ''}
+            <a href="${detailUrl}" style="display: block; margin-top: 8px; padding: 6px; background: #4F46E5; color: white; text-align: center; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold;">${t('roomList.mapViewDetail')}</a>
           </div>
         `);
     });
-  }, [rooms, userLat, userLng]);
+  }, [rooms, userLat, userLng, t]);
 
   useEffect(() => {
     return () => {
@@ -210,6 +212,7 @@ const RoomsMapView: React.FC<RoomsMapViewProps> = ({ rooms, userLat, userLng }) 
 
 export const RoomList: React.FC = () => {
   const { t } = useTranslation();
+  const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isNearbyQuery = searchParams.get('nearby') === 'true';
@@ -246,6 +249,7 @@ export const RoomList: React.FC = () => {
         },
         (err) => {
           console.warn('Geolocation failed:', err);
+          toast.warning(t('roomFilterBar.gpsDenied'));
         }
       );
     }
@@ -290,7 +294,7 @@ export const RoomList: React.FC = () => {
         sortBy: SORT_TO_BACKEND[sortBy],
       });
       if (result.hadError) {
-        throw new Error('Không tải được danh sách phòng từ máy chủ.');
+        throw new Error('Failed to load rooms from server');
       }
       return result;
     },
@@ -364,7 +368,7 @@ export const RoomList: React.FC = () => {
             }`}
           >
             <LayoutGrid className="w-4 h-4" />
-            <span>Danh sách</span>
+            <span>{t('roomList.viewList')}</span>
           </button>
           <button
             onClick={() => setViewMode('map')}
@@ -375,7 +379,7 @@ export const RoomList: React.FC = () => {
             }`}
           >
             <Map className="w-4 h-4" />
-            <span>Bản đồ</span>
+            <span>{t('roomList.viewMap')}</span>
           </button>
         </div>
       </div>
@@ -394,7 +398,7 @@ export const RoomList: React.FC = () => {
           <strong>{totalItems}</strong> {t('roomList.roomsAvailableSuffix')}
           {filters.userLat && filters.userLng && (
             <span className="ml-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
-              📍 Định vị GPS đang bật
+              📍 {t('roomList.gpsEnabled')}
             </span>
           )}
         </div>
@@ -412,7 +416,7 @@ export const RoomList: React.FC = () => {
           >
             <option value="NEWEST">{t('roomList.sortNewest')}</option>
             {filters.userLat && filters.userLng && (
-              <option value="DISTANCE">📍 Gần bạn nhất</option>
+              <option value="DISTANCE">📍 {t('roomList.sortDistance')}</option>
             )}
             <option value="PRICE_ASC">{t('roomList.sortPriceAsc')}</option>
             <option value="PRICE_DESC">{t('roomList.sortPriceDesc')}</option>
@@ -454,7 +458,7 @@ export const RoomList: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {rooms.map((room) => (
-            <RoomCard key={room.id} room={room} />
+            <RoomCard key={room.id} room={room} priceTerm={filters.rentalTermType} />
           ))}
         </div>
       )}

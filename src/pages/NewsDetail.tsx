@@ -1,14 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
-import { newsApi, NewsItem } from '@/services/newsApi';
-import { ArrowLeft, Calendar, Clock, Share2, Newspaper, Sparkles, BookOpen, Check } from 'lucide-react';
+import { newsApi, NewsItem, formatNewsDate } from '@/services/newsApi';
+import { ArrowLeft, Calendar, Clock, Share2, Newspaper, Sparkles, BookOpen, Check, WifiOff } from 'lucide-react';
+import { NewsCover } from '@/components/home/NewsCover';
 import { useToast } from '@/context/ToastContext';
 import { Seo } from '@/components/common/Seo';
 import { JsonLd } from '@/components/common/JsonLd';
 import { absoluteUrl } from '@/config/seo';
 
 export const NewsDetail: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
@@ -17,6 +20,9 @@ export const NewsDetail: React.FC = () => {
   const [relatedNews, setRelatedNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  // Tăng để tải lại (nút "Thử lại") khi lỗi mạng/server.
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Nội dung tin tức lấy từ CMS (admin nhập rich-text) — chưa qua sanitize trước đây thì
   // dangerouslySetInnerHTML render thẳng, admin (hoặc ai chiếm được tài khoản admin) chèn
@@ -29,23 +35,44 @@ export const NewsDetail: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
+    let cancelled = false;
     setLoading(true);
+    setLoadError(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    newsApi.getNewsById(id).then((data) => {
-      setArticle(data);
-      setLoading(false);
-    });
+    newsApi
+      .getNewsById(id)
+      .then((data) => {
+        if (!cancelled) setArticle(data);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setArticle(null);
+        setLoadError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-    newsApi.getPublicNews({ pageNumber: 1, pageSize: 4 }).then((res) => {
-      setRelatedNews(res.items.filter((item) => item.id !== id).slice(0, 3));
-    });
-  }, [id]);
+    // Bài liên quan chỉ là phần phụ — lỗi thì bỏ qua, không ảnh hưởng nội dung chính.
+    newsApi
+      .getPublicNews({ pageNumber: 1, pageSize: 4 })
+      .then((res) => {
+        if (!cancelled) setRelatedNews(res.items.filter((item) => item.id !== id).slice(0, 3));
+      })
+      .catch(() => {
+        if (!cancelled) setRelatedNews([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, reloadKey]);
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
-    toast.success('Đã sao chép liên kết bài viết!');
+    toast.success(t('news.copyLinkSuccess'));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -68,16 +95,26 @@ export const NewsDetail: React.FC = () => {
     return (
       <div className="max-w-md mx-auto my-20 p-8 bg-slate-50 border border-slate-200 rounded-3xl text-center space-y-4">
         <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto">
-          <Newspaper className="w-6 h-6" />
+          {loadError ? <WifiOff className="w-6 h-6" /> : <Newspaper className="w-6 h-6" />}
         </div>
-        <h2 className="text-xl font-bold text-slate-900 font-heading">Không tìm thấy bài viết</h2>
-        <p className="text-xs text-slate-500">Bài viết bạn tìm kiếm không tồn tại hoặc đã bị xóa.</p>
+        <h2 className="text-xl font-bold text-slate-900 font-heading">
+          {loadError ? t('news.errorTitle') : t('news.notFoundTitle')}
+        </h2>
+        <p className="text-xs text-slate-500">{loadError ? t('news.errorDesc') : t('news.notFoundDesc')}</p>
+        {loadError && (
+          <button
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="gradient-bg text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md"
+          >
+            {t('news.retryButton')}
+          </button>
+        )}
         <Link
           to="/news"
           className="inline-flex items-center gap-2 gradient-bg text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md hover:scale-105 transition-transform"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Quay lại trang tin tức</span>
+          <span>{t('news.backToList')}</span>
         </Link>
       </div>
     );
@@ -87,7 +124,7 @@ export const NewsDetail: React.FC = () => {
 
   return (
     <article className="pb-20 space-y-12">
-      <Seo title={article.title} description={article.excerpt} path={newsPath} image={article.image} type="article" />
+      <Seo title={article.title} description={article.excerpt} path={newsPath} image={article.image ?? undefined} type="article" />
       <JsonLd
         data={{
           '@context': 'https://schema.org',
@@ -97,7 +134,7 @@ export const NewsDetail: React.FC = () => {
           image: article.image ? [article.image] : undefined,
           datePublished: article.createdAt,
           author: { '@type': 'Organization', name: 'Pimi' },
-          publisher: { '@type': 'Organization', name: 'Pimi', logo: { '@type': 'ImageObject', url: absoluteUrl('/favicon.svg') } },
+          publisher: { '@type': 'Organization', name: 'Pimi', logo: { '@type': 'ImageObject', url: absoluteUrl('/favicon.png') } },
           mainEntityOfPage: absoluteUrl(newsPath),
         }}
       />
@@ -112,25 +149,22 @@ export const NewsDetail: React.FC = () => {
             className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Danh sách tin tức & cẩm nang</span>
+            <span>{t('news.backToListLong')}</span>
           </button>
         </div>
 
         {/* Main Article Header */}
         <header className="space-y-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <span className="px-3.5 py-1.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold tracking-wide border border-indigo-200">
-              {article.category}
-            </span>
             <div className="flex items-center gap-4 text-xs font-semibold text-slate-400">
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-indigo-500" />
-                <span>{article.date}</span>
+                <span>{formatNewsDate(article.createdAt, i18n.language)}</span>
               </span>
               <span>•</span>
               <span className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-emerald-500" />
-                <span>{article.readTime}</span>
+                <span>{t('news.readTime', { count: article.readMinutes })}</span>
               </span>
             </div>
           </div>
@@ -143,7 +177,7 @@ export const NewsDetail: React.FC = () => {
           <div className="flex items-center justify-between border-y border-slate-100 py-3">
             <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
               <Sparkles className="w-4 h-4 text-amber-500" />
-              <span>Phát hành bởi <strong>Ban Biên Tập Pimi</strong></span>
+              <span>{t('news.publishedByPrefix')} <strong>{t('news.editorialTeam')}</strong></span>
             </div>
 
             <button
@@ -151,17 +185,13 @@ export const NewsDetail: React.FC = () => {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
             >
               {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4 text-slate-500" />}
-              <span>{copied ? 'Đã chép link' : 'Chia sẻ bài viết'}</span>
+              <span>{copied ? t('news.copied') : t('news.share')}</span>
             </button>
           </div>
 
           {/* Hero Feature Image */}
           <div className="relative w-full h-80 sm:h-[420px] rounded-3xl overflow-hidden shadow-2xl border border-slate-200/80">
-            <img
-              src={article.image}
-              alt={article.title}
-              className="w-full h-full object-cover"
-            />
+            <NewsCover image={article.image} alt={article.title} className="w-full h-full object-cover" />
           </div>
         </header>
 
@@ -181,13 +211,13 @@ export const NewsDetail: React.FC = () => {
           <div className="flex items-center justify-between">
             <h3 className="text-2xl font-bold text-slate-900 font-heading flex items-center gap-2">
               <BookOpen className="w-6 h-6 text-indigo-600" />
-              <span>Bài Viết Liên Quan</span>
+              <span>{t('news.related')}</span>
             </h3>
             <Link
               to="/news"
               className="text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:underline"
             >
-              Xem tất cả bài viết &rarr;
+              {t('news.viewAll')} &rarr;
             </Link>
           </div>
 
@@ -198,14 +228,11 @@ export const NewsDetail: React.FC = () => {
                 onClick={() => navigate(`/news/${item.id}`)}
                 className="group bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer space-y-3"
               >
-                <img
-                  src={item.image}
+                <NewsCover
+                  image={item.image}
                   alt={item.title}
                   className="w-full h-40 object-cover rounded-xl group-hover:scale-105 transition-transform"
                 />
-                <span className="inline-block px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
-                  {item.category}
-                </span>
                 <h4 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 font-heading">
                   {item.title}
                 </h4>

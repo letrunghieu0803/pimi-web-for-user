@@ -1,7 +1,14 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { axiosClient, setCsrfToken } from '@/services/axiosClient';
+import { axiosClient, setCsrfToken, SESSION_EXPIRED_EVENT } from '@/services/axiosClient';
+import {
+  clearBearerSession,
+  extractTokens,
+  getBearerSession,
+  rememberLoginTokens,
+} from '@/services/bearerSession';
 import { getApiErrorMessage } from '@/utils/apiError';
+import { useToast } from './ToastContext';
 
 // ERR_MSG_NEED_VERIFY_EMAIL in bff-for-pimi's error constants.
 const ERR_CODE_NEED_VERIFY_EMAIL = '000006';
@@ -41,6 +48,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { t } = useTranslation();
+  const toast = useToast();
   // accessToken/refreshToken không còn lưu ở localStorage nữa — nằm trong cookie httpOnly do
   // backend set (JS không đọc/ghi được, xem `axiosClient.ts`). `user` (không nhạy cảm) vẫn lưu
   // như trước để hiển thị UI ngay không cần chờ network; sự tồn tại của nó cũng là gợi ý "đã
@@ -65,6 +73,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user]);
 
+  // Đọc được trong closure của listener bên dưới mà không cần đăng ký lại effect mỗi lần `user`
+  // đổi — chỉ cần giá trị MỚI NHẤT tại thời điểm sự kiện bắn ra.
+  const userRef = useRef(user);
+  userRef.current = user;
+
+  // axiosClient.ts bắn sự kiện này khi phát hiện phiên đã mất thật (refresh ngầm cũng thất bại,
+  // không chỉ access token hết hạn tạm thời) — trước đây UI vẫn hiện "đã đăng nhập" (dựa vào cache
+  // localStorage, xem comment ở khai báo `user` phía trên) cho tới khi người dùng tình cờ thao tác
+  // trúng 1 API cần xác thực và thấy lỗi thô ngay tại chỗ đó (vd giữa chừng 1 form dài). Giờ dọn
+  // sạch state (navbar tự chuyển về "chưa đăng nhập") + báo rõ ràng ngay khi phát hiện, thay vì im
+  // lặng để lỗi trồi lên đúng chỗ request đang thất bại. Chỉ báo khi TRƯỚC ĐÓ đang tưởng đã đăng
+  // nhập — tránh làm phiền khách vãng lai (chưa đăng nhập) khi có API public nào đó lỡ trả 401.
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      clearBearerSession();
+      if (userRef.current) {
+        setUser(null);
+        toast.warning(t('authContext.sessionExpired'));
+      }
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+  }, [t, toast]);
+
   // Dùng chung cho login() VÀ completeEmailVerification() — cả 2 endpoint backend
   // (/auth/login, /auth/verify-email) giờ trả cùng 1 hình dạng response {accessToken,
   // refreshToken, role, csrfToken} (không có object "user"), tự set cookie httpOnly + phải tự
@@ -78,6 +110,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // `withCredentials: true` ở axiosClient) — không tự đọc/lưu accessToken vào localStorage
     // nữa như trước.
     setCsrfToken(response?.csrfToken);
+
+    // Bearer fallback (xem bearerSession.ts): đăng nhập mới phải dò lại cookie có dùng được không
+    // -> bỏ phiên bearer cũ, chỉ giữ token vừa nhận ở bộ nhớ làm ứng viên. Request hồ sơ ngay bên
+    // dưới sẽ quyết định (interceptor): 401 000127 => bật bearer mode, 2xx => bỏ ứng viên.
+    clearBearerSession();
+    rememberLoginTokens(extractTokens(response));
 
     let rawUser: any = {};
     try {
@@ -101,7 +139,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       email: rawUser.email,
       avatar: rawUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
       role: 'RENT_USER',
-      isVerified: true,
+      // Lấy đúng cờ KYC thật từ /users/me — trước đây luôn gán true nên huy hiệu "đã xác thực" ở
+      // trang Hồ sơ hiện cho mọi tài khoản dù chưa qua xác minh nào.
+      isVerified: !!rawUser.isVerified,
       createdAt: rawUser.createdAt || new Date().toISOString(),
     };
 
@@ -115,6 +155,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // thuê; xem AuthService.login() ở backend). Không gửi field này thì 1 tài khoản chủ nhà
       // đăng nhập ở đây sẽ nhận JWT role=HOUSE_OWNER, khiến các API dành riêng cho người thuê
       // (đặt lịch xem phòng, đặt phòng...) bị chặn 403 sai.
+      // Bỏ phiên bearer cũ (nếu có) trước khi gọi — xem bearerSession.ts.
+      clearBearerSession();
       const response: any = await axiosClient.post('/v1/auth/login', {
         username: usernameOrPhone.trim().toLowerCase(),
         password: pass,
@@ -207,9 +249,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     // Token nằm trong cookie httpOnly — JS không tự xoá được, phải gọi backend để nó
     // `clearCookie`. Không chặn UI chờ response (best-effort) — vẫn dọn state/local ngay.
-    axiosClient.post('/v1/auth/logout').catch(() => {
+    // Bearer mode: gửi kèm refreshToken để backend chỉ kết thúc phiên của thiết bị này, và gắn
+    // sẵn Authorization (đọc từ storage TRƯỚC khi xoá bên dưới — interceptor chạy bất đồng bộ).
+    // Cookie mode: backend tự đọc refresh token từ cookie, không cần body.
+    const bearer = getBearerSession();
+    (bearer
+      ? axiosClient.post(
+          '/v1/auth/logout',
+          { refreshToken: bearer.refreshToken },
+          { headers: { Authorization: `Bearer ${bearer.accessToken}` } },
+        )
+      : axiosClient.post('/v1/auth/logout')
+    ).catch(() => {
       // ignore
     });
+    clearBearerSession(); // luôn xoá, kể cả khi request thất bại
     setUser(null);
     localStorage.clear();
     sessionStorage.clear();

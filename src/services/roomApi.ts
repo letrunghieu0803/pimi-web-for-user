@@ -1,38 +1,6 @@
-import { Room, ViewingRequest } from '@/types';
+import { priceBucketToMinMax } from '@/utils/priceRanges';
+import { Room } from '@/types';
 import { axiosClient } from './axiosClient';
-
-
-const VIEWING_REQUESTS_KEY = 'pimi_tenant_viewing_requests';
-
-// Initial Mock Bookings so new users immediately see realistic booking history
-const INITIAL_MOCK_BOOKINGS: ViewingRequest[] = [
-  {
-    id: 'req-101',
-    roomId: 'room-1',
-    roomName: 'Phòng Studio Đầy Đủ Nội Thất Cao Cấp Cầu Giấy',
-    tenantName: 'Nguyễn Văn Thuê',
-    tenantPhone: '0988776655',
-    tenantEmail: 'nguyenvanthue@gmail.com',
-    preferredDate: '2026-07-28',
-    preferredTime: '10:00',
-    notes: 'Tôi muốn hẹn xem phòng vào buổi sáng, gọi trước 15 phút.',
-    status: 'CONFIRMED',
-    createdAt: '2026-07-25T09:30:00Z',
-  },
-  {
-    id: 'req-102',
-    roomId: 'room-2',
-    roomName: 'Căn Hộ Mini Có Gác Xép Rộng Trần Duy Hưng',
-    tenantName: 'Nguyễn Văn Thuê',
-    tenantPhone: '0988776655',
-    tenantEmail: 'nguyenvanthue@gmail.com',
-    preferredDate: '2026-07-30',
-    preferredTime: '14:30',
-    notes: 'Xem phòng ngoài giờ hành chính.',
-    status: 'PENDING',
-    createdAt: '2026-07-26T08:15:00Z',
-  },
-];
 
 // Helper to map backend RentRoom model to user app Room interface — cũng dùng lại ở
 // favoriteApi.ts (danh sách phòng yêu thích trả về đúng shape RentRoom này).
@@ -107,6 +75,27 @@ export const mapBackendRoomToRoom = (item: any): Room => {
   };
 };
 
+// Kết quả GET /rent-rooms/public/search-facets — chỉ gồm các lựa chọn CÓ phòng thật đang công khai
+// (theo loại hình ngắn/dài hạn) nên không bao giờ gợi ý 1 khu vực/loại phòng/tiện ích ra 0 kết quả.
+// `province` là cột `county` của toà nhà (tỉnh/thành), `districts[].name` là cột `city` (quận/huyện).
+export interface SearchFacetDistrict {
+  name: string;
+  roomCount: number;
+}
+
+export interface SearchFacetLocation {
+  province: string;
+  roomCount: number;
+  districts: SearchFacetDistrict[];
+}
+
+export interface SearchFacets {
+  locations: SearchFacetLocation[];
+  roomTypes: { type: string; roomCount: number }[];
+  amenities: string[];
+  mezzanineCount: number;
+}
+
 interface PublicFeedParams {
   district?: string;
   search?: string;
@@ -135,20 +124,6 @@ interface PublicFeedResult {
   hadError?: boolean;
 }
 
-const priceRangeToMinMax = (priceRange?: string): { minPrice?: number; maxPrice?: number } => {
-  switch (priceRange) {
-    case '0-3m':
-      return { maxPrice: 3000000 };
-    case '3m-5m':
-      return { minPrice: 3000000, maxPrice: 5000000 };
-    case '5m-8m':
-      return { minPrice: 5000000, maxPrice: 8000000 };
-    case '8m+':
-      return { minPrice: 8000000 };
-    default:
-      return {};
-  }
-};
 
 // In-flight deduplication promise maps
 const inFlightFeedPromises = new Map<string, Promise<PublicFeedResult>>();
@@ -164,7 +139,10 @@ const fetchPublicFeed = (params: PublicFeedParams): Promise<PublicFeedResult> =>
   const promise = axiosClient
     .get('/v1/rent-rooms/public/feed', {
       params: {
-        district: params.district && params.district !== 'Tất cả quận/huyện' ? params.district : undefined,
+        // Tên quận/huyện lấy từ search-facets là cột `city` của toà nhà (xem getPublicSearchFacets bên
+        // backend: county = tỉnh/thành, city = quận/huyện) nên phải lọc bằng param `city` — param
+        // `district` của backend khớp cột `district` khác, không khớp được các giá trị đó.
+        city: params.district || undefined,
         search: params.search || undefined,
         minPrice: params.minPrice,
         maxPrice: params.maxPrice,
@@ -292,7 +270,7 @@ export const roomApi = {
     pageSize?: number;
     sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'distance';
   }): Promise<PublicFeedResult> => {
-    const { minPrice, maxPrice } = priceRangeToMinMax(params?.priceRange);
+    const { minPrice, maxPrice } = priceBucketToMinMax(params?.priceRange, params?.rentalTermType || 'SHORT_TERM');
     return fetchPublicFeed({
       district: params?.district,
       search: params?.keyword,
@@ -310,6 +288,21 @@ export const roomApi = {
       pageSize: params?.pageSize,
       sortBy: params?.sortBy,
     });
+  },
+
+  // Lựa chọn bộ lọc thật từ backend (khu vực + số phòng, loại phòng, tiện ích, số phòng gác xép) cho
+  // loại hình thuê đang xem — dùng cho RoomFilterBar và ô tìm nhanh/khu vực hot ở trang chủ.
+  getSearchFacets: async (rentalTermType: 'SHORT_TERM' | 'LONG_TERM' = 'SHORT_TERM'): Promise<SearchFacets> => {
+    const response: any = await axiosClient.get('/v1/rent-rooms/public/search-facets', {
+      params: { rentalTermType },
+    });
+    const raw = response?.data ?? response ?? {};
+    return {
+      locations: Array.isArray(raw.locations) ? raw.locations : [],
+      roomTypes: Array.isArray(raw.roomTypes) ? raw.roomTypes : [],
+      amenities: Array.isArray(raw.amenities) ? raw.amenities : [],
+      mezzanineCount: Number(raw.mezzanineCount) || 0,
+    };
   },
 
   // Back-compat helper for callers that just want a flat list (Home.tsx preview,
@@ -346,81 +339,6 @@ export const roomApi = {
   // availableCount + a representative room's photos/amenities)
   getRoomGroupById: async (groupId: string): Promise<Room | null> => {
     return fetchRoomGroupDetail(groupId);
-  },
-
-  // Submit viewing request
-  submitViewingRequest: async (request: ViewingRequest): Promise<{ success: boolean; message: string }> => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    
-    let existing: ViewingRequest[] = [];
-    const saved = localStorage.getItem(VIEWING_REQUESTS_KEY);
-    if (saved) {
-      try {
-        existing = JSON.parse(saved);
-      } catch (e) {
-        existing = [];
-      }
-    } else {
-      existing = [...INITIAL_MOCK_BOOKINGS];
-    }
-
-    const newRequest: ViewingRequest = {
-      ...request,
-      id: `req-${Date.now()}`,
-      status: 'PENDING',
-      createdAt: new Date().toISOString(),
-    };
-
-    existing.unshift(newRequest);
-    localStorage.setItem(VIEWING_REQUESTS_KEY, JSON.stringify(existing));
-
-    return {
-      success: true,
-      message: 'Gửi yêu cầu xem phòng thành công! Chủ nhà sẽ liên hệ với bạn trong thời gian sớm nhất.',
-    };
-  },
-
-  // Get user booking history
-  getUserViewingRequests: (tenantPhone?: string): ViewingRequest[] => {
-    const saved = localStorage.getItem(VIEWING_REQUESTS_KEY);
-    let list: ViewingRequest[] = [];
-    if (saved) {
-      try {
-        list = JSON.parse(saved);
-      } catch (e) {
-        list = [...INITIAL_MOCK_BOOKINGS];
-      }
-    } else {
-      list = [...INITIAL_MOCK_BOOKINGS];
-      localStorage.setItem(VIEWING_REQUESTS_KEY, JSON.stringify(list));
-    }
-
-    if (tenantPhone) {
-      return list.filter((r) => r.tenantPhone === tenantPhone || !r.tenantPhone);
-    }
-    return list;
-  },
-
-  // Cancel booking request
-  cancelViewingRequest: async (requestId: string): Promise<{ success: boolean; message: string }> => {
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    const saved = localStorage.getItem(VIEWING_REQUESTS_KEY);
-    let list: ViewingRequest[] = saved ? JSON.parse(saved) : [...INITIAL_MOCK_BOOKINGS];
-
-    list = list.map((item) => {
-      if (item.id === requestId) {
-        return { ...item, status: 'CANCELLED' as const };
-      }
-      return item;
-    });
-
-    localStorage.setItem(VIEWING_REQUESTS_KEY, JSON.stringify(list));
-
-    return {
-      success: true,
-      message: 'Đã hủy lịch hẹn xem phòng thành công.',
-    };
   },
 };
 

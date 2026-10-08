@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Bell, CheckCheck, Calendar, FileText, Info, Trash2, CheckCircle2, Clock, RotateCcw } from 'lucide-react';
@@ -7,12 +7,14 @@ import { FilterTabs } from '@/components/common/FilterTabs';
 import { Pagination } from '@/components/common/Pagination';
 import { NotificationListSkeleton } from '@/components/ui/Skeleton';
 import { Seo } from '@/components/common/Seo';
+import { useSocket } from '@/context/SocketContext';
 
 const PAGE_SIZE = 10;
 
 export const NotificationsPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const socket = useSocket();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'UNREAD' | 'READ'>('ALL');
@@ -62,6 +64,34 @@ export const NotificationsPage: React.FC = () => {
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
+
+  // Thông báo mới đẩy qua socket (`notification:new`, cùng sự kiện chuông navbar đang nghe) — hiện ngay
+  // trong danh sách không cần tải lại trang. Chỉ chèn vào đầu danh sách khi đang ở trang 1 và tab khớp
+  // (Tất cả/Chưa đọc — thông báo mới luôn là chưa đọc); các trường hợp khác chỉ cập nhật bộ đếm, để
+  // phân trang/tab đang xem không bị xáo trộn. Dùng ref cho tab/trang để không phải đăng ký lại socket.
+  const viewRef = useRef({ activeTab, pageNumber });
+  viewRef.current = { activeTab, pageNumber };
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewNotification = (notification: NotificationItem) => {
+      const { activeTab: tab, pageNumber: page } = viewRef.current;
+      setUnreadCount(prev => prev + 1);
+      setTotalCount(prev => prev + 1);
+      if (tab === 'READ') return;
+      setCurrentTabTotal(prev => prev + 1);
+      if (page !== 1) return;
+      setNotifications(prev => {
+        if (prev.some(n => n.id === notification.id)) return prev;
+        return [notification, ...prev].slice(0, PAGE_SIZE);
+      });
+    };
+
+    socket.on('notification:new', handleNewNotification);
+    return () => {
+      socket.off('notification:new', handleNewNotification);
+    };
+  }, [socket]);
 
   const handleMarkAsRead = async (item: NotificationItem) => {
     if (item.isRead) return;

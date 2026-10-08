@@ -14,6 +14,9 @@ import { ReportRoomButton } from '@/components/room/ReportRoomButton';
 import { RoomCard } from '@/components/common/RoomCard';
 import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
 import { DateRangeCalendar } from '@/components/booking/DateRangeCalendar';
+import { ViewingSlotPicker, ViewingSlotSelection } from '@/components/appointment/ViewingSlotPicker';
+import { ViewingBookingForm, ViewingBookingFormValues } from '@/components/appointment/ViewingBookingForm';
+import { ViewingConfirmationPanel } from '@/components/appointment/ViewingConfirmationPanel';
 import { MapPin, Maximize2, Users, ShieldCheck, CalendarCheck, CalendarDays, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2, Globe2 } from 'lucide-react';
 import { VietMapViewer } from '@/components/common/VietMapViewer';
 import { useToast } from '@/context/ToastContext';
@@ -22,6 +25,8 @@ import { getApiErrorMessage } from '@/utils/apiError';
 import { Seo } from '@/components/common/Seo';
 import { JsonLd } from '@/components/common/JsonLd';
 import { absoluteUrl } from '@/config/seo';
+import { formatVnd } from '@/utils/money';
+import { formatMoney } from '@/utils/money';
 
 export const RoomDetail: React.FC = () => {
   const { t } = useTranslation();
@@ -39,7 +44,6 @@ export const RoomDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [collaborators, setCollaborators] = useState<HouseCollaborator[]>([]);
   const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
@@ -63,6 +67,17 @@ export const RoomDetail: React.FC = () => {
   // MỚI hơn đang hiển thị — chỉ áp dụng kết quả nếu request vẫn còn là request mới nhất lúc resolve.
   const quoteRequestIdRef = useRef(0);
 
+  // Luồng đặt lịch xem nhà tự chọn (thay hẳn nút bấm đơn cũ) — modal 3 bước: chọn slot trên lịch
+  // trống của TOÀ NHÀ (không phải riêng phòng) → điền form bắt buộc (SĐT/email/...) → xem panel
+  // xác nhận. 'closed' = không có modal nào đang mở. pendingSlotSelection sống giữa bước 1 và 2;
+  // confirmedAppointment sống ở bước 3 (chính là response đầy đủ của POST /v1/appointments, đủ
+  // dữ liệu cho panel xác nhận, không cần gọi thêm request).
+  const [viewingModalStep, setViewingModalStep] = useState<'closed' | 'slot' | 'form' | 'confirmation'>('closed');
+  const [pendingSlotSelection, setPendingSlotSelection] = useState<ViewingSlotSelection | null>(null);
+  const [viewingSubmitting, setViewingSubmitting] = useState(false);
+  const [viewingFormError, setViewingFormError] = useState<string | null>(null);
+  const [confirmedAppointment, setConfirmedAppointment] = useState<Appointment | null>(null);
+
   const fetchActiveAppointment = async (currentRoom: Room | null) => {
     if (!isAuthenticated || !targetId || !currentRoom) return;
     try {
@@ -72,7 +87,13 @@ export const RoomDetail: React.FC = () => {
         const matchesRoom = currentRoom.roomGroupId
           ? app.rentRoom?.roomGroupId === currentRoom.roomGroupId
           : app.rentRoomId === targetId;
-        return matchesRoom && ['PENDING_OWNER', 'OWNER_OFFERED_TIMES', 'USER_ACCEPTED'].includes(app.status);
+        // PENDING_APPROVAL — đặt vào khung giờ mặc định (nhà chưa cấu hình giờ mở cửa), đang chờ
+        // chủ nhà duyệt — CŨNG phải chặn đặt lại/hiện đúng trạng thái "đang chờ" như PENDING_OWNER,
+        // khác CONFIRMED (cố tình không chặn, xem comment ở handleRequestViewing()).
+        return (
+          matchesRoom &&
+          ['PENDING_OWNER', 'PENDING_APPROVAL', 'OWNER_OFFERED_TIMES', 'USER_ACCEPTED'].includes(app.status)
+        );
       });
       setActiveAppointment(found || null);
     } catch (err) {
@@ -193,16 +214,20 @@ export const RoomDetail: React.FC = () => {
     );
   }
 
-  const formatPrice = (price: number) => {
-    return `${(price / 1000000).toLocaleString('vi-VN')} ${t('roomCard.million')}`;
-  };
+  const formatPrice = (price: number) => formatVnd(price);
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.info(t('roomDetail.toastLinkCopied'));
   };
 
-  const handleRequestViewing = async () => {
+  // Mở bước 1 (chọn slot) của luồng đặt lịch xem nhà tự chọn — thay cho việc tạo lịch hẹn ngay
+  // (hành vi cũ). activeAppointment ở đây khớp lịch hẹn LEGACY (PENDING_OWNER/OWNER_OFFERED_TIMES/
+  // USER_ACCEPTED) + PENDING_APPROVAL (luồng mới, đặt vào khung giờ mặc định — đang chờ chủ nhà
+  // duyệt, xem filter trong fetchActiveAppointment) — cố tình KHÔNG mở rộng để khớp cả CONFIRMED,
+  // vì sản phẩm cho phép đặt nhiều lần/nhiều khung giờ khác nhau không giới hạn ở luồng mới (chỉ
+  // chặn trùng slot ở phía server khi cùng 1 slot, không chặn đặt thêm slot khác).
+  const handleRequestViewing = () => {
     if (!isAuthenticated) {
       toast.warning(t('roomDetail.toastNeedLogin'));
       navigate(`/login?redirect=${isGroupView ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`}`);
@@ -216,21 +241,61 @@ export const RoomDetail: React.FC = () => {
       return;
     }
 
-    setSubmitting(true);
-    try {
-      const fullNote = t('roomDetail.viewingNote', { name: user?.fullName || '', phone: user?.phoneNumber || '' });
-      await appointmentApi.createAppointment(
-        room.roomGroupId
-          ? { roomGroupId: room.roomGroupId, note: fullNote }
-          : { rentRoomId: room.id, note: fullNote }
-      );
+    if (!room.houseId) {
+      // Không nên xảy ra với dữ liệu thật (mọi phòng đều thuộc 1 toà nhà) — chặn sớm thay vì mở
+      // modal rồi lộ lỗi tải lưới lịch trống khó hiểu hơn.
+      toast.error(t('errors.generic'));
+      return;
+    }
 
-      toast.success(t('roomDetail.toastRequestSuccess'));
+    setViewingFormError(null);
+    setViewingModalStep('slot');
+  };
+
+  const handleViewingSlotNext = (selection: ViewingSlotSelection) => {
+    setPendingSlotSelection(selection);
+    setViewingModalStep('form');
+  };
+
+  const handleViewingFormBack = () => {
+    setViewingModalStep('slot');
+  };
+
+  const handleCloseViewingModal = () => {
+    setViewingModalStep('closed');
+    setPendingSlotSelection(null);
+    setConfirmedAppointment(null);
+    setViewingFormError(null);
+  };
+
+  const handleViewingFormSubmit = async (values: ViewingBookingFormValues) => {
+    if (!pendingSlotSelection || !room) return;
+
+    setViewingSubmitting(true);
+    setViewingFormError(null);
+    try {
+      const res: any = await appointmentApi.createAppointment({
+        ...(room.roomGroupId ? { roomGroupId: room.roomGroupId } : { rentRoomId: room.id }),
+        note: values.note,
+        viewingDate: pendingSlotSelection.viewingDate,
+        startMinute: pendingSlotSelection.startMinute,
+        slotCount: pendingSlotSelection.slotCount,
+        viewerType: values.viewerType,
+        contactPhone: values.contactPhone,
+        contactEmail: values.contactEmail,
+        expectedOccupantsCount: values.expectedOccupantsCount,
+        expectedOccupantName: values.expectedOccupantName,
+      });
+      const created: Appointment = res?.data || res;
+      setConfirmedAppointment(created);
+      setViewingModalStep('confirmation');
+      // Cập nhật activeAppointment/nút hành động chính ở nền — không chặn hiển thị panel xác
+      // nhận, và cố tình không await (lỗi ở đây không nên làm hỏng trải nghiệm vừa đặt thành công).
       fetchActiveAppointment(room);
     } catch (err: any) {
-      toast.error(getApiErrorMessage(err));
+      setViewingFormError(getApiErrorMessage(err));
     } finally {
-      setSubmitting(false);
+      setViewingSubmitting(false);
     }
   };
 
@@ -342,7 +407,7 @@ export const RoomDetail: React.FC = () => {
                   </span>
                 )}
               </span>
-              <span className="font-black text-slate-900">{quote.amount.toLocaleString('vi-VN')}đ</span>
+              <span className="font-black text-slate-900">{formatVnd(quote.amount)}</span>
             </div>
           ) : null}
         </div>
@@ -368,6 +433,13 @@ export const RoomDetail: React.FC = () => {
         <Clock className="w-4 h-4 text-amber-600 shrink-0" />
         <span>{t('roomDetail.statusPending')}</span>
       </div>
+    ) : /* Khung giờ mặc định (nhà chưa cấu hình giờ mở cửa) — đang chờ chủ nhà duyệt, KHÔNG
+           được rơi vào nhánh "statusConfirmed" bên dưới (sẽ báo sai là đã xác nhận). */
+    activeAppointment.status === 'PENDING_APPROVAL' ? (
+      <div className="w-full py-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed text-center px-3">
+        <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+        <span>{t('roomDetail.statusPendingApproval')}</span>
+      </div>
     ) : activeAppointment.status === 'OWNER_OFFERED_TIMES' ? (
       <button
         onClick={() => navigate('/appointments')}
@@ -388,11 +460,10 @@ export const RoomDetail: React.FC = () => {
   ) : (
     <button
       onClick={handleRequestViewing}
-      disabled={submitting}
       className="w-full py-4 rounded-2xl gradient-bg text-white font-bold text-sm shadow-xl shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
     >
       <CalendarCheck className="w-5 h-5" />
-      <span>{submitting ? t('roomDetail.sending') : t('roomDetail.requestViewingButton')}</span>
+      <span>{t('roomDetail.requestViewingButton')}</span>
     </button>
   );
 
@@ -573,15 +644,15 @@ export const RoomDetail: React.FC = () => {
             <div className="space-y-1">
               <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.rentPrice')}</span>
               <span className="text-lg font-black text-emerald-600 font-heading">
-                {formatPrice(room.price)} / {room.longTermDurationValue && room.longTermDurationValue > 1 ? `${room.longTermDurationValue} ` : ''}{room.longTermPriceUnit === 'PER_YEAR' ? 'năm' : 'tháng'}
+                {formatPrice(room.price)} / {room.longTermDurationValue && room.longTermDurationValue > 1 ? `${room.longTermDurationValue} ` : ''}{room.longTermPriceUnit === 'PER_YEAR' ? t('roomCard.unitYear') : t('roomCard.unitMonth')}
               </span>
             </div>
 
             {room.shortTermPrice ? (
               <div className="space-y-1">
-                <span className="text-xs text-slate-500 font-semibold block">Giá ngắn hạn</span>
+                <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.shortTermPrice')}</span>
                 <span className="text-base font-bold text-amber-600 font-heading">
-                  {formatPrice(room.shortTermPrice)} / {room.shortTermDurationValue && room.shortTermDurationValue > 1 ? `${room.shortTermDurationValue} ` : ''}{room.shortTermPriceUnit === 'PER_HOUR' ? 'giờ' : 'ngày'}
+                  {formatPrice(room.shortTermPrice)} / {room.shortTermDurationValue && room.shortTermDurationValue > 1 ? `${room.shortTermDurationValue} ` : ''}{room.shortTermPriceUnit === 'PER_HOUR' ? t('roomCard.unitHour') : t('roomCard.unitDay')}
                 </span>
               </div>
             ) : (
@@ -602,9 +673,11 @@ export const RoomDetail: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-semibold block">Thời hạn HĐ tối thiểu</span>
+              <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.minContractTerm')}</span>
               <span className="text-sm font-bold text-indigo-600">
-                {room.minContractTermMonths ? `${room.minContractTermMonths} tháng` : 'Linh hoạt'}
+                {room.minContractTermMonths
+                  ? t('roomDetail.minContractMonths', { count: room.minContractTermMonths })
+                  : t('roomDetail.minContractFlexible')}
               </span>
             </div>
 
@@ -651,7 +724,7 @@ export const RoomDetail: React.FC = () => {
                     <div>
                       <p className="text-sm font-bold text-slate-800">{svc.name}</p>
                       <p className="text-xs text-emerald-600 font-semibold">
-                        {svc.price !== undefined ? `${svc.price.toLocaleString('vi-VN')} ${t('roomDetail.currency')}` : t('roomDetail.contactOwner')}
+                        {svc.price !== undefined ? `${formatMoney(svc.price)} ${t('roomDetail.currency')}` : t('roomDetail.contactOwner')}
                       </p>
                       {svc.note && <p className="text-[11px] text-slate-400 mt-0.5">{svc.note}</p>}
                     </div>
@@ -778,6 +851,34 @@ export const RoomDetail: React.FC = () => {
           }}
           onClose={() => setShowCalendar(false)}
         />
+      )}
+
+      {/* Đặt lịch xem nhà tự chọn — modal 3 bước, xem handleRequestViewing/handleViewingSlotNext/
+          handleViewingFormSubmit. Lịch trống scope theo TOÀ NHÀ (room.houseId), không phải riêng
+          phòng — đúng thiết kế (chủ nhà cấu hình 1 lịch dùng chung cho cả toà nhà). */}
+      {viewingModalStep === 'slot' && room.houseId && (
+        <ViewingSlotPicker
+          rentHouseId={room.houseId}
+          onNext={handleViewingSlotNext}
+          onClose={handleCloseViewingModal}
+        />
+      )}
+
+      {viewingModalStep === 'form' && (
+        <ViewingBookingForm
+          submitting={viewingSubmitting}
+          serverError={viewingFormError}
+          defaultContactPhone={user?.phoneNumber}
+          defaultContactEmail={user?.email}
+          defaultOccupantName={user?.fullName}
+          onBack={handleViewingFormBack}
+          onClose={handleCloseViewingModal}
+          onSubmit={handleViewingFormSubmit}
+        />
+      )}
+
+      {viewingModalStep === 'confirmation' && confirmedAppointment && (
+        <ViewingConfirmationPanel appointment={confirmedAppointment} onClose={handleCloseViewingModal} />
       )}
 
       {/* Sticky mobile CTA — dưới lg, sidebar gốc (giá + nút hành động) nằm sau toàn bộ

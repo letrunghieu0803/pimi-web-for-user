@@ -125,8 +125,8 @@
   "000124": "Vui lòng cung cấp ít nhất 1 trường thông tin cần cập nhật",
   "000125": "Cần chọn ít nhất 1 phòng, hoặc áp dụng cho tất cả các phòng",
   "000126": "Không tìm thấy thông báo",
-  "000127": "Thiếu token xác thực",
-  "000128": "Token xác thực không hợp lệ",
+  "000127": "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại",
+  "000128": "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại",
   "000129": "Token không hợp lệ",
   "000130": "Truy cập bị từ chối do không đúng vai trò người dùng",
   "000196": "Tài khoản quản trị/cộng tác viên chỉ được đăng nhập tại trang quản trị",
@@ -136,5 +136,15 @@
   "000204": "Không tìm thấy tố cáo phòng",
   "000215": "Tài khoản này không được phép đăng nhập với vai trò được yêu cầu ở ứng dụng này",
   "000216": "Ngày kết thúc hợp đồng phải sau ngày bắt đầu",
-  "000217": "Thời gian hợp đồng bị chồng chéo với 1 hợp đồng khác của phòng này"
+  "000217": "Thời gian hợp đồng bị chồng chéo với 1 hợp đồng khác của phòng này",
+  "000227": "Khung giờ này không mở để đặt xem nhà — vui lòng chọn khung giờ khác",
+  "000228": "Khung giờ mở cửa không tồn tại",
+  "000229": "Khung giờ này chồng lấn với 1 khung giờ khác đã cấu hình cùng ngày",
+  "000230": "Khung giờ không hợp lệ — giờ bắt đầu/kết thúc phải là bội số của 30 phút và giờ kết thúc phải sau giờ bắt đầu",
+  "000231": "Khung giờ khoá không tồn tại",
+  "000232": "Bạn không có quyền cấu hình lịch xem nhà của toà nhà này",
+  "000233": "Khoảng thời gian xem lịch tối đa 62 ngày",
+  "000234": "Lịch hẹn này không thể huỷ (đã huỷ/đã hoàn tất trước đó)",
+  "000235": "Bạn không có quyền huỷ lịch hẹn này",
+  "000236": "Chỉ có thể đặt lịch xem nhà cách hiện tại ít nhất 30 phút và trong vòng 7 ngày tới"
 }

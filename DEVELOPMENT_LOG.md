@@ -4,6 +4,274 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-07 — AASA: nhận thêm link hoá đơn /invoice/*
+
+**Thay đổi:** `public/.well-known/apple-app-site-association` thêm `/invoice/*` (app đã có màn xem hoá đơn công khai). `assetlinks.json` không đổi (Android lọc theo đường dẫn ở `AndroidManifest.xml`).
+
+**Đã kiểm tra:** JSON hợp lệ. Nhắc lại: phải deploy với `Content-Type: application/json` cho file không có đuôi (xem mục cùng ngày bên dưới).
+
+## 2026-10-07 — File xác thực domain cho deep link vào app (Universal Links / App Links)
+
+**Vì sao:** Để link pimi.vn mở thẳng app Pimi khi đã cài (xem log phongtroapp cùng ngày).
+
+**Thay đổi:** `public/.well-known/apple-app-site-association` (appID `H3HQ9LLS3Q.com.piminest.prod`; chỉ `/rooms/*`, `/room-groups/*`, `/news/*`, `/payment/*`, `/bookings`, `/appointments`, `/appointment/*` — không có `/invoice/*`) và `public/.well-known/assetlinks.json` (package `com.phongtroapp`, chỉ fingerprint SHA-256 chứng chỉ release; cố tình KHÔNG thêm fingerprint debug vì keystore debug mặc định ai cũng có).
+
+**Khi deploy (quan trọng):** `apple-app-site-association` không có đuôi file — phải upload lên S3 với `Content-Type: application/json` (mặc định S3 gán octet-stream thì iOS có thể từ chối); không được redirect. Hiện `https://pimi.vn/.well-known/...` trả 200 `text/html` (SPA fallback về index.html) nên trước khi deploy file là chưa hoạt động. Sau deploy kiểm tra: `curl -I https://pimi.vn/.well-known/apple-app-site-association` phải 200 + `application/json`. iOS cache AASA qua CDN của Apple (có thể trễ vài giờ–1 ngày); Android xác minh lúc cài/cập nhật app.
+
+**Đã kiểm tra:** `vite build` đưa cả 2 file vào output; JSON hợp lệ.
+
+## 2026-10-07 — Chế độ Bearer dự phòng khi trình duyệt chặn cookie (văng sau đăng nhập trên điện thoại)
+
+**Vì sao:** Phản hồi: đăng nhập trên web bằng điện thoại bị văng ngay. Phiên web nằm hoàn toàn trong cookie httpOnly do API (domain khác site với web) set — iOS Safari/WebKit và webview chặn cookie bên thứ ba nên sau khi đăng nhập cookie không được lưu → `GET /users/me` 401 `000127` → refresh cũng hỏng → bị đăng xuất.
+
+**Thay đổi:** Thêm chế độ Bearer dự phòng (`src/services/bearerSession.ts`): token từ body login giữ trong bộ nhớ làm "ứng viên"; nếu request có xác thực đầu tiên trả 401 `000127` thì lưu token vào localStorage (`pimi_bearer_session_user`) và thử lại với `Authorization: Bearer` (backend bỏ qua CSRF khi có header). Refresh dùng Bearer refresh token, logout gửi `{refreshToken}` rồi xoá phiên, socket gửi `auth.token`. Trình duyệt dùng cookie được thì giữ nguyên hành vi cũ (ứng viên bị bỏ khi `GET /users/me` thành công, token không bao giờ vào localStorage). Đánh đổi: ở chế độ Bearer token nằm trong localStorage nên lộ nếu có XSS — chỉ áp dụng khi cookie không dùng được. Giải pháp lâu dài: đưa API về cùng site với từng web (CloudFront `/api/*`).
+
+**Đã kiểm tra:** `tsc -p tsconfig.app.json` sạch, `vite build` OK. Sửa thêm: request thử lại sau refresh luôn gắn lại access token mới (không giữ header cũ). CHƯA thử trên iPhone/Safari thật (backend: e2e `sessions.e2e-spec.ts` có ca Bearer thuần, 8/8).
+
+## 2026-10-06 — Đồng bộ với app: hồ sơ thật, bảo mật tài khoản, bộ lọc từ backend, bỏ dữ liệu giả
+
+**Vì sao:** Rà soát web↔app. Hồ sơ chỉ lưu localStorage (giả), bộ lọc/khu vực hot dùng danh sách cứng, nhiều chỗ mock.
+
+**Thay đổi:** `Profile` đọc/lưu thật (`/users/me`), huy hiệu xác thực theo `isVerified`, số lịch hẹn thật; đổi mật khẩu, đổi email (OTP), khoá tài khoản, kích hoạt lại ở Login. Quận/loại phòng/tiện ích/khu vực hot lấy từ `search-facets` (lọc theo `city`). Bỏ: form Liên hệ giả, số liệu Home cứng, nút điền tài khoản mẫu, fallback tin tức mock, `mockData.ts`, `NewsArticleModal`. Thông báo cập nhật realtime (`notification:new`); chuỗi tiếng Việt cứng → i18n vi/en, `alert()` GPS → toast. **Bỏ qua KYC khách thuê:** backend chặn RENT_USER ở `POST /images/list`.
+
+**Đã kiểm tra:** `tsc -p tsconfig.app.json` sạch; `vite build` OK. CHƯA chạy trên trình duyệt.
+
+## 2026-10-06 — Khoảng giá theo loại hình tìm kiếm
+
+**Vì sao:** Backend giờ lọc/sắp xếp tìm ngắn hạn theo giá ngắn hạn (đồng/ngày-giờ); các nút khoảng giá cũ (<3tr…>8tr) là giá tháng nên không còn hợp.
+
+**Thay đổi:** `utils/priceRanges.ts` (mới): ngắn hạn `<300k / 300–500k / 500k–1tr / >1tr` (id `s0-300k`…), dài hạn giữ nguyên id cũ (`0-3m`…, URL cũ chạy tiếp).
+`RoomFilterBar` hiện bộ khoảng giá theo công tắc ngắn/dài hạn và reset về "tất cả" khi đổi loại hình; `Home` ô tìm nhanh (dẫn tới danh sách ngắn hạn) dùng khoảng giá ngắn hạn;
+`roomApi` quy đổi theo loại hình (id không thuộc loại hình đang tìm = không lọc). i18n `home.shortPrice*`.
+
+**Đã kiểm tra:** `tsc` sạch; chạy thật: `/rooms?priceRange=s300k-500k` gọi API với `minPrice=300000&maxPrice=500000&rentalTermType=SHORT_TERM`, bộ lọc hiện nhãn ngắn hạn.
+
+## 2026-10-06 — Huỷ đặt phòng ngắn hạn + theo dõi hoàn tiền
+
+**Vì sao:** Đặt phòng ngắn hạn đã thanh toán chưa có cách huỷ/hoàn tiền (xem log bff cùng ngày).
+
+**Thay đổi:** `CancelBookingModal` — xem trước hậu quả: đơn CHƯA thanh toán huỷ ngay; đơn ĐÃ thanh toán hiện mức hoàn GỢI Ý theo chính sách (2 giờ đầu + còn ≥ 4 giờ: 100%; ≥ 3 ngày: 100%; ≥ 1 ngày: 50%; còn lại: không hoàn — mốc tô đậm), nhập tài khoản nhận hoàn, gửi yêu cầu cho Pimi
+(ghi rõ mức chính thức do Pimi xác nhận, phòng vẫn giữ cho tới khi duyệt). `RefundStatusNote` hiện trạng thái: chờ xem xét / đã duyệt (X% = Y) / đã hoàn (mã giao dịch) / bị từ chối. Trang thanh toán đặt phòng: nút huỷ cho đơn chờ thanh toán và đã thanh toán, khối "đã huỷ"; lịch sử thuê: đơn đã
+huỷ nhưng từng thanh toán vẫn hiện kèm trạng thái hoàn tiền, nút "Huỷ đặt phòng" cho đơn PAID chưa có yêu cầu. i18n `bookingCancel.*`.
+
+**Đã kiểm tra:** `tsc` sạch; chạy thật với backend cục bộ: đơn đặt 1 giờ trước, nhận phòng sau 5 ngày → gợi ý 100% (tô đậm dòng 2 giờ đầu) → gửi yêu cầu → thẻ đổi thành "đang chờ Pimi xem xét"; đơn đã duyệt 50% hiện "hoàn 50% = 500.000đ".
+Chưa thử trên UI: huỷ ngay đơn chưa thanh toán ở trang thanh toán.
+
+## 2026-10-06 — Thông báo khi thanh toán thành công + thẻ phòng đúng giá theo loại hình
+
+**Vì sao:** Khi webhook xác nhận, trang thanh toán chỉ lặng lẽ đổi giao diện — khách đang nhìn app ngân hàng/tab
+khác dễ bỏ lỡ. Thẻ phòng trong mục dài hạn có thể hiện giá ngắn hạn của phòng toà "cả hai".
+
+**Thay đổi:** `BookingPayment.tsx` và `InvoiceDetail.tsx` hiện toast "Thanh toán thành công! Đã nhận X đ…" đúng lúc
+trạng thái chuyển từ chờ thanh toán sang đã thanh toán (không báo khi mở lại đơn đã thanh toán từ trước); chuông
+thông báo vẫn nhận thông báo từ backend qua socket như cũ. `RoomCard` thêm prop `priceTerm` — mục ngắn hạn hiện giá
+ngắn hạn, mục dài hạn hiện giá dài hạn (`RoomList`, `Home` truyền vào; yêu thích/đã xem giữ cách cũ). Danh sách ngắn
+hạn chỉ còn phòng có giá ngắn hạn do backend lọc (xem log bff cùng ngày).
+
+**Đã kiểm tra:** `tsc` sạch; chạy thật trang hoá đơn công khai với backend cục bộ: đổi hoá đơn sang PAID trong DB →
+toast "Payment successful! We received 2.500.000 đ for this invoice." xuất hiện, trang chuyển sang "đã thanh toán".
+Chưa thử luồng `BookingPayment` trên giao diện (cần đăng nhập người thuê; cùng cơ chế toast) và `RoomCard`/`priceTerm`.
+
+## 2026-10-06 — Trang hoá đơn công khai tự cập nhật khi khách đã thanh toán
+
+**Vì sao:** Trang `/invoice/:token` chỉ tải 1 lần nên khách quét QR trả tiền xong vẫn thấy mã QR cho tới khi tải lại
+(trang đặt phòng và các màn app/owner đã có poll, riêng trang này thiếu).
+
+**Thay đổi:** `pages/InvoiceDetail.tsx` — hoá đơn `PENDING_PAYMENT`/`OVERDUE` tự hỏi lại server mỗi 5 giây (bỏ
+qua khi tab ẩn, lỗi mạng thoáng qua giữ nguyên dữ liệu đang hiển thị) và làm mới ngay khi tab hiện lại (khách
+quay từ app ngân hàng về).
+
+**Đã kiểm tra:** `tsc` sạch; chạy thật với backend cục bộ: mở trang hoá đơn chờ thanh toán, đổi hoá đơn sang PAID
+trong DB, trang tự chuyển "hoá đơn đã được thanh toán" sau ~4 giây không cần tải lại. (Pane trình duyệt ở trạng
+thái tab ẩn nên phải giả lập `document.hidden=false` khi thử.)
+
+## 2026-10-06 — Số tiền luôn hiển thị đủ dạng 3.500.000đ
+
+**Vì sao:** Giá phòng đang rút gọn "3,5 triệu" / "3.5 tr" (thẻ phòng, chi tiết phòng, lịch sử, bản đồ),
+yêu cầu thống nhất mọi số tiền dạng chấm ngăn cách hàng nghìn.
+
+**Thay đổi:** thêm `utils/money.ts` (`formatMoney`/`formatVnd`); `RoomCard`, `RoomDetail`,
+`BookingHistory`, `ViewingConfirmationPanel`, nhãn giá trên bản đồ `RoomList`, `BookingPayment`,
+`InvoiceDetail` đều dùng chung; nhãn khoảng giá bộ lọc ("Dưới 3 triệu"...) đổi sang số đầy đủ (vi/en);
+dữ liệu mẫu địa điểm hot.  Khoá i18n `roomCard.million` không còn được dùng ở code (chưa xoá khỏi file dịch).
+
+**Đã kiểm tra:** `npx tsc --noEmit` sạch.
+
+## 2026-10-04 — Đổi favicon sang logo chim cánh cụt
+
+**Vì sao:** Thay favicon cũ bằng logo mới (chim cánh cụt) cho 3 trang production (pimi.vn,
+bizpimi.vn, piminest.com).
+
+**Thay đổi:**
+- Thêm `favicon.png` (512), `favicon-32.png`, `apple-touch-icon.png` (180) từ ảnh gốc, sửa thẻ
+  `<link rel="icon">` trong `index.html`, xoá `favicon.svg` cũ.
+- `firebase-messaging-sw.js` (icon thông báo đẩy) + logo trong JSON-LD (`Home.tsx`,
+  `NewsDetail.tsx`) đổi `/favicon.svg` → `/favicon.png`.
+- Bản đang chạy trên S3 được vá trực tiếp (index.html + service worker + file icon, invalidate
+  CloudFront) thay vì build lại, nên JSON-LD trong bundle vẫn trỏ `/favicon.svg` (file cũ còn trên
+  S3) cho tới lần deploy build mới.
+
+**Đã kiểm tra:** `npx tsc --noEmit` không đụng tới (chỉ sửa chuỗi). Live: pimi.vn trả đúng thẻ icon mới, 3 file PNG HTTP 200.
+
+## 2026-10-02 — Giới hạn cửa sổ đặt lịch xem phòng: cách hiện tại 30 phút - 7 ngày
+
+**Vì sao:** Backend (xem `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) thêm giới hạn: slot chỉ đặt
+được nếu cách hiện tại ít nhất 30 phút và trong vòng 7 ngày tới. `ViewingSlotPicker.tsx` (lịch chọn
+slot) đọc `isOpen` thẳng từ API public grid — field này giờ backend đã tự lọc đúng theo giới hạn
+mới, nên **không cần sửa logic component nào cả**, slot/ngày ngoài cửa sổ tự động hiện khoá/gạch
+ngang như khi chủ nhà khoá riêng.
+
+**Thay đổi:**
+- `services/appointmentAvailabilityApi.ts`: chỉ cập nhật comment giải thích `isOpen: false` giờ có
+  2 nguyên nhân (chủ nhà khoá riêng HOẶC ngoài cửa sổ đặt lịch), không đổi code.
+- `i18n/locales/{vi,en}/errors.json`: thêm bản dịch lỗi `000236` — phòng trường hợp slot hết hạn
+  ngay lúc khách đang điền form (lưới đã tải trước đó, "now" trôi qua trong lúc thao tác), submit
+  sẽ bị BE từ chối với thông báo rõ ràng thay vì lỗi chung chung.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Không cần live-test riêng UI — logic
+lọc nằm hoàn toàn ở BE (đã verify qua API thật, xem log BE), FE chỉ đọc lại đúng field `isOpen` sẵn
+có, hành vi UI (khoá/gạch ngang slot và ngày) đã được component xử lý từ trước.
+
+## 2026-09-30 — Trang xem chi tiết lịch hẹn công khai cho người xem hộ (link trong tin ZNS)
+
+**Vì sao:** Backend (xem `bff-for-pimi/DEVELOPMENT_LOG.md` cùng ngày) thêm tin ZNS xác nhận đặt
+lịch thành công gửi tới SĐT liên hệ khách nhập lúc đặt. Nút "Xem chi tiết" trong tin đó cần 1
+trang đích: nếu "xem hộ" (viewerType=PROXY), người nhận thường không có tài khoản Pimi nên phải
+xem được KHÔNG cần đăng nhập (qua token); nếu "tự đi xem" (SELF), người nhận chính là chủ tài
+khoản đã đặt lịch, chỉ cần đưa về trang danh sách lịch hẹn đã đăng nhập sẵn.
+
+**Thay đổi:**
+- Trang mới `pages/AppointmentPublicView.tsx`, route `/appointment-view/:composite` — đọc
+  `{appointmentId}.{viewToken}.{env}` (viewToken RỖNG = SELF). Cùng cơ chế redirect-theo-môi-trường
+  với `InvoiceDetail.tsx` (domain nút ZNS khoá cứng pimi.vn, bản production chỉ gọi được
+  api.pimi.vn). Token rỗng → điều hướng `/appointments?highlight=<id>` (TenantAppointments.tsx đã
+  sẵn hỗ trợ tham số này). Token có giá trị → gọi `GET /appointments/public/:id?token=` (không cần
+  đăng nhập), tái dùng NGUYÊN `ViewingConfirmationPanel.tsx` để render (đúng layout/nội dung với
+  panel xác nhận hiện ngay lúc đặt thành công, không viết lại UI mới).
+- `services/appointmentApi.ts` thêm `getPublic(id, token)`.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch, `npm run lint` không phát sinh cảnh
+báo mới. Live-test qua Browser pane (dev server cục bộ đang chạy sẵn của người dùng + BE cục bộ,
+đã `prisma db push` áp cột `viewToken` mới): `/appointment-view/malformed` → "liên kết không hợp
+lệ"; `/appointment-view/<id>..prod` (token rỗng) → điều hướng đúng
+`/appointments?highlight=<id>`; `/appointment-view/<id>.<token>.prod` (id/token không tồn tại) →
+gọi đúng API, nhận 404, hiện đúng "lịch hẹn không tồn tại".
+
+## 2026-09-30 — Báo rõ cho người dùng khi phiên đăng nhập đã mất thật (không chỉ để lỗi thô trồi lên)
+
+**Vì sao:** Phát hiện qua live-test cục bộ — `isAuthenticated` (AuthContext) chỉ dựa vào hồ sơ
+cache trong `localStorage`, không xác thực lại với server, nên navbar vẫn hiện "đã đăng nhập" dù
+cookie phiên thật đã mất (hết hạn cả access lẫn refresh, hoặc bị xoá). Hệ quả: người dùng điền hết
+1 form dài (vd đặt lịch xem phòng) rồi mới thấy lỗi thô "Thiếu token xác thực" — không có hướng
+dẫn gì để biết cần làm gì tiếp theo.
+
+**Thay đổi:**
+- `services/axiosClient.ts`: thêm `SESSION_EXPIRED_EVENT` — bắn ra (qua `window.dispatchEvent`,
+  1 lần duy nhất cho tới khi có phiên mới) đúng lúc luồng tự làm mới token ngầm (thêm hôm
+  2026-09-29) xác nhận phiên đã mất THẬT (refresh cũng thất bại), không phải chỉ access token hết
+  hạn tạm thời.
+- `context/AuthContext.tsx`: lắng nghe sự kiện trên — dọn sạch `user` (navbar tự chuyển về "chưa
+  đăng nhập", xoá cache localStorage) + hiện toast rõ ràng "Phiên đăng nhập đã hết hạn, vui lòng
+  đăng nhập lại". Chỉ báo khi trước đó đang tưởng đã đăng nhập (tránh làm phiền khách vãng lai).
+- `i18n/locales/{vi,en}/errors.json`: sửa lại text 000127/000128 (trước đây dịch thô "Thiếu token
+  xác thực"/"Token xác thực không hợp lệ") thành cùng 1 câu hướng dẫn hành động rõ ràng — 2 mã này
+  luôn cùng ý nghĩa "chưa xác thực", không cần phân biệt.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch, `npm run lint` không phát sinh cảnh
+báo mới. Live-test qua Browser pane (dev server cục bộ của chính người dùng, port 5174): tiêm hồ
+sơ giả vào `localStorage` rồi reload — xác nhận toast hiện đúng câu, navbar tự chuyển về "Đăng
+nhập/Đăng ký", `localStorage` được dọn sạch, và dù nhiều lời gọi nền cùng lúc thất bại 401
+(unread-count gọi từ nhiều nơi) chỉ hiện đúng 1 toast (không spam).
+
+## 2026-09-30 — Sửa form đặt lịch: chuyển tab "Xem hộ" không xoá dữ liệu tự điền của "Chính mình"
+
+**Vì sao:** Phát hiện qua ảnh chụp thật — chọn tab "Xem hộ" vẫn còn nguyên SĐT/email/tên của
+chính tài khoản đang đăng nhập (tự điền sẵn cho tab "Chính mình" lúc mở form, `useState` chỉ khởi
+tạo 1 lần, đổi tab không đụng tới 3 field này). Sai vì SĐT/email/tên lúc xem hộ phải là của người
+sẽ đi xem thay, không phải người đặt lịch.
+
+**Thay đổi:**
+- `components/appointment/ViewingBookingForm.tsx`: thêm `handleViewerTypeChange()` — chuyển sang
+  "Chính mình" thì tự điền lại đúng thông tin tài khoản đang đăng nhập (phòng trường hợp khách đã
+  gõ đè trước đó), chuyển sang "Xem hộ" thì xoá trắng cả 3 field, bắt khách tự nhập thông tin
+  người xem hộ.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Chưa live-test qua browser (fix chỉ
+đổi state phía client, không qua API — xác minh qua đọc logic trực tiếp thay vì click-through, vì
+click-through cần tài khoản đã đăng nhập + phòng còn slot mở).
+
+## 2026-09-30 — Trang trung chuyển cho nút "Xem chi tiết" lịch hẹn trong tin ZNS
+
+**Vì sao:** Tin ZNS "có khách đặt lịch hẹn" gửi tới chủ nhà (xem `bff-for-pimi/DEVELOPMENT_LOG.md`
+cùng ngày) có nút "Xem chi tiết" — Zalo bắt buộc domain nút phải là domain ĐÃ XÁC THỰC khai báo cố
+định trên OA Manager. `pimi.vn` là domain duy nhất đã xác thực (dùng chung với hoá đơn), nhưng
+trang chi tiết lịch hẹn THẬT lại nằm ở Web-Pimi-for-owner (app khác, chỉ deploy trên Vercel, chưa
+có subdomain pimi.vn riêng). Cần 1 trang trung chuyển giữ domain pimi.vn rồi tự bắn sang đúng app.
+
+**Thay đổi:**
+- Trang mới `pages/AppointmentRedirect.tsx`, route `/appointment/:composite` — đọc
+  `{appointmentId}.{env}` từ URL (cùng quy ước nối chuỗi với `/invoice/:composite`), redirect toàn
+  trang (`window.location`, khác origin) sang `<OWNER_WEB_ORIGIN>/appointments?highlight=<id>` —
+  đúng route + query param `AppointmentList.tsx` bên Web-Pimi-for-owner đã dùng sẵn để cuộn tới +
+  làm nổi bật 1 lịch hẹn cụ thể. Không gọi API, không hiển thị nội dung — chỉ chuyển tiếp.
+- Domain đích đọc từ `VITE_OWNER_WEB_URL`/`VITE_OWNER_WEB_TEST_URL` (mặc định fallback về domain
+  Vercel hiện có của Web-Pimi-for-owner, CHƯA có bản test riêng nên tạm trùng bản production — set
+  `VITE_OWNER_WEB_TEST_URL` khi có bản test thật).
+- Thêm khoá i18n `appointmentRedirect.*` (vi/en).
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch, `npm run lint` không phát sinh cảnh
+báo mới. Live-test qua Browser pane: `/appointment/<id>.test` build đúng URL đích kèm query param
+đúng định dạng (redirect thật báo 404 vì bản Vercel test hiện không hoạt động — không liên quan
+logic trang này); `/appointment/malformed` (thiếu dấu `.`) hiện đúng trạng thái "liên kết không
+hợp lệ" thay vì crash.
+
+## 2026-09-29 — Tự làm mới access token ngầm khi gặp 401/403-CSRF, tránh lỗi hiển thị sai bản chất
+
+**Vì sao:** Phát hiện qua live-test trên server test — gửi lịch hẹn xem phòng bị 403 "Missing or
+invalid CSRF token" dù phiên đăng nhập vẫn còn. Nguyên nhân gốc: access token (cookie httpOnly)
+chỉ sống 1 ngày, ngắn hơn cookie CSRF/refresh (7 ngày) — phiên mở lâu sẽ có lúc access token hết
+hạn giữa chừng, và trước khi FE kịp gọi refresh, request mutate tiếp theo bị CsrfGuard (chạy trước
+AuthGuard) chặn nhầm bằng lỗi CSRF thay vì lỗi đúng bản chất là hết phiên. Backend tương ứng ở
+`bff-for-pimi/DEVELOPMENT_LOG.md` (2026-09-29, public hoá `GET /auth/csrf-token`).
+
+**Thay đổi:**
+- `services/axiosClient.ts`: response interceptor bắt lỗi 401 (`000127`/`000128`) hoặc 403-CSRF
+  (`000174`) — tự gọi ngầm `POST /auth/refresh-token` (dedupe qua 1 promise dùng chung), nạp lại
+  CSRF token mới, rồi thử lại đúng request gốc (guard `_retriedAfterRefresh` tránh lặp vô hạn,
+  loại trừ chính endpoint refresh-token/login). Người dùng không còn thấy lỗi mỗi khi access token
+  hết hạn tự nhiên sau 24h.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch.
+
+## 2026-09-29 — Đặt lịch xem phòng tự chọn slot (thay nút "Yêu cầu xem phòng" đơn giản cũ)
+
+**Vì sao:** Đồng bộ backend đổi luồng lịch hẹn — khách thuê giờ tự chọn khung giờ 30 phút còn
+trống trên lịch chủ nhà đã mở sẵn, xác nhận ngay lúc đặt, không cần chờ chủ nhà đề xuất giờ.
+Backend tương ứng ở `bff-for-pimi/DEVELOPMENT_LOG.md` (2026-09-29).
+
+**Thay đổi:**
+- 3 component mới thay thế nút đơn cũ trong `RoomDetail.tsx`: `ViewingSlotPicker.tsx` (lịch +
+  lưới slot 30 phút, đọc `GET .../public/:rentHouseId/grid`, cho chọn 1-2 slot liên tiếp),
+  `ViewingBookingForm.tsx` (form bắt buộc: người xem hộ/chính mình, SĐT, email, số người ở dự
+  kiến, tên người dự kiến ở, ghi chú tuỳ chọn), `ViewingConfirmationPanel.tsx` (hiện ngay sau đặt
+  thành công — địa chỉ, ngày giờ, tên người xem, giá phòng, hướng dẫn xem nhà nếu có, sanitize qua
+  DOMPurify). `services/appointmentAvailabilityApi.ts` mới.
+- `TenantAppointments.tsx`: thêm tab/badge `CONFIRMED`, hiển thị field mới, nới điều kiện nút
+  "xác nhận có mặt" sang cả `CONFIRMED`. Khối chọn giờ dạng radio cũ đánh dấu legacy.
+
+**2 bug phát hiện + sửa lúc live-test:**
+- `ViewingConfirmationPanel.tsx` hiện sai giờ xem phòng (lệch theo múi giờ máy khách) — cùng
+  nguyên nhân "DateTime neo UTC" đã ghi ở BE log, sửa bằng ép `timeZone: 'UTC'` khi format.
+- Giá phòng hiện thiếu dấu phân cách hàng nghìn + dư dấu `/` ("5600000đ / / tháng") — do
+  `rentRoom.price` BE trả về dạng string (Prisma Decimal serialize qua JSON), code cũ gọi thẳng
+  `.toLocaleString()` trên string là no-op. Sửa `formatPrice` ép `Number()` trước, bỏ dấu `/` dư.
+
+**Đã kiểm tra:** `npx tsc -p tsconfig.app.json --noEmit` sạch. Live-test qua Browser pane: đặt lịch
+2 slot liên tiếp, panel xác nhận hiện đúng đủ giờ/giá/hướng dẫn, đặt trùng slot (không bị chặn,
+đúng chủ đích tính năng), lịch sử "Lịch hẹn của tôi" hiển thị đúng dữ liệu `CONFIRMED`.
+
+---
+
 ## 2026-09-28 (2) — Đổi route hoá đơn theo domain cố định của Zalo + tự redirect sang bản test
 
 **Vì sao:** Zalo bắt buộc URL nút "Xem chi tiết" trong template ZNS thuộc domain ĐÃ XÁC THỰC —

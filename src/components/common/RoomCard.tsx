@@ -6,9 +6,14 @@ import { MapPin, Maximize2, Users, ShieldCheck, Layers, Navigation, Sparkles, He
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useToast } from '@/context/ToastContext';
+import { formatVnd } from '@/utils/money';
 
 interface RoomCardProps {
   room: Room;
+  // Loại hình đang tìm/xem — danh sách ngắn hạn hiện giá ngắn hạn, danh sách dài hạn hiện giá dài
+  // hạn (phòng toà nhà "cả hai" có đủ 2 giá, không được lấy giá ngắn hạn đặt vào mục dài hạn).
+  // Bỏ trống (yêu thích, đã xem...) thì giữ cách cũ: có giá ngắn hạn thì hiện giá ngắn hạn.
+  priceTerm?: 'SHORT_TERM' | 'LONG_TERM';
 }
 
 // React.memo: RoomCard được render lặp lại rất nhiều lần trong 1 danh sách (RoomList/Home/...) —
@@ -17,7 +22,7 @@ interface RoomCardProps {
 // mounted re-render khi có 1 phòng BẤT KỲ được toggle yêu thích (FavoritesContext broadcast theo
 // Context API, không phân biệt theo từng roomId) — đó là hạn chế kiến trúc sâu hơn, cần tách
 // context theo từng item mới giải quyết triệt để, ngoài phạm vi sửa nhanh này.
-const RoomCardComponent: React.FC<RoomCardProps> = ({ room }) => {
+const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const toast = useToast();
@@ -41,12 +46,8 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room }) => {
       toast.error(t('roomCard.favoriteError'));
     }
   };
-  const formatPrice = (price: number) => {
-    if (price >= 1000000) {
-      return `${(price / 1000000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${t('roomCard.million')}`;
-    }
-    return `${price.toLocaleString('vi-VN')}đ`;
-  };
+  // Luôn hiển thị đủ dạng 3.500.000đ — không rút gọn "3,5 triệu".
+  const formatPrice = (price: number) => formatVnd(price);
 
   const detailLink = room.roomGroupId ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`;
 
@@ -69,7 +70,7 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room }) => {
             {room.isRecommended && (
               <span className="badge-tag bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black backdrop-blur-md shadow-md">
                 <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
-                <span>⭐ Đề Cử</span>
+                <span>{t('roomCard.recommendedBadge')}</span>
               </span>
             )}
             <span className="badge-tag bg-emerald-500/90 text-white backdrop-blur-md shadow-sm">
@@ -101,14 +102,14 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room }) => {
 
         {/* Price Tag Overlay */}
         <div className="absolute bottom-3 left-3 bg-slate-900/85 backdrop-blur-md text-white px-3.5 py-1.5 rounded-2xl shadow-lg flex items-baseline gap-1">
-          {room.shortTermPrice ? (
+          {room.shortTermPrice && priceTerm !== 'LONG_TERM' ? (
             <>
               <span className="text-lg font-black text-emerald-400 font-heading">
                 {formatPrice(room.shortTermPrice)}
               </span>
               <span className="text-[11px] text-slate-300">
                 / {room.shortTermDurationValue && room.shortTermDurationValue > 1 ? `${room.shortTermDurationValue} ` : ''}
-                {room.shortTermPriceUnit === 'PER_HOUR' ? 'giờ' : 'ngày'}
+                {room.shortTermPriceUnit === 'PER_HOUR' ? t('roomCard.unitHour') : t('roomCard.unitDay')}
               </span>
             </>
           ) : (
@@ -118,7 +119,7 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room }) => {
               </span>
               <span className="text-[11px] text-slate-300">
                 / {room.longTermDurationValue && room.longTermDurationValue > 1 ? `${room.longTermDurationValue} ` : ''}
-                {room.longTermPriceUnit === 'PER_YEAR' ? 'năm' : 'tháng'}
+                {room.longTermPriceUnit === 'PER_YEAR' ? t('roomCard.unitYear') : t('roomCard.unitMonth')}
               </span>
             </>
           )}
