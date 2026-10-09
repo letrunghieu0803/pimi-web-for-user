@@ -67,6 +67,18 @@ jobs:
             --cache-control "public,max-age=31536000,immutable" \
             --exclude "index.html"
 
+      # File liên kết ứng dụng (Universal Links iOS / App Links Android): apple-app-site-association
+      # KHÔNG có đuôi nên `s3 sync` ở trên gán Content-Type nhị phân + cache 1 năm — iOS cần
+      # application/json, trả thẳng 200 không redirect. Ghi đè lại đúng kiểu + cache ngắn (5 phút)
+      # để sửa danh sách đường dẫn không phải chờ cả năm.
+      - name: Upload app-link files (application/json, short cache)
+        run: |
+          for f in apple-app-site-association assetlinks.json; do
+            aws s3 cp "dist/.well-known/$f" "s3://${{ vars.AWS_S3_BUCKET }}/.well-known/$f" \
+              --content-type "application/json" \
+              --cache-control "public,max-age=300"
+          done
+
       - name: Upload index.html (no cache)
         run: |
           aws s3 cp dist/index.html s3://${{ vars.AWS_S3_BUCKET }}/index.html \

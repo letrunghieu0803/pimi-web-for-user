@@ -4,6 +4,18 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-10 — Deploy: upload file .well-known đúng Content-Type; ghi nhận pipeline đang lỗi
+
+**Vì sao:** `https://pimi.vn/.well-known/apple-app-site-association` và `assetlinks.json` trên production vẫn trả HTML của SPA (`x-cache: Error from cloudfront`, `last-modified` 4/10) nên Universal Links / App Links chưa chạy. Bucket `pimi-web-user-product` chưa có thư mục `.well-known`, lần ghi cuối 4/10 — chưa có lần deploy nào sau khi code deep link được merge vào `product`.
+
+**Nguyên nhân (đã xác minh):** Các run "Deploy product to AWS" #3–#6 (mới nhất #6, commit b39174b) thất bại ở bước cấu hình AWS với lỗi `Input required and not supplied: aws-region` — biến `AWS_REGION` (repository/environment variable) chưa được tạo trên GitHub, nên workflow dừng trước khi upload gì lên S3.
+
+**Thay đổi:** `.github/workflows/deploy-product.yml` thêm bước "Upload app-link files" sau `s3 sync`: `aws s3 cp` hai file trong `dist/.well-known/` với `Content-Type: application/json` + `Cache-Control: public,max-age=300`. Lý do: `apple-app-site-association` không có đuôi nên `s3 sync` gán kiểu nhị phân + cache 1 năm (iOS cần application/json, trả thẳng 200, không redirect; cache ngắn để sửa danh sách đường dẫn không phải chờ).
+
+**Cần làm ngoài code (chủ repo):** (1) GitHub → Settings → Variables: `AWS_REGION=ap-southeast-1`, `AWS_S3_BUCKET=pimi-web-user-product`, `AWS_CLOUDFRONT_DISTRIBUTION_ID=EENUPSS9B3NBJ`; secret `AWS_DEPLOY_ROLE_ARN`. (2) Trust policy của role `pimi-web-user-deploy-role` hiện chỉ cho `sub = repo:letrunghieu0803/pimi-web-for-user:ref:refs/heads/product`; workflow lại dùng `environment: production` nên token OIDC có `sub = repo:letrunghieu0803/pimi-web-for-user:environment:production` → cần thêm sub này vào trust policy (hoặc bỏ `environment:` khỏi workflow).
+
+**Đã kiểm tra:** YAML hợp lệ, 10 bước đúng thứ tự; `vite build` chép `public/.well-known/*` vào `dist/.well-known/`.
+
 ## 2026-10-07 — AASA: nhận thêm link hoá đơn /invoice/*
 
 **Thay đổi:** `public/.well-known/apple-app-site-association` thêm `/invoice/*` (app đã có màn xem hoá đơn công khai). `assetlinks.json` không đổi (Android lọc theo đường dẫn ở `AndroidManifest.xml`).
