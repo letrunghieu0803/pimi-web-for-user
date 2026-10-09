@@ -4,6 +4,14 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-10 — Deploy: build production trỏ link lịch hẹn sang bizpimi.vn
+
+**Vì sao:** `AppointmentRedirect.tsx` (trang trung chuyển link "Xem chi tiết" lịch hẹn trong tin ZNS, `pimi.vn/appointment/{id}.{env}`) chuyển sang web chủ nhà theo `VITE_OWNER_WEB_URL`, mặc định rơi về `https://pimi-web-for-house-owner.vercel.app`. Workflow deploy không ghi biến này nên bản production sẽ chuyển người dùng sang bản Vercel cũ thay vì `bizpimi.vn`. `VITE_OWNER_WEB_TEST_URL` mặc định trùng `VITE_OWNER_WEB_URL`, không cần đặt riêng.
+
+**Thay đổi:** `.github/workflows/deploy-product.yml` — bước "Write .env.production" thêm `VITE_OWNER_WEB_URL=https://bizpimi.vn` (giá trị công khai nên ghi thẳng trong workflow, không cần tạo secret).
+
+**Chưa đặt (cố ý):** `VITE_TEST_SITE_URL` (chỉ dùng để chuyển link hoá đơn/lịch hẹn của môi trường test sang bản Vercel test — giữ mặc định).
+
 ## 2026-10-10 — Deploy: upload file .well-known đúng Content-Type; ghi nhận pipeline đang lỗi
 
 **Vì sao:** `https://pimi.vn/.well-known/apple-app-site-association` và `assetlinks.json` trên production vẫn trả HTML của SPA (`x-cache: Error from cloudfront`, `last-modified` 4/10) nên Universal Links / App Links chưa chạy. Bucket `pimi-web-user-product` chưa có thư mục `.well-known`, lần ghi cuối 4/10 — chưa có lần deploy nào sau khi code deep link được merge vào `product`.
