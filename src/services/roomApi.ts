@@ -318,6 +318,7 @@ export const roomApi = {
     userLng?: number | null;
     radiusInKm?: number | null;
     sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'distance';
+    rentalTermType?: 'SHORT_TERM' | 'LONG_TERM';
   }): Promise<Room[]> => {
     const result = await roomApi.getRoomsPaginated({ ...params, pageNumber: 1, pageSize: 100 });
     return result.rooms;

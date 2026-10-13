@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Room } from '@/types';
 import { roomApi } from '@/services/roomApi';
 import { appointmentApi, Appointment } from '@/services/appointmentApi';
@@ -27,6 +27,7 @@ import { JsonLd } from '@/components/common/JsonLd';
 import { absoluteUrl } from '@/config/seo';
 import { formatVnd } from '@/utils/money';
 import { formatMoney } from '@/utils/money';
+import { formatPriceUnit, getRoomPriceDisplay, resolveRoomPriceTerm, RoomPriceTerm } from '@/utils/roomPrice';
 
 export const RoomDetail: React.FC = () => {
   const { t } = useTranslation();
@@ -34,6 +35,12 @@ export const RoomDetail: React.FC = () => {
   const isGroupView = !!groupId;
   const targetId = groupId || id;
   const navigate = useNavigate();
+  // Loại hình người dùng đang tìm (RoomCard gắn ?term= vào link chi tiết) — quyết định giá + đơn vị hiển thị và luồng đặt.
+  const [searchParams] = useSearchParams();
+  const termParam: RoomPriceTerm | null =
+    searchParams.get('term') === 'LONG_TERM' || searchParams.get('term') === 'SHORT_TERM'
+      ? (searchParams.get('term') as RoomPriceTerm)
+      : null;
   const toast = useToast();
   const { user, isAuthenticated } = useAuth();
   const { isFavorited, toggleFavorite } = useFavorites();
@@ -140,7 +147,8 @@ export const RoomDetail: React.FC = () => {
         })
         .finally(() => setLoading(false));
 
-      roomApi.getRooms().then((all) => {
+      // Phòng gợi ý cùng loại hình với phòng đang xem (mặc định ngắn hạn như danh sách gốc) để giá/đơn vị khớp.
+      roomApi.getRooms({ rentalTermType: termParam ?? 'SHORT_TERM' }).then((all) => {
         // Grouped listings are keyed by roomGroupId (the representative room's
         // own id != the group's id), so exclude by group id when applicable —
         // otherwise the current group could show up in its own recommendations.
@@ -150,7 +158,7 @@ export const RoomDetail: React.FC = () => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetId, isGroupView, isAuthenticated]);
+  }, [targetId, isGroupView, isAuthenticated, termParam]);
 
   // Kết hợp ngày đã chọn + giờ (chỉ có ý nghĩa với phòng PER_HOUR) thành 1 mốc thời gian thật.
   const combineDateAndTime = (date: Date, time: string): Date => {
@@ -230,7 +238,7 @@ export const RoomDetail: React.FC = () => {
   const handleRequestViewing = () => {
     if (!isAuthenticated) {
       toast.warning(t('roomDetail.toastNeedLogin'));
-      navigate(`/login?redirect=${isGroupView ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`}`);
+      navigate(`/login?redirect=${redirectPath}`);
       return;
     }
 
@@ -301,14 +309,21 @@ export const RoomDetail: React.FC = () => {
 
   // Ngắn hạn = thanh toán QR trong app ngay; dài hạn = đặt lịch xem phòng như cũ.
   // Cả 2 loại đều có thể "Liên hệ cộng tác viên" (ẩn nếu chưa có ai được gán cho toà nhà).
+  // Chỉ vào luồng đặt + thanh toán ngay khi đang xem phòng theo loại ngắn hạn — phòng "cả hai" có đủ 2 giá mà đang tìm dài hạn
+  // thì hiện giá thuê tháng + đặt lịch xem phòng.
+  const viewTerm = resolveRoomPriceTerm(room, termParam);
+  const viewDisplay = getRoomPriceDisplay(room, viewTerm);
+  const otherTerm: RoomPriceTerm = viewTerm === 'SHORT_TERM' ? 'LONG_TERM' : 'SHORT_TERM';
+  const otherDisplay = getRoomPriceDisplay(room, otherTerm);
+  const termLabel = (term: RoomPriceTerm) => t(term === 'SHORT_TERM' ? 'roomDetail.shortTermPrice' : 'roomDetail.longTermPrice');
   const canBookShortTerm =
-    (room.rentalTermType === 'SHORT_TERM' || room.rentalTermType === 'BOTH') && !!room.shortTermPrice;
+    (room.rentalTermType === 'SHORT_TERM' || room.rentalTermType === 'BOTH') && !!room.shortTermPrice && viewTerm === 'SHORT_TERM';
   const hasCollaborators = collaborators.length > 0;
 
   const handleBookAndPay = async () => {
     if (!isAuthenticated) {
       toast.warning(t('roomDetail.toastNeedLogin'));
-      navigate(`/login?redirect=/rooms/${room.id}`);
+      navigate(`/login?redirect=${redirectPath}`);
       return;
     }
 
@@ -339,6 +354,8 @@ export const RoomDetail: React.FC = () => {
   };
 
   const detailPath = isGroupView ? `/room-groups/${targetId}` : `/rooms/${targetId}`;
+  // Đường dẫn quay lại sau đăng nhập giữ loại hình đang xem (detailPath riêng cho SEO/canonical, không kèm ?term=).
+  const redirectPath = termParam ? `${detailPath}?term=${termParam}` : detailPath;
   const effectivePrice = room.price || room.shortTermPrice || 0;
   const roomSeoDescription = (room.description || '').replace(/\s+/g, ' ').trim().slice(0, 160) ||
     t('seo.roomDetailFallbackDescription', { name: room.name, address: room.address });
@@ -527,7 +544,7 @@ export const RoomDetail: React.FC = () => {
             onClick={async () => {
               if (!isAuthenticated) {
                 toast.warning(t('roomDetail.toastNeedLogin'));
-                navigate(`/login?redirect=${detailPath}`);
+                navigate(`/login?redirect=${redirectPath}`);
                 return;
               }
               try {
@@ -642,17 +659,19 @@ export const RoomDetail: React.FC = () => {
           {/* Key Specifications Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 bg-slate-50 rounded-3xl border border-slate-200/80">
             <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.rentPrice')}</span>
+              <span className="text-xs text-slate-500 font-semibold block">
+                {viewTerm === 'LONG_TERM' ? t('roomDetail.rentPrice') : termLabel('SHORT_TERM')}
+              </span>
               <span className="text-lg font-black text-emerald-600 font-heading">
-                {formatPrice(room.price)} / {room.longTermDurationValue && room.longTermDurationValue > 1 ? `${room.longTermDurationValue} ` : ''}{room.longTermPriceUnit === 'PER_YEAR' ? t('roomCard.unitYear') : t('roomCard.unitMonth')}
+                {viewDisplay.amount !== undefined ? `${formatPrice(viewDisplay.amount)} ${formatPriceUnit(viewDisplay, t)}` : '-'}
               </span>
             </div>
 
-            {room.shortTermPrice ? (
+            {otherDisplay.amount !== undefined ? (
               <div className="space-y-1">
-                <span className="text-xs text-slate-500 font-semibold block">{t('roomDetail.shortTermPrice')}</span>
+                <span className="text-xs text-slate-500 font-semibold block">{termLabel(otherTerm)}</span>
                 <span className="text-base font-bold text-amber-600 font-heading">
-                  {formatPrice(room.shortTermPrice)} / {room.shortTermDurationValue && room.shortTermDurationValue > 1 ? `${room.shortTermDurationValue} ` : ''}{room.shortTermPriceUnit === 'PER_HOUR' ? t('roomCard.unitHour') : t('roomCard.unitDay')}
+                  {formatPrice(otherDisplay.amount)} {formatPriceUnit(otherDisplay, t)}
                 </span>
               </div>
             ) : (
@@ -766,9 +785,9 @@ export const RoomDetail: React.FC = () => {
               <span className="text-xs text-slate-400 font-semibold">{t('roomDetail.listedPrice')}</span>
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-black text-emerald-400 font-heading">
-                  {formatPrice(room.price)}
+                  {viewDisplay.amount !== undefined ? formatPrice(viewDisplay.amount) : '-'}
                 </span>
-                <span className="text-xs text-slate-300">{t('roomDetail.perMonthLong')}</span>
+                <span className="text-xs text-slate-300">{formatPriceUnit(viewDisplay, t)}</span>
               </div>
               <p className="text-[11px] text-slate-400">{t('roomDetail.priceIncludesFee')}</p>
             </div>
@@ -826,7 +845,7 @@ export const RoomDetail: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {similarRooms.map((r) => (
-              <RoomCard key={r.id} room={r} />
+              <RoomCard key={r.id} room={r} priceTerm={termParam ?? 'SHORT_TERM'} />
             ))}
           </div>
         </section>
@@ -892,7 +911,8 @@ export const RoomDetail: React.FC = () => {
           <div className="shrink-0 leading-tight">
             <span className="block text-[10px] text-slate-500 font-semibold">{t('roomDetail.listedPrice')}</span>
             <span className="block text-base font-black text-emerald-600 font-heading whitespace-nowrap">
-              {formatPrice(room.price)}
+              {viewDisplay.amount !== undefined ? formatPrice(viewDisplay.amount) : '-'}{' '}
+              <span className="text-[10px] font-semibold text-slate-500">{formatPriceUnit(viewDisplay, t)}</span>
             </span>
           </div>
           <div className="flex-1 min-w-0">{primaryActionButton}</div>
