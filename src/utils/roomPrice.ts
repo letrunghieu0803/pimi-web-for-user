@@ -4,24 +4,60 @@ import type { Room } from '@/types';
 // cùng nhau theo đúng loại hình (không ghép số tiền loại này với đơn vị loại kia).
 export type RoomPriceTerm = 'SHORT_TERM' | 'LONG_TERM';
 
+export interface SecondaryPrice {
+  amount: number;
+  unitKey: string;
+}
+
 export interface RoomPriceDisplay {
   amount: number | undefined;
   // Khoá i18n của đơn vị: roomCard.unit{Hour,Day,Month,Year}
   unitKey: string;
-  // Bội số thời lượng (vd "2 giờ") — chỉ > 1 mới hiện.
+  // Bội số thời lượng (vd "2 tháng") — chỉ > 1 mới hiện; thuê ngắn hạn luôn 1 (đã bỏ khái niệm "block" ở backend).
   durationValue: number;
+  // Thuê ngắn hạn mà phòng bán CẢ theo ngày lẫn theo giờ: giá chính là giá ngày, giá giờ nằm ở đây.
+  secondary?: SecondaryPrice;
 }
 
 type PriceFields = Pick<
   Room,
-  'price' | 'shortTermPrice' | 'shortTermPriceUnit' | 'shortTermDurationValue' | 'longTermPriceUnit' | 'longTermDurationValue'
+  | 'price'
+  | 'shortTermPrice'
+  | 'shortTermPriceUnit'
+  | 'shortTermDayPrice'
+  | 'shortTermHourPrice'
+  | 'longTermPriceUnit'
+  | 'longTermDurationValue'
 >;
 
-const shortDisplay = (room: Partial<PriceFields>): RoomPriceDisplay => ({
-  amount: Number(room.shortTermPrice) > 0 ? Number(room.shortTermPrice) : undefined,
-  unitKey: room.shortTermPriceUnit === 'PER_HOUR' ? 'roomCard.unitHour' : 'roomCard.unitDay',
-  durationValue: Number(room.shortTermDurationValue) || 1,
-});
+const positive = (v: unknown): number | undefined => (Number(v) > 0 ? Number(v) : undefined);
+
+/** Giá thuê ngắn hạn theo NGÀY và theo GIỜ của phòng (bản ghi cũ chỉ có 1 giá + 1 đơn vị thì quy theo đơn vị đó). */
+export const getShortTermPrices = (room: Partial<PriceFields>): { day?: number; hour?: number } => {
+  let day = positive(room.shortTermDayPrice);
+  let hour = positive(room.shortTermHourPrice);
+  if (day === undefined && hour === undefined) {
+    const legacy = positive(room.shortTermPrice);
+    if (legacy !== undefined) {
+      if (room.shortTermPriceUnit === 'PER_HOUR') hour = legacy;
+      else day = legacy;
+    }
+  }
+  return { day, hour };
+};
+
+const shortDisplay = (room: Partial<PriceFields>): RoomPriceDisplay => {
+  const { day, hour } = getShortTermPrices(room);
+  if (day !== undefined) {
+    return {
+      amount: day,
+      unitKey: 'roomCard.unitDay',
+      durationValue: 1,
+      secondary: hour !== undefined ? { amount: hour, unitKey: 'roomCard.unitHour' } : undefined,
+    };
+  }
+  return { amount: hour, unitKey: 'roomCard.unitHour', durationValue: 1 };
+};
 
 const longDisplay = (room: Partial<PriceFields>): RoomPriceDisplay => ({
   amount: Number(room.price) > 0 ? Number(room.price) : undefined,

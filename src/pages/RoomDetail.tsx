@@ -27,7 +27,7 @@ import { JsonLd } from '@/components/common/JsonLd';
 import { absoluteUrl } from '@/config/seo';
 import { formatVnd } from '@/utils/money';
 import { formatMoney } from '@/utils/money';
-import { formatPriceUnit, getRoomPriceDisplay, resolveRoomPriceTerm, RoomPriceTerm } from '@/utils/roomPrice';
+import { formatPriceUnit, getRoomPriceDisplay, hasRoomPriceForTerm, resolveRoomPriceTerm, RoomPriceTerm } from '@/utils/roomPrice';
 import type { BookingSelection } from '@/utils/shortTermBooking';
 
 export const RoomDetail: React.FC = () => {
@@ -251,7 +251,9 @@ export const RoomDetail: React.FC = () => {
   const otherDisplay = getRoomPriceDisplay(room, otherTerm);
   const termLabel = (term: RoomPriceTerm) => t(term === 'SHORT_TERM' ? 'roomDetail.shortTermPrice' : 'roomDetail.longTermPrice');
   const canBookShortTerm =
-    (room.rentalTermType === 'SHORT_TERM' || room.rentalTermType === 'BOTH') && !!room.shortTermPrice && viewTerm === 'SHORT_TERM';
+    (room.rentalTermType === 'SHORT_TERM' || room.rentalTermType === 'BOTH') &&
+    hasRoomPriceForTerm(room, 'SHORT_TERM') &&
+    viewTerm === 'SHORT_TERM';
   const hasCollaborators = collaborators.length > 0;
 
   const handleBookAndPay = async () => {
@@ -284,7 +286,7 @@ export const RoomDetail: React.FC = () => {
   const detailPath = isGroupView ? `/room-groups/${targetId}` : `/rooms/${targetId}`;
   // Đường dẫn quay lại sau đăng nhập giữ loại hình đang xem (detailPath riêng cho SEO/canonical, không kèm ?term=).
   const redirectPath = termParam ? `${detailPath}?term=${termParam}` : detailPath;
-  const effectivePrice = room.price || room.shortTermPrice || 0;
+  const effectivePrice = room.price || room.shortTermDayPrice || room.shortTermHourPrice || room.shortTermPrice || 0;
   const roomSeoDescription = (room.description || '').replace(/\s+/g, ' ').trim().slice(0, 160) ||
     t('seo.roomDetailFallbackDescription', { name: room.name, address: room.address });
 
@@ -536,6 +538,11 @@ export const RoomDetail: React.FC = () => {
               <span className="text-lg font-black text-emerald-600 font-heading">
                 {viewDisplay.amount !== undefined ? `${formatPrice(viewDisplay.amount)} ${formatPriceUnit(viewDisplay, t)}` : '-'}
               </span>
+              {viewDisplay.secondary && (
+                <span className="block text-sm font-bold text-emerald-700 font-heading">
+                  {formatPrice(viewDisplay.secondary.amount)} / {t(viewDisplay.secondary.unitKey)}
+                </span>
+              )}
             </div>
 
             {otherDisplay.amount !== undefined ? (
@@ -660,6 +667,11 @@ export const RoomDetail: React.FC = () => {
                 </span>
                 <span className="text-xs text-slate-300">{formatPriceUnit(viewDisplay, t)}</span>
               </div>
+              {viewDisplay.secondary && (
+                <p className="text-sm font-bold text-emerald-300">
+                  {formatPrice(viewDisplay.secondary.amount)} <span className="text-xs font-normal text-slate-300">/ {t(viewDisplay.secondary.unitKey)}</span>
+                </p>
+              )}
               <p className="text-[11px] text-slate-400">{t('roomDetail.priceIncludesFee')}</p>
             </div>
 

@@ -4,6 +4,18 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-15 — Thẻ phòng / chi tiết hiện cả giá NGÀY lẫn giá GIỜ khi thuê ngắn hạn (bước 4)
+
+**Vì sao:** Backend đã tách thuê ngắn hạn thành 2 hình thức (giá ngày, giá giờ); thẻ phòng và trang chi tiết vẫn đọc 3 cột giá cũ (`shortTermPrice/Unit/DurationValue` — bản đại diện = giá ngày, không có thì giá giờ) nên phòng bán cả 2 chỉ hiện 1 giá.
+
+**Thay đổi:**
+- `utils/roomPrice.ts`: `getShortTermPrices` đọc `shortTermDayPrice`/`shortTermHourPrice` (dữ liệu cũ chỉ có 1 giá + 1 đơn vị thì quy theo đơn vị đó); `getRoomPriceDisplay` tìm ngắn hạn: giá chính = giá ngày (hoặc giá giờ nếu phòng chỉ bán theo giờ), `secondary` = giá giờ khi phòng bán cả 2; bỏ khái niệm "block" ở ngắn hạn (`durationValue` luôn 1).
+- `RoomCard`: hiện thêm giá phụ cạnh giá chính ("600.000đ / day | 75.000đ / hour"). `RoomDetail`: ô thông số và hộp giá ở sidebar hiện thêm giá giờ; `canBookShortTerm` dùng `hasRoomPriceForTerm(room, 'SHORT_TERM')` (có giá ngày hoặc giờ) thay cho `shortTermPrice` cũ; `effectivePrice` của JSON-LD/SEO ưu tiên giá ngày/giờ mới.
+- Cố ý KHÔNG đổi API/xoá cột giá cũ ở backend (tìm kiếm/sắp xếp/lọc giá và app cũ còn đọc chúng); web đã hết phụ thuộc vào chúng ngoài bước quy đổi dữ liệu cũ.
+- App mobile làm cùng ngày (xem log phongtroapp).
+
+**Đã kiểm tra (trình duyệt, backend local):** thẻ Phòng A1 ở trang chủ hiện "600.000đ / day 75.000đ / hour"; chi tiết `?term=SHORT_TERM`: hộp giá "600.000đ / day, 75.000đ / hour", ô thông số "Short-term price 600.000đ / day 75.000đ / hour"; `tsc -p tsconfig.app.json` sạch, `oxlint` không cảnh báo mới. **Chưa kiểm tra:** giao diện điện thoại (thẻ có thêm giá phụ trong ô overlay hẹp), trang danh sách `/rooms` ở tab ngắn hạn, sắp xếp/lọc giá của phòng có cả 2 giá vẫn so theo giá ngày.
+
 ## 2026-10-15 — Đặt phòng ngắn hạn: chọn THEO NGÀY hoặc THEO GIỜ, báo giá + giờ nhận/trả thật (bước 3)
 
 **Vì sao:** Backend (bff-for-pimi, cùng ngày) tách thuê ngắn hạn thành 2 hình thức: theo ngày (chọn ngày nhận/trả, giờ theo cài đặt phòng — mặc định 14:00/11:00) và theo giờ (giờ bắt đầu + số giờ). Trang chi tiết cũ chỉ có lịch chọn khoảng ngày + 2 ô giờ (chỉ phòng PER_HOUR), tự coi hình thức theo đơn vị giá của phòng.
