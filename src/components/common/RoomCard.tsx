@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useToast } from '@/context/ToastContext';
 import { formatVnd } from '@/utils/money';
+import { formatPriceUnit, getRoomPriceDisplay } from '@/utils/roomPrice';
 
 interface RoomCardProps {
   room: Room;
@@ -48,8 +49,11 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
   };
   // Luôn hiển thị đủ dạng 3.500.000đ — không rút gọn "3,5 triệu".
   const formatPrice = (price: number) => formatVnd(price);
+  const priceDisplay = getRoomPriceDisplay(room, priceTerm);
 
-  const detailLink = room.roomGroupId ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`;
+  // Đang tìm theo loại hình nào thì chuyển loại đó sang trang chi tiết (?term=) để giá + đơn vị + luồng đặt khớp với danh sách.
+  const detailBase = room.roomGroupId ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`;
+  const detailLink = priceTerm ? `${detailBase}?term=${priceTerm}` : detailBase;
 
   return (
     <article className="relative glass-card rounded-3xl overflow-hidden flex flex-col group border border-slate-200/80 hover:border-indigo-200">
@@ -100,30 +104,18 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
           </div>
         </div>
 
-        {/* Price Tag Overlay */}
+        {/* Price Tag Overlay — ẩn khi phòng không có giá của loại hình đang tìm (không lấy giá loại kia thay thế). */}
+        {priceDisplay.amount !== undefined && (
         <div className="absolute bottom-3 left-3 bg-slate-900/85 backdrop-blur-md text-white px-3.5 py-1.5 rounded-2xl shadow-lg flex items-baseline gap-1">
-          {room.shortTermPrice && priceTerm !== 'LONG_TERM' ? (
-            <>
-              <span className="text-lg font-black text-emerald-400 font-heading">
-                {formatPrice(room.shortTermPrice)}
-              </span>
-              <span className="text-[11px] text-slate-300">
-                / {room.shortTermDurationValue && room.shortTermDurationValue > 1 ? `${room.shortTermDurationValue} ` : ''}
-                {room.shortTermPriceUnit === 'PER_HOUR' ? t('roomCard.unitHour') : t('roomCard.unitDay')}
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="text-lg font-black text-emerald-400 font-heading">
-                {formatPrice(room.price)}
-              </span>
-              <span className="text-[11px] text-slate-300">
-                / {room.longTermDurationValue && room.longTermDurationValue > 1 ? `${room.longTermDurationValue} ` : ''}
-                {room.longTermPriceUnit === 'PER_YEAR' ? t('roomCard.unitYear') : t('roomCard.unitMonth')}
-              </span>
-            </>
+          <span className="text-lg font-black text-emerald-400 font-heading">{formatPrice(priceDisplay.amount)}</span>
+          <span className="text-[11px] text-slate-300">{formatPriceUnit(priceDisplay, t)}</span>
+          {priceDisplay.secondary && (
+            <span className="text-[11px] text-slate-300 ml-1.5 pl-1.5 border-l border-slate-500/60">
+              {formatPrice(priceDisplay.secondary.amount)} / {t(priceDisplay.secondary.unitKey)}
+            </span>
           )}
         </div>
+        )}
 
         {/* Favorite Button — z-10 để nổi trên lớp link phủ toàn thẻ (::after của tiêu đề), nhờ đó
             bấm tim vẫn tách bạch với hành vi "bấm thẻ -> vào chi tiết". */}

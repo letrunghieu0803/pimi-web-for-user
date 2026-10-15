@@ -4,6 +4,44 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-15 — Thẻ phòng / chi tiết hiện cả giá NGÀY lẫn giá GIỜ khi thuê ngắn hạn (bước 4)
+
+**Vì sao:** Backend đã tách thuê ngắn hạn thành 2 hình thức (giá ngày, giá giờ); thẻ phòng và trang chi tiết vẫn đọc 3 cột giá cũ (`shortTermPrice/Unit/DurationValue` — bản đại diện = giá ngày, không có thì giá giờ) nên phòng bán cả 2 chỉ hiện 1 giá.
+
+**Thay đổi:**
+- `utils/roomPrice.ts`: `getShortTermPrices` đọc `shortTermDayPrice`/`shortTermHourPrice` (dữ liệu cũ chỉ có 1 giá + 1 đơn vị thì quy theo đơn vị đó); `getRoomPriceDisplay` tìm ngắn hạn: giá chính = giá ngày (hoặc giá giờ nếu phòng chỉ bán theo giờ), `secondary` = giá giờ khi phòng bán cả 2; bỏ khái niệm "block" ở ngắn hạn (`durationValue` luôn 1).
+- `RoomCard`: hiện thêm giá phụ cạnh giá chính ("600.000đ / day | 75.000đ / hour"). `RoomDetail`: ô thông số và hộp giá ở sidebar hiện thêm giá giờ; `canBookShortTerm` dùng `hasRoomPriceForTerm(room, 'SHORT_TERM')` (có giá ngày hoặc giờ) thay cho `shortTermPrice` cũ; `effectivePrice` của JSON-LD/SEO ưu tiên giá ngày/giờ mới.
+- Cố ý KHÔNG đổi API/xoá cột giá cũ ở backend (tìm kiếm/sắp xếp/lọc giá và app cũ còn đọc chúng); web đã hết phụ thuộc vào chúng ngoài bước quy đổi dữ liệu cũ.
+- App mobile làm cùng ngày (xem log phongtroapp).
+
+**Đã kiểm tra (trình duyệt, backend local):** thẻ Phòng A1 ở trang chủ hiện "600.000đ / day 75.000đ / hour"; chi tiết `?term=SHORT_TERM`: hộp giá "600.000đ / day, 75.000đ / hour", ô thông số "Short-term price 600.000đ / day 75.000đ / hour"; `tsc -p tsconfig.app.json` sạch, `oxlint` không cảnh báo mới. **Chưa kiểm tra:** giao diện điện thoại (thẻ có thêm giá phụ trong ô overlay hẹp), trang danh sách `/rooms` ở tab ngắn hạn, sắp xếp/lọc giá của phòng có cả 2 giá vẫn so theo giá ngày.
+
+## 2026-10-15 — Đặt phòng ngắn hạn: chọn THEO NGÀY hoặc THEO GIỜ, báo giá + giờ nhận/trả thật (bước 3)
+
+**Vì sao:** Backend (bff-for-pimi, cùng ngày) tách thuê ngắn hạn thành 2 hình thức: theo ngày (chọn ngày nhận/trả, giờ theo cài đặt phòng — mặc định 14:00/11:00) và theo giờ (giờ bắt đầu + số giờ). Trang chi tiết cũ chỉ có lịch chọn khoảng ngày + 2 ô giờ (chỉ phòng PER_HOUR), tự coi hình thức theo đơn vị giá của phòng.
+
+**Thay đổi:**
+- `components/booking/ShortTermBookingPanel.tsx` (mới) thay khối chọn ngày/giờ + báo giá cũ ở sidebar `RoomDetail`: nút chuyển "Thuê theo ngày / theo giờ" (chỉ khi phòng bán cả 2). *Theo ngày:* dùng lại `DateRangeCalendar` (ngày bận = các đêm từ `startDate` tới trước `endDate`, ngày trả vẫn nhận được khách mới), ghi chú giờ nhận/trả của phòng. *Theo giờ:* ô ngày (`min` = hôm nay), giờ bắt đầu (`type=time`, bật sau khi chọn ngày), số giờ bằng nút −/+ trong [min, max] của phòng, "Kết thúc lúc …", khung giờ nhận khách; kiểm tra phía web (giờ đã qua, ngoài khung, ngoài khoảng giờ). Báo giá do server trả: "N đêm/giờ × đơn giá = tổng", giảm giá theo bậc, ghi chú chặn trần giá một đêm, giờ nhận/trả thật (hiển thị theo `Asia/Ho_Chi_Minh`); lỗi 400/409 hiện nguyên thông báo server.
+- `pages/RoomDetail.tsx`: bỏ state/effect/hàm ngày giờ cũ (`checkIn/OutDate`, `checkIn/OutTime`, `isHourlyRoom`, `combineDateAndTime`, fetch availability, modal lịch); thay bằng `selection` + `quoteOk` từ panel (`key={room.id}` để dựng lại state khi đổi phòng); `handleBookAndPay` gửi `bookingApi.createBooking(room.id, selection)`, thiếu lựa chọn thì cuộn tới panel (mobile) + toast; nút đặt bị khoá khi báo giá không thành công.
+- `utils/shortTermBooking.ts` (mới): cấu hình thuê ngắn hạn của phòng, tiện ích ngày/giờ VN (`vnInstant`, `vnToday`...), `validateHourlySelection`, `hourlyEndLabel`. `services/bookingApi.ts`: `createBooking`/`getQuote` nhận `BookingTimePayload`; `BookingQuote`/`BusyRange` mở rộng. `services/roomApi.ts` + `types/index.ts`: map thêm giá ngày/giờ, giờ nhận/trả, min/max giờ, khung giờ, đệm. i18n vi/en (`booking.*`).
+- Lỗi đã gặp và sửa: lần đầu panel báo giá lặp vô hạn (hơn 1.700 request → 429) vì `fromDateKey(hourDate)` tạo `Date` mới mỗi lần render làm `selection` đổi identity liên tục; sửa bằng `useMemo` cho ngày + effect báo giá phụ thuộc khoá chuỗi của lựa chọn — sau đó chỉ 1 request mỗi lần chọn.
+- App mobile làm cùng ngày (xem log phongtroapp).
+
+**Đã kiểm tra (trình duyệt, backend local):** Phòng A1 — theo giờ: "2 hour(s) × 75.000đ = 150.000đ", 09:00→11:00 ngày 16/10; theo ngày (20→23/10): "3 night(s) × 600.000đ = 1.800.000đ", nhận 14:00 / trả 11:00; không còn vòng lặp (1 request khi đổi lựa chọn); `tsc -p tsconfig.app.json` + `oxlint` sạch. **Chưa kiểm tra:** bấm "Book & Pay" thật (DB dev chưa cấu hình tài khoản ngân hàng nhận tiền), giao diện điện thoại (CTA cố định cuộn tới panel), phòng chỉ bán 1 hình thức, hiển thị ngày bận từ đơn theo giờ trên lịch; thẻ phòng ở danh sách vẫn chỉ hiện 1 giá (bước 4).
+
+## 2026-10-13 — Giá phòng theo đúng loại hình đang tìm (ngắn/dài hạn) và đúng đơn vị ở danh sách + chi tiết
+
+**Vì sao:** Yêu cầu mới: tìm loại hình nào thì hiển thị giá của loại đó với đúng đơn vị cài đặt của phòng; đơn vị tháng/năm chỉ thuộc dài hạn, giờ/ngày chỉ thuộc ngắn hạn. Web trước đó: `RoomCard` ở tìm ngắn hạn mà phòng thiếu giá ngắn hạn thì lấy giá dài hạn thay; trang chi tiết luôn hiện `room.price` + "/ tháng" (0đ với phòng chỉ có giá ngắn hạn), ô giá sidebar/thanh dưới mobile hard-code "/ tháng", luôn vào luồng "Book & Pay" nếu phòng có giá ngắn hạn kể cả khi đang tìm dài hạn; phòng gợi ý luôn lấy từ danh sách ngắn hạn; tiêu đề lọc giá luôn ghi "VNĐ / Tháng".
+
+**Thay đổi:**
+- `utils/roomPrice.ts` (mới, cùng quy tắc với app mobile): `getRoomPriceDisplay(room, term)` — có `term` thì CHỈ lấy giá loại đó (thiếu → `amount` undefined, không thay bằng giá loại kia); không có `term` (Yêu thích/Đã xem) giữ cách cũ (ngắn hạn nếu có, không thì dài hạn, kèm đúng đơn vị). Thêm `hasRoomPriceForTerm`, `resolveRoomPriceTerm`, `formatPriceUnit`.
+- `RoomCard`: dùng util; ẩn nhãn giá khi không có giá loại đang tìm; link chi tiết gắn `?term=` khi biết loại hình (`RoomList` và 2 mục ngắn hạn ở `Home` truyền `priceTerm`).
+- `RoomDetail`: đọc `?term=` → `viewTerm`; ô giá chính + sidebar + thanh dưới mobile hiện giá/đơn vị của loại đang xem (giá loại còn lại là ô phụ nếu phòng có, nhãn mới `roomDetail.longTermPrice`); `canBookShortTerm` thêm điều kiện `viewTerm === 'SHORT_TERM'` (dài hạn → "Request A Viewing"); phòng gợi ý lấy theo loại đang xem (`roomApi.getRooms` thêm tham số `rentalTermType`); redirect đăng nhập giữ `?term=`.
+- `RoomFilterBar`: tiêu đề khoảng giá theo loại hình (`roomFilterBar.priceRangeLabelShortTerm`: "VNĐ / Giờ Hoặc Ngày"); i18n vi/en.
+- Backend/app mobile: xem log bff-for-pimi và phongtroapp cùng ngày (phòng thiếu giá loại hình đang tìm không còn trong kết quả).
+
+**Đã kiểm tra (trình duyệt, backend local; phòng A1 đủ 36.000.000/năm + 150.000/giờ×2, B1 chỉ dài hạn):** tìm dài hạn ra A1 "…đ / year", B1 "…đ / month"; tìm ngắn hạn chỉ ra A1 "150.000đ / 2 hour" với link `?term=SHORT_TERM`; chi tiết `?term=LONG_TERM`: "Rent Price 36.000.000đ / year", giá phụ ngắn hạn, nút "Request A Viewing"; chi tiết `?term=SHORT_TERM`: giá chính "150.000đ / 2 hour", giá phụ dài hạn, "Book & Pay"; `tsc -p tsconfig.app.json` sạch. **Chưa kiểm tra:** tiêu đề lọc giá theo tab ngắn hạn trên giao diện, giao diện mobile, luồng đăng nhập quay lại giữ `?term=`; Yêu thích/Đã xem giữ hiển thị theo giá riêng của phòng (chưa lọc theo loại hình).
+
 ## 2026-10-10 — Deploy: build production trỏ link lịch hẹn sang bizpimi.vn
 
 **Vì sao:** `AppointmentRedirect.tsx` (trang trung chuyển link "Xem chi tiết" lịch hẹn trong tin ZNS, `pimi.vn/appointment/{id}.{env}`) chuyển sang web chủ nhà theo `VITE_OWNER_WEB_URL`, mặc định rơi về `https://pimi-web-for-house-owner.vercel.app`. Workflow deploy không ghi biến này nên bản production sẽ chuyển người dùng sang bản Vercel cũ thay vì `bizpimi.vn`. `VITE_OWNER_WEB_TEST_URL` mặc định trùng `VITE_OWNER_WEB_URL`, không cần đặt riêng.

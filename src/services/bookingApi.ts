@@ -64,6 +64,11 @@ export interface CancelBookingPayload {
 export interface BusyRange {
   start: string;
   end: string;
+  // Ngày theo giờ Việt Nam (YYYY-MM-DD) của khoảng bận — đơn theo ngày chiếm các ĐÊM từ startDate tới trước endDate.
+  startDate?: string;
+  endDate?: string;
+  mode?: 'DAILY' | 'HOURLY' | null;
+  bufferMinutes?: number;
   source: 'booking' | 'contract';
 }
 
@@ -73,15 +78,30 @@ export interface BookingQuote {
   hours: number | null;
   discountPercent: number;
   appliedTier: { minNights: number; discountPercent: number } | null;
+  mode: 'DAILY' | 'HOURLY';
+  // Mốc nhận/trả phòng thật (ISO) mà đơn sẽ lưu.
+  checkInAt: string;
+  checkOutAt: string;
+  unitPrice: number;
+  cappedByDailyPrice: boolean;
+}
+
+// Lựa chọn thời gian thuê gửi cho báo giá/đặt phòng: DAILY gửi 2 ngày (YYYY-MM-DD, giờ nhận/trả theo phòng),
+// HOURLY gửi giờ bắt đầu (ISO) + số giờ.
+export interface BookingTimePayload {
+  mode: 'DAILY' | 'HOURLY';
+  checkInDate: string;
+  checkOutDate?: string;
+  hours?: number;
 }
 
 export const bookingApi = {
-  createBooking: (rentRoomId: string, checkInDate: string, checkOutDate: string) => {
-    return axiosClient.post('/v1/bookings', { rentRoomId, checkInDate, checkOutDate });
+  createBooking: (rentRoomId: string, time: BookingTimePayload) => {
+    return axiosClient.post('/v1/bookings', { rentRoomId, ...time });
   },
 
-  getQuote: (rentRoomId: string, checkInDate: string, checkOutDate: string) => {
-    return axiosClient.post('/v1/bookings/quote', { rentRoomId, checkInDate, checkOutDate });
+  getQuote: (rentRoomId: string, time: BookingTimePayload) => {
+    return axiosClient.post('/v1/bookings/quote', { rentRoomId, ...time });
   },
 
   getAvailability: (roomId: string) => {
