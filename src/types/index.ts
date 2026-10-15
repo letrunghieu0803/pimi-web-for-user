@@ -44,6 +44,17 @@ export interface Room {
   shortTermPrice?: number;
   shortTermPriceUnit?: ShortTermPriceUnit;
   shortTermDurationValue?: number;
+  // Thuê ngắn hạn: 2 hình thức độc lập — giá theo NGÀY (đêm) và theo GIỜ (3 trường shortTerm* cũ chỉ là bản đại diện).
+  shortTermDayPrice?: number;
+  shortTermHourPrice?: number;
+  // Phút từ 00:00 (giờ VN): giờ nhận/trả của thuê theo ngày; khung giờ + giới hạn số giờ của thuê theo giờ.
+  checkInMinute?: number;
+  checkOutMinute?: number;
+  hourlyMinHours?: number;
+  hourlyMaxHours?: number;
+  hourlyOpenMinute?: number | null;
+  hourlyCloseMinute?: number | null;
+  bufferMinutes?: number;
   longTermPriceUnit?: LongTermPriceUnit;
   longTermDurationValue?: number;
   minContractTermMonths?: number;

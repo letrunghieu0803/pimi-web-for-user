@@ -109,6 +109,11 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
         <div className="absolute bottom-3 left-3 bg-slate-900/85 backdrop-blur-md text-white px-3.5 py-1.5 rounded-2xl shadow-lg flex items-baseline gap-1">
           <span className="text-lg font-black text-emerald-400 font-heading">{formatPrice(priceDisplay.amount)}</span>
           <span className="text-[11px] text-slate-300">{formatPriceUnit(priceDisplay, t)}</span>
+          {priceDisplay.secondary && (
+            <span className="text-[11px] text-slate-300 ml-1.5 pl-1.5 border-l border-slate-500/60">
+              {formatPrice(priceDisplay.secondary.amount)} / {t(priceDisplay.secondary.unitKey)}
+            </span>
+          )}
         </div>
         )}
 
