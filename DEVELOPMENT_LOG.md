@@ -4,6 +4,19 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-13 — Giá phòng theo đúng loại hình đang tìm (ngắn/dài hạn) và đúng đơn vị ở danh sách + chi tiết
+
+**Vì sao:** Yêu cầu mới: tìm loại hình nào thì hiển thị giá của loại đó với đúng đơn vị cài đặt của phòng; đơn vị tháng/năm chỉ thuộc dài hạn, giờ/ngày chỉ thuộc ngắn hạn. Web trước đó: `RoomCard` ở tìm ngắn hạn mà phòng thiếu giá ngắn hạn thì lấy giá dài hạn thay; trang chi tiết luôn hiện `room.price` + "/ tháng" (0đ với phòng chỉ có giá ngắn hạn), ô giá sidebar/thanh dưới mobile hard-code "/ tháng", luôn vào luồng "Book & Pay" nếu phòng có giá ngắn hạn kể cả khi đang tìm dài hạn; phòng gợi ý luôn lấy từ danh sách ngắn hạn; tiêu đề lọc giá luôn ghi "VNĐ / Tháng".
+
+**Thay đổi:**
+- `utils/roomPrice.ts` (mới, cùng quy tắc với app mobile): `getRoomPriceDisplay(room, term)` — có `term` thì CHỈ lấy giá loại đó (thiếu → `amount` undefined, không thay bằng giá loại kia); không có `term` (Yêu thích/Đã xem) giữ cách cũ (ngắn hạn nếu có, không thì dài hạn, kèm đúng đơn vị). Thêm `hasRoomPriceForTerm`, `resolveRoomPriceTerm`, `formatPriceUnit`.
+- `RoomCard`: dùng util; ẩn nhãn giá khi không có giá loại đang tìm; link chi tiết gắn `?term=` khi biết loại hình (`RoomList` và 2 mục ngắn hạn ở `Home` truyền `priceTerm`).
+- `RoomDetail`: đọc `?term=` → `viewTerm`; ô giá chính + sidebar + thanh dưới mobile hiện giá/đơn vị của loại đang xem (giá loại còn lại là ô phụ nếu phòng có, nhãn mới `roomDetail.longTermPrice`); `canBookShortTerm` thêm điều kiện `viewTerm === 'SHORT_TERM'` (dài hạn → "Request A Viewing"); phòng gợi ý lấy theo loại đang xem (`roomApi.getRooms` thêm tham số `rentalTermType`); redirect đăng nhập giữ `?term=`.
+- `RoomFilterBar`: tiêu đề khoảng giá theo loại hình (`roomFilterBar.priceRangeLabelShortTerm`: "VNĐ / Giờ Hoặc Ngày"); i18n vi/en.
+- Backend/app mobile: xem log bff-for-pimi và phongtroapp cùng ngày (phòng thiếu giá loại hình đang tìm không còn trong kết quả).
+
+**Đã kiểm tra (trình duyệt, backend local; phòng A1 đủ 36.000.000/năm + 150.000/giờ×2, B1 chỉ dài hạn):** tìm dài hạn ra A1 "…đ / year", B1 "…đ / month"; tìm ngắn hạn chỉ ra A1 "150.000đ / 2 hour" với link `?term=SHORT_TERM`; chi tiết `?term=LONG_TERM`: "Rent Price 36.000.000đ / year", giá phụ ngắn hạn, nút "Request A Viewing"; chi tiết `?term=SHORT_TERM`: giá chính "150.000đ / 2 hour", giá phụ dài hạn, "Book & Pay"; `tsc -p tsconfig.app.json` sạch. **Chưa kiểm tra:** tiêu đề lọc giá theo tab ngắn hạn trên giao diện, giao diện mobile, luồng đăng nhập quay lại giữ `?term=`; Yêu thích/Đã xem giữ hiển thị theo giá riêng của phòng (chưa lọc theo loại hình).
+
 ## 2026-10-07 — AASA: nhận thêm link hoá đơn /invoice/*
 
 **Thay đổi:** `public/.well-known/apple-app-site-association` thêm `/invoice/*` (app đã có màn xem hoá đơn công khai). `assetlinks.json` không đổi (Android lọc theo đường dẫn ở `AndroidManifest.xml`).

@@ -252,6 +252,7 @@
   },
   "roomDetail": {
     "shortTermPrice": "Giá ngắn hạn",
+    "longTermPrice": "Giá dài hạn",
     "minContractTerm": "Thời hạn HĐ tối thiểu",
     "minContractMonths": "{{count}} tháng",
     "minContractFlexible": "Linh hoạt",
@@ -732,6 +733,7 @@
     "designTypeLabel": "Kiểu Thiết Kế",
     "mezzanineToggle": "Có gác xép kiên cố",
     "priceRangeLabel": "Mức Giá Thuê (VNĐ / Tháng)",
+    "priceRangeLabelShortTerm": "Mức Giá Thuê Ngắn Hạn (VNĐ / Giờ Hoặc Ngày)",
     "priceAll": "Tất cả giá",
     "priceOver8": "Trên 8.000.000đ",
     "amenitiesLabel": "Tiện Ích Đi Kèm",

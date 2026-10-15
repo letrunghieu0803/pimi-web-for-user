@@ -308,7 +308,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
       <div>
         <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
           <DollarSign className="w-3.5 h-3.5 text-indigo-600" />
-          <span>{t('roomFilterBar.priceRangeLabel')}</span>
+          <span>{t(draft.rentalTermType === 'LONG_TERM' ? 'roomFilterBar.priceRangeLabel' : 'roomFilterBar.priceRangeLabelShortTerm')}</span>
         </label>
         <div className="flex flex-wrap gap-2">
           {[
