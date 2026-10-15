@@ -4,7 +4,7 @@ import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { Room } from '@/types';
 import { roomApi } from '@/services/roomApi';
 import { appointmentApi, Appointment } from '@/services/appointmentApi';
-import { bookingApi, BusyRange, BookingQuote } from '@/services/bookingApi';
+import { bookingApi } from '@/services/bookingApi';
 import { collaboratorApi, HouseCollaborator } from '@/services/collaboratorApi';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
@@ -13,11 +13,11 @@ import { RoomReviews } from '@/components/room/RoomReviews';
 import { ReportRoomButton } from '@/components/room/ReportRoomButton';
 import { RoomCard } from '@/components/common/RoomCard';
 import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
-import { DateRangeCalendar } from '@/components/booking/DateRangeCalendar';
+import { ShortTermBookingPanel } from '@/components/booking/ShortTermBookingPanel';
 import { ViewingSlotPicker, ViewingSlotSelection } from '@/components/appointment/ViewingSlotPicker';
 import { ViewingBookingForm, ViewingBookingFormValues } from '@/components/appointment/ViewingBookingForm';
 import { ViewingConfirmationPanel } from '@/components/appointment/ViewingConfirmationPanel';
-import { MapPin, Maximize2, Users, ShieldCheck, CalendarCheck, CalendarDays, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2, Globe2 } from 'lucide-react';
+import { MapPin, Maximize2, Users, ShieldCheck, CalendarCheck, CheckCircle2, Building2, ChevronLeft, Share2, Heart, ArrowRight, Clock, AlertCircle, Receipt, Wallet, Users2, Globe2 } from 'lucide-react';
 import { VietMapViewer } from '@/components/common/VietMapViewer';
 import { useToast } from '@/context/ToastContext';
 import { RoomDetailSkeleton } from '@/components/ui/Skeleton';
@@ -28,6 +28,7 @@ import { absoluteUrl } from '@/config/seo';
 import { formatVnd } from '@/utils/money';
 import { formatMoney } from '@/utils/money';
 import { formatPriceUnit, getRoomPriceDisplay, resolveRoomPriceTerm, RoomPriceTerm } from '@/utils/roomPrice';
+import type { BookingSelection } from '@/utils/shortTermBooking';
 
 export const RoomDetail: React.FC = () => {
   const { t } = useTranslation();
@@ -55,24 +56,11 @@ export const RoomDetail: React.FC = () => {
   const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
 
-  // Đặt phòng ngắn hạn theo ngày/giờ thật — busyRanges cho lịch tô xám, checkIn/checkOutDate là
-  // NGÀY đã chọn (00:00), checkIn/checkOutTime chỉ có ý nghĩa với phòng PER_HOUR (kết hợp với
-  // ngày để ra đúng thời điểm nhận/trả). quote là báo giá server trả về (tự tính lại mỗi khi đổi
-  // ngày/giờ, KHÔNG tự tính ở FE — tránh lệch công thức với BE, xem PaymentsService.computeBookingPrice).
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [busyRanges, setBusyRanges] = useState<BusyRange[]>([]);
-  const [checkInDate, setCheckInDate] = useState<Date | null>(null);
-  const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
-  // Mặc định 14:00 → 16:00 (chỉ áp dụng phòng PER_HOUR) — LUÔN hợp lệ (giờ trả sau giờ nhận) dù
-  // khách chọn cùng 1 ngày (trường hợp bình thường của phòng theo giờ) hay khác ngày.
-  const [checkInTime, setCheckInTime] = useState('14:00');
-  const [checkOutTime, setCheckOutTime] = useState('16:00');
-  const [quote, setQuote] = useState<BookingQuote | null>(null);
-  const [quoteLoading, setQuoteLoading] = useState(false);
-  const [quoteError, setQuoteError] = useState(false);
-  // Chặn quote CŨ (do đổi ngày/giờ liên tiếp, response về không đúng thứ tự gửi) ghi đè lên quote
-  // MỚI hơn đang hiển thị — chỉ áp dụng kết quả nếu request vẫn còn là request mới nhất lúc resolve.
-  const quoteRequestIdRef = useRef(0);
+  // Đặt phòng ngắn hạn: ShortTermBookingPanel tự quản lý chọn ngày/giờ + báo giá + lịch bận, chỉ báo lại cho trang này
+  // lựa chọn hợp lệ hiện tại (selection) và việc server báo giá được hay không (quoteOk — còn trống trong khoảng đó).
+  const [selection, setSelection] = useState<BookingSelection | null>(null);
+  const [quoteOk, setQuoteOk] = useState(false);
+  const bookingPanelRef = useRef<HTMLDivElement>(null);
 
   // Luồng đặt lịch xem nhà tự chọn (thay hẳn nút bấm đơn cũ) — modal 3 bước: chọn slot trên lịch
   // trống của TOÀ NHÀ (không phải riêng phòng) → điền form bắt buộc (SĐT/email/...) → xem panel
@@ -112,17 +100,11 @@ export const RoomDetail: React.FC = () => {
     if (targetId) {
       window.scrollTo(0, 0);
       setLoading(true);
-      // RoomDetail được React Router tái sử dụng NGUYÊN component instance khi điều hướng qua 1
-      // phòng khác bằng client-side nav (vd bấm "similar rooms" bên dưới) — nếu không reset, ngày
-      // đã chọn (đã validate hợp lệ với busyRanges của phòng CŨ) sẽ hiện lại cho phòng MỚI mà chưa
-      // hề được kiểm tra lại, dù busyRanges/quote bên dưới đã tự fetch lại đúng cho phòng mới.
-      setCheckInDate(null);
-      setCheckOutDate(null);
-      setCheckInTime('14:00');
-      setCheckOutTime('16:00');
-      setQuote(null);
-      setQuoteError(false);
-      setShowCalendar(false);
+      // RoomDetail được React Router tái sử dụng NGUYÊN component instance khi điều hướng qua 1 phòng khác bằng
+      // client-side nav (vd bấm "similar rooms") — reset lựa chọn thời gian cũ; ShortTermBookingPanel có key theo
+      // room.id nên tự dựng lại state riêng (ngày/giờ/báo giá) cho phòng mới.
+      setSelection(null);
+      setQuoteOk(false);
       const fetchDetail = isGroupView ? roomApi.getRoomGroupById(targetId) : roomApi.getRoomById(targetId);
       fetchDetail
         .then((data) => {
@@ -137,12 +119,6 @@ export const RoomDetail: React.FC = () => {
               .getHouseCollaborators(data.houseId)
               .then((res: any) => setCollaborators(res?.data || res || []))
               .catch(() => setCollaborators([]));
-          }
-          if (data?.id) {
-            bookingApi
-              .getAvailability(data.id)
-              .then((res: any) => setBusyRanges(res?.data || res || []))
-              .catch(() => setBusyRanges([]));
           }
         })
         .finally(() => setLoading(false));
@@ -159,48 +135,6 @@ export const RoomDetail: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetId, isGroupView, isAuthenticated, termParam]);
-
-  // Kết hợp ngày đã chọn + giờ (chỉ có ý nghĩa với phòng PER_HOUR) thành 1 mốc thời gian thật.
-  const combineDateAndTime = (date: Date, time: string): Date => {
-    const [hours, minutes] = time.split(':').map(Number);
-    const combined = new Date(date);
-    combined.setHours(hours || 0, minutes || 0, 0, 0);
-    return combined;
-  };
-
-  const isHourlyRoom = room?.shortTermPriceUnit === 'PER_HOUR';
-
-  // Báo giá lại mỗi khi khách đổi ngày/giờ — luôn hỏi server (không tự tính ở FE) để không bao
-  // giờ lệch công thức thật (block giá/giảm theo bậc) với lúc đặt thật.
-  useEffect(() => {
-    if (!room?.id || !checkInDate || !checkOutDate) {
-      setQuote(null);
-      setQuoteError(false);
-      return;
-    }
-    const checkIn = isHourlyRoom ? combineDateAndTime(checkInDate, checkInTime) : checkInDate;
-    const checkOut = isHourlyRoom ? combineDateAndTime(checkOutDate, checkOutTime) : checkOutDate;
-
-    const requestId = ++quoteRequestIdRef.current;
-    setQuoteLoading(true);
-    setQuoteError(false);
-    bookingApi
-      .getQuote(room.id, checkIn.toISOString(), checkOut.toISOString())
-      .then((res: any) => {
-        if (quoteRequestIdRef.current !== requestId) return;
-        setQuote(res?.data || res);
-      })
-      .catch(() => {
-        if (quoteRequestIdRef.current !== requestId) return;
-        setQuote(null);
-        setQuoteError(true);
-      })
-      .finally(() => {
-        if (quoteRequestIdRef.current !== requestId) return;
-        setQuoteLoading(false);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room?.id, checkInDate, checkOutDate, checkInTime, checkOutTime, isHourlyRoom]);
 
   if (loading) {
     return (
@@ -327,23 +261,17 @@ export const RoomDetail: React.FC = () => {
       return;
     }
 
-    if (!checkInDate || !checkOutDate) {
-      toast.warning(t('booking.toastNeedDates'));
-      setShowCalendar(true);
-      return;
-    }
-
-    const checkIn = isHourlyRoom ? combineDateAndTime(checkInDate, checkInTime) : checkInDate;
-    const checkOut = isHourlyRoom ? combineDateAndTime(checkOutDate, checkOutTime) : checkOutDate;
-    if (checkOut.getTime() <= checkIn.getTime()) {
-      toast.warning(t('booking.toastInvalidDateRange'));
+    if (!selection) {
+      toast.warning(t('booking.toastNeedTime'));
+      // Panel chọn thời gian nằm trong sidebar (trên mobile nằm dưới nội dung) — cuộn tới đó thay vì mở modal.
+      bookingPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
     if (bookingSubmitting) return;
     setBookingSubmitting(true);
     try {
-      const res: any = await bookingApi.createBooking(room.id, checkIn.toISOString(), checkOut.toISOString());
+      const res: any = await bookingApi.createBooking(room.id, selection);
       const booking = res?.data || res;
       navigate(`/payment/${booking.id}`);
     } catch (err: any) {
@@ -360,75 +288,18 @@ export const RoomDetail: React.FC = () => {
   const roomSeoDescription = (room.description || '').replace(/\s+/g, ' ').trim().slice(0, 160) ||
     t('seo.roomDetailFallbackDescription', { name: room.name, address: room.address });
 
-  // Khối chọn ngày nhận/trả phòng — CHỈ hiện ở sidebar desktop (thanh CTA sticky mobile quá hẹp
-  // để nhét thêm lịch + giờ + báo giá). Trên mobile, bấm nút đặt phòng khi chưa chọn ngày sẽ tự
-  // mở modal lịch (xem handleBookAndPay) — vẫn dùng chung đúng 1 modal DateRangeCalendar.
+  // Khối chọn thời gian thuê (theo ngày / theo giờ) + báo giá — nằm trong sidebar; trên mobile sidebar xếp dưới nội dung,
+  // nút CTA cố định ở đáy sẽ cuộn tới đây nếu khách bấm đặt khi chưa chọn (xem handleBookAndPay).
   const dateSelectorBlock = canBookShortTerm ? (
-    <div className="space-y-2.5">
-      <button
-        type="button"
-        onClick={() => setShowCalendar(true)}
-        className="w-full flex items-center gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-indigo-300 transition-colors text-left"
-      >
-        <CalendarDays className="w-4 h-4 text-indigo-600 shrink-0" />
-        {checkInDate && checkOutDate ? (
-          <span className="text-xs font-bold text-slate-800">
-            {checkInDate.toLocaleDateString('vi-VN')} → {checkOutDate.toLocaleDateString('vi-VN')}
-          </span>
-        ) : (
-          <span className="text-xs font-semibold text-slate-500">{t('booking.selectDatesButton')}</span>
-        )}
-      </button>
-
-      {isHourlyRoom && checkInDate && checkOutDate && (
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-[11px] text-slate-500 block mb-1">{t('booking.checkInTimeLabel')}</label>
-            <input
-              type="time"
-              value={checkInTime}
-              onChange={(e) => setCheckInTime(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="text-[11px] text-slate-500 block mb-1">{t('booking.checkOutTimeLabel')}</label>
-            <input
-              type="time"
-              value={checkOutTime}
-              // Chỉ ràng buộc được khi cùng 1 ngày (min theo giờ không có ý nghĩa khi trả phòng ở
-              // ngày sau) — handleBookAndPay vẫn kiểm tra lại đầy đủ trước khi gửi request.
-              min={checkInDate && checkOutDate && checkInDate.getTime() === checkOutDate.getTime() ? checkInTime : undefined}
-              onChange={(e) => setCheckOutTime(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-        </div>
-      )}
-
-      {checkInDate && checkOutDate && (
-        <div className="text-xs px-1">
-          {quoteLoading ? (
-            <span className="text-slate-400">{t('booking.quoteLoading')}</span>
-          ) : quoteError ? (
-            <span className="text-rose-500">{t('booking.quoteError')}</span>
-          ) : quote ? (
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500">
-                {quote.nights !== null
-                  ? t('booking.quoteNights', { count: quote.nights })
-                  : t('booking.quoteHours', { count: quote.hours })}
-                {quote.discountPercent > 0 && (
-                  <span className="text-emerald-600 font-bold ml-1">
-                    ({t('booking.quoteDiscountApplied', { percent: quote.discountPercent })})
-                  </span>
-                )}
-              </span>
-              <span className="font-black text-slate-900">{formatVnd(quote.amount)}</span>
-            </div>
-          ) : null}
-        </div>
-      )}
+    <div ref={bookingPanelRef}>
+      <ShortTermBookingPanel
+        key={room.id}
+        room={room}
+        onChange={(next, ok) => {
+          setSelection(next);
+          setQuoteOk(ok);
+        }}
+      />
     </div>
   ) : null;
 
@@ -438,7 +309,7 @@ export const RoomDetail: React.FC = () => {
   const primaryActionButton = canBookShortTerm ? (
     <button
       onClick={handleBookAndPay}
-      disabled={bookingSubmitting}
+      disabled={bookingSubmitting || (!!selection && !quoteOk)}
       className="w-full py-4 rounded-2xl gradient-bg text-white font-bold text-sm shadow-xl shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
     >
       <Wallet className="w-5 h-5" />
@@ -855,20 +726,6 @@ export const RoomDetail: React.FC = () => {
         <ContactCollaboratorModal
           collaborators={collaborators}
           onClose={() => setShowCollaboratorModal(false)}
-        />
-      )}
-
-      {showCalendar && (
-        <DateRangeCalendar
-          busyRanges={busyRanges}
-          checkInDate={checkInDate}
-          checkOutDate={checkOutDate}
-          allowSameDay={isHourlyRoom}
-          onChange={(newCheckIn, newCheckOut) => {
-            setCheckInDate(newCheckIn);
-            setCheckOutDate(newCheckOut);
-          }}
-          onClose={() => setShowCalendar(false)}
         />
       )}
 

@@ -4,6 +4,19 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-10-15 — Đặt phòng ngắn hạn: chọn THEO NGÀY hoặc THEO GIỜ, báo giá + giờ nhận/trả thật (bước 3)
+
+**Vì sao:** Backend (bff-for-pimi, cùng ngày) tách thuê ngắn hạn thành 2 hình thức: theo ngày (chọn ngày nhận/trả, giờ theo cài đặt phòng — mặc định 14:00/11:00) và theo giờ (giờ bắt đầu + số giờ). Trang chi tiết cũ chỉ có lịch chọn khoảng ngày + 2 ô giờ (chỉ phòng PER_HOUR), tự coi hình thức theo đơn vị giá của phòng.
+
+**Thay đổi:**
+- `components/booking/ShortTermBookingPanel.tsx` (mới) thay khối chọn ngày/giờ + báo giá cũ ở sidebar `RoomDetail`: nút chuyển "Thuê theo ngày / theo giờ" (chỉ khi phòng bán cả 2). *Theo ngày:* dùng lại `DateRangeCalendar` (ngày bận = các đêm từ `startDate` tới trước `endDate`, ngày trả vẫn nhận được khách mới), ghi chú giờ nhận/trả của phòng. *Theo giờ:* ô ngày (`min` = hôm nay), giờ bắt đầu (`type=time`, bật sau khi chọn ngày), số giờ bằng nút −/+ trong [min, max] của phòng, "Kết thúc lúc …", khung giờ nhận khách; kiểm tra phía web (giờ đã qua, ngoài khung, ngoài khoảng giờ). Báo giá do server trả: "N đêm/giờ × đơn giá = tổng", giảm giá theo bậc, ghi chú chặn trần giá một đêm, giờ nhận/trả thật (hiển thị theo `Asia/Ho_Chi_Minh`); lỗi 400/409 hiện nguyên thông báo server.
+- `pages/RoomDetail.tsx`: bỏ state/effect/hàm ngày giờ cũ (`checkIn/OutDate`, `checkIn/OutTime`, `isHourlyRoom`, `combineDateAndTime`, fetch availability, modal lịch); thay bằng `selection` + `quoteOk` từ panel (`key={room.id}` để dựng lại state khi đổi phòng); `handleBookAndPay` gửi `bookingApi.createBooking(room.id, selection)`, thiếu lựa chọn thì cuộn tới panel (mobile) + toast; nút đặt bị khoá khi báo giá không thành công.
+- `utils/shortTermBooking.ts` (mới): cấu hình thuê ngắn hạn của phòng, tiện ích ngày/giờ VN (`vnInstant`, `vnToday`...), `validateHourlySelection`, `hourlyEndLabel`. `services/bookingApi.ts`: `createBooking`/`getQuote` nhận `BookingTimePayload`; `BookingQuote`/`BusyRange` mở rộng. `services/roomApi.ts` + `types/index.ts`: map thêm giá ngày/giờ, giờ nhận/trả, min/max giờ, khung giờ, đệm. i18n vi/en (`booking.*`).
+- Lỗi đã gặp và sửa: lần đầu panel báo giá lặp vô hạn (hơn 1.700 request → 429) vì `fromDateKey(hourDate)` tạo `Date` mới mỗi lần render làm `selection` đổi identity liên tục; sửa bằng `useMemo` cho ngày + effect báo giá phụ thuộc khoá chuỗi của lựa chọn — sau đó chỉ 1 request mỗi lần chọn.
+- App mobile làm cùng ngày (xem log phongtroapp).
+
+**Đã kiểm tra (trình duyệt, backend local):** Phòng A1 — theo giờ: "2 hour(s) × 75.000đ = 150.000đ", 09:00→11:00 ngày 16/10; theo ngày (20→23/10): "3 night(s) × 600.000đ = 1.800.000đ", nhận 14:00 / trả 11:00; không còn vòng lặp (1 request khi đổi lựa chọn); `tsc -p tsconfig.app.json` + `oxlint` sạch. **Chưa kiểm tra:** bấm "Book & Pay" thật (DB dev chưa cấu hình tài khoản ngân hàng nhận tiền), giao diện điện thoại (CTA cố định cuộn tới panel), phòng chỉ bán 1 hình thức, hiển thị ngày bận từ đơn theo giờ trên lịch; thẻ phòng ở danh sách vẫn chỉ hiện 1 giá (bước 4).
+
 ## 2026-10-13 — Giá phòng theo đúng loại hình đang tìm (ngắn/dài hạn) và đúng đơn vị ở danh sách + chi tiết
 
 **Vì sao:** Yêu cầu mới: tìm loại hình nào thì hiển thị giá của loại đó với đúng đơn vị cài đặt của phòng; đơn vị tháng/năm chỉ thuộc dài hạn, giờ/ngày chỉ thuộc ngắn hạn. Web trước đó: `RoomCard` ở tìm ngắn hạn mà phòng thiếu giá ngắn hạn thì lấy giá dài hạn thay; trang chi tiết luôn hiện `room.price` + "/ tháng" (0đ với phòng chỉ có giá ngắn hạn), ô giá sidebar/thanh dưới mobile hard-code "/ tháng", luôn vào luồng "Book & Pay" nếu phòng có giá ngắn hạn kể cả khi đang tìm dài hạn; phòng gợi ý luôn lấy từ danh sách ngắn hạn; tiêu đề lọc giá luôn ghi "VNĐ / Tháng".
