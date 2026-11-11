@@ -1,10 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Room } from '@/types';
 import { roomApi } from '@/services/roomApi';
 import { appointmentApi, Appointment } from '@/services/appointmentApi';
-import { bookingApi } from '@/services/bookingApi';
 import { collaboratorApi, HouseCollaborator } from '@/services/collaboratorApi';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
@@ -13,7 +12,7 @@ import { RoomReviews } from '@/components/room/RoomReviews';
 import { ReportRoomButton } from '@/components/room/ReportRoomButton';
 import { RoomCard } from '@/components/common/RoomCard';
 import { ContactCollaboratorModal } from '@/components/common/ContactCollaboratorModal';
-import { ShortTermBookingPanel } from '@/components/booking/ShortTermBookingPanel';
+import { ShortTermBookingModal } from '@/components/booking/ShortTermBookingModal';
 import { ViewingSlotPicker, ViewingSlotSelection } from '@/components/appointment/ViewingSlotPicker';
 import { ViewingBookingForm, ViewingBookingFormValues } from '@/components/appointment/ViewingBookingForm';
 import { ViewingConfirmationPanel } from '@/components/appointment/ViewingConfirmationPanel';
@@ -28,7 +27,6 @@ import { absoluteUrl } from '@/config/seo';
 import { formatVnd } from '@/utils/money';
 import { formatMoney } from '@/utils/money';
 import { formatPriceUnit, getRoomPriceDisplay, hasRoomPriceForTerm, resolveRoomPriceTerm, RoomPriceTerm } from '@/utils/roomPrice';
-import type { BookingSelection } from '@/utils/shortTermBooking';
 
 export const RoomDetail: React.FC = () => {
   const { t } = useTranslation();
@@ -54,13 +52,10 @@ export const RoomDetail: React.FC = () => {
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
   const [collaborators, setCollaborators] = useState<HouseCollaborator[]>([]);
   const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
-  const [bookingSubmitting, setBookingSubmitting] = useState(false);
 
-  // Đặt phòng ngắn hạn: ShortTermBookingPanel tự quản lý chọn ngày/giờ + báo giá + lịch bận, chỉ báo lại cho trang này
-  // lựa chọn hợp lệ hiện tại (selection) và việc server báo giá được hay không (quoteOk — còn trống trong khoảng đó).
-  const [selection, setSelection] = useState<BookingSelection | null>(null);
-  const [quoteOk, setQuoteOk] = useState(false);
-  const bookingPanelRef = useRef<HTMLDivElement>(null);
+  // Đặt phòng ngắn hạn: bấm "Đặt phòng & Thanh toán" mở modal chọn thời gian (ShortTermBookingModal tự quản lý chọn ngày/giờ,
+  // báo giá, lịch bận và tạo đơn) — không còn khối chọn thời gian nằm trong trang.
+  const [showBookingModal, setShowBookingModal] = useState(false);
 
   // Luồng đặt lịch xem nhà tự chọn (thay hẳn nút bấm đơn cũ) — modal 3 bước: chọn slot trên lịch
   // trống của TOÀ NHÀ (không phải riêng phòng) → điền form bắt buộc (SĐT/email/...) → xem panel
@@ -101,10 +96,8 @@ export const RoomDetail: React.FC = () => {
       window.scrollTo(0, 0);
       setLoading(true);
       // RoomDetail được React Router tái sử dụng NGUYÊN component instance khi điều hướng qua 1 phòng khác bằng
-      // client-side nav (vd bấm "similar rooms") — reset lựa chọn thời gian cũ; ShortTermBookingPanel có key theo
-      // room.id nên tự dựng lại state riêng (ngày/giờ/báo giá) cho phòng mới.
-      setSelection(null);
-      setQuoteOk(false);
+      // client-side nav (vd bấm "similar rooms") — đóng modal đặt phòng của phòng cũ (modal dựng state riêng mỗi lần mở).
+      setShowBookingModal(false);
       const fetchDetail = isGroupView ? roomApi.getRoomGroupById(targetId) : roomApi.getRoomById(targetId);
       fetchDetail
         .then((data) => {
@@ -256,31 +249,18 @@ export const RoomDetail: React.FC = () => {
     viewTerm === 'SHORT_TERM';
   const hasCollaborators = collaborators.length > 0;
 
-  const handleBookAndPay = async () => {
+  const handleBookAndPay = () => {
     if (!isAuthenticated) {
       toast.warning(t('roomDetail.toastNeedLogin'));
       navigate(`/login?redirect=${redirectPath}`);
       return;
     }
+    setShowBookingModal(true);
+  };
 
-    if (!selection) {
-      toast.warning(t('booking.toastNeedTime'));
-      // Panel chọn thời gian nằm trong sidebar (trên mobile nằm dưới nội dung) — cuộn tới đó thay vì mở modal.
-      bookingPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
-
-    if (bookingSubmitting) return;
-    setBookingSubmitting(true);
-    try {
-      const res: any = await bookingApi.createBooking(room.id, selection);
-      const booking = res?.data || res;
-      navigate(`/payment/${booking.id}`);
-    } catch (err: any) {
-      toast.error(getApiErrorMessage(err));
-    } finally {
-      setBookingSubmitting(false);
-    }
+  const handleBooked = (bookingId: string) => {
+    setShowBookingModal(false);
+    navigate(`/payment/${bookingId}`);
   };
 
   const detailPath = isGroupView ? `/room-groups/${targetId}` : `/rooms/${targetId}`;
@@ -290,32 +270,16 @@ export const RoomDetail: React.FC = () => {
   const roomSeoDescription = (room.description || '').replace(/\s+/g, ' ').trim().slice(0, 160) ||
     t('seo.roomDetailFallbackDescription', { name: room.name, address: room.address });
 
-  // Khối chọn thời gian thuê (theo ngày / theo giờ) + báo giá — nằm trong sidebar; trên mobile sidebar xếp dưới nội dung,
-  // nút CTA cố định ở đáy sẽ cuộn tới đây nếu khách bấm đặt khi chưa chọn (xem handleBookAndPay).
-  const dateSelectorBlock = canBookShortTerm ? (
-    <div ref={bookingPanelRef}>
-      <ShortTermBookingPanel
-        key={room.id}
-        room={room}
-        onChange={(next, ok) => {
-          setSelection(next);
-          setQuoteOk(ok);
-        }}
-      />
-    </div>
-  ) : null;
-
   // Nút hành động chính (giống hệt logic trong sidebar gốc) — dùng lại nguyên khối này ở cả
   // sidebar (>= lg) lẫn thanh CTA sticky mobile (< lg) để KHÔNG tạo ra 2 nguồn sự thật cho
   // cùng 1 hành vi (đặt & thanh toán / đặt lịch xem phòng / trạng thái lịch hẹn hiện tại).
   const primaryActionButton = canBookShortTerm ? (
     <button
       onClick={handleBookAndPay}
-      disabled={bookingSubmitting || (!!selection && !quoteOk)}
-      className="w-full py-4 rounded-2xl gradient-bg text-white font-bold text-sm shadow-xl shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+      className="w-full py-4 rounded-2xl gradient-bg text-white font-bold text-sm shadow-xl shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
     >
       <Wallet className="w-5 h-5" />
-      <span>{bookingSubmitting ? t('roomDetail.creatingBooking') : t('roomDetail.bookAndPayButton')}</span>
+      <span>{t('roomDetail.bookAndPayButton')}</span>
     </button>
   ) : activeAppointment ? (
     activeAppointment.status === 'PENDING_OWNER' ? (
@@ -677,7 +641,6 @@ export const RoomDetail: React.FC = () => {
 
             {/* Direct Primary Actions */}
             <div className="space-y-3">
-              {dateSelectorBlock}
               {primaryActionButton}
 
               {hasCollaborators && (
@@ -732,6 +695,10 @@ export const RoomDetail: React.FC = () => {
             ))}
           </div>
         </section>
+      )}
+
+      {showBookingModal && canBookShortTerm && (
+        <ShortTermBookingModal room={room} onClose={() => setShowBookingModal(false)} onBooked={handleBooked} />
       )}
 
       {showCollaboratorModal && (
