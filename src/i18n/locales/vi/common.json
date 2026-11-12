@@ -351,7 +351,8 @@
     "expiredText": "Mã QR đã hết hạn do chưa nhận được thanh toán. Vui lòng quay lại và đặt phòng lại nếu vẫn muốn thuê.",
     "backToRoomButton": "Quay lại trang phòng",
     "stayPeriodLabel": "Thời gian ở",
-    "paidToast": "Thanh toán thành công! Đã nhận {{amount}} đ cho phòng {{room}}."
+    "paidToast": "Thanh toán thành công! Đã nhận {{amount}} đ cho phòng {{room}}.",
+    "voucherLine": "Giá gốc {{list}} − voucher {{code}} (-{{discount}})"
   },
   "booking": {
     "calendarTitle": "Chọn ngày nhận/trả phòng",
@@ -400,7 +401,14 @@
     "quoteLoading": "Đang tính giá...",
     "quoteError": "Không tính được giá cho khoảng ngày này, vui lòng chọn lại",
     "toastNeedDates": "Vui lòng chọn ngày nhận/trả phòng trước khi đặt",
-    "toastInvalidDateRange": "Giờ trả phòng phải sau giờ nhận phòng"
+    "toastInvalidDateRange": "Giờ trả phòng phải sau giờ nhận phòng",
+    "voucherPlaceholder": "Nhập mã voucher (nếu có)",
+    "voucherApply": "Áp dụng",
+    "voucherApplied": "Đã áp dụng mã {{code}}",
+    "voucherRemove": "Bỏ mã voucher",
+    "voucherNeedDates": "Chọn thời gian thuê trước khi áp dụng voucher.",
+    "voucherDiscountLine": "Voucher {{code}}",
+    "voucherTotalLine": "Cần thanh toán"
   },
   "tenantAppointments": {
     "title": "Lịch sử Đặt lịch xem phòng",

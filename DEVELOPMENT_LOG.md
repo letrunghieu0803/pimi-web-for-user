@@ -4,6 +4,15 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-13 — Nhập mã voucher trong modal đặt phòng ngắn hạn
+
+**Vì sao:** Tính năng voucher giảm giá (xem log bff-for-pimi cùng ngày).
+
+**Thay đổi:**
+- `ShortTermBookingPanel`: ô nhập mã + Áp dụng; báo giá hiện giá gốc, dòng "Voucher X −N" và "Cần thanh toán"; mã sai/hết hạn/hết lượt hiện lỗi dưới ô nhập và báo giá tự chạy lại không kèm mã; `voucherCode` nằm trong `BookingSelection` gửi khi tạo đơn.
+- `BookingPayment`: dòng "Giá gốc − voucher (−N)" khi đơn có voucher. Types `BookingQuote`/`Booking`, i18n vi/en.
+- Đã thử trên trình duyệt với backend local: 900.000đ − 80.000đ = 820.000đ; mã không tồn tại báo lỗi và về giá gốc.
+
 ## 2026-11-11 — Đặt phòng ngắn hạn: chọn thời gian trong modal khi bấm "Đặt Phòng & Thanh Toán"
 
 **Vì sao:** Khối chọn ngày/giờ nằm trong sidebar trang chi tiết; nút "Đặt Phòng & Thanh Toán" chỉ cuộn tới khối đó khi chưa chọn, và bị mờ khi báo giá chưa xong — người dùng không biết nút có hoạt động không. Đổi sang cùng trải nghiệm với app mobile: bấm nút → modal chọn thời gian → Xác nhận / Hủy.

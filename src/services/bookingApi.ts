@@ -20,6 +20,10 @@ export interface Booking {
   rentRoomId: string;
   rentHouseId: string;
   refund?: BookingRefund | null;
+  // Voucher đã áp dụng (null/0 nếu không dùng): `amount` là số khách phải trả sau giảm, `listAmount` là giá niêm yết.
+  voucherCode?: string | null;
+  listAmount?: string | number | null;
+  discountAmount?: string | number;
   [key: string]: unknown;
 }
 
@@ -84,6 +88,10 @@ export interface BookingQuote {
   checkOutAt: string;
   unitPrice: number;
   cappedByDailyPrice: boolean;
+  // `amount` đã trừ voucher (số khách trả); `listAmount` là giá trước voucher.
+  listAmount: number;
+  discountAmount: number;
+  voucher: { code: string; title: string | null; funder: 'PLATFORM' | 'OWNER'; discountType: 'FIXED' | 'PERCENT'; discountValue: number } | null;
 }
 
 // Lựa chọn thời gian thuê gửi cho báo giá/đặt phòng: DAILY gửi 2 ngày (YYYY-MM-DD, giờ nhận/trả theo phòng),
@@ -93,6 +101,7 @@ export interface BookingTimePayload {
   checkInDate: string;
   checkOutDate?: string;
   hours?: number;
+  voucherCode?: string;
 }
 
 export const bookingApi = {
