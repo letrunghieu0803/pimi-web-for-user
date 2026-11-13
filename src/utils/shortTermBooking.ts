@@ -110,4 +110,6 @@ export interface BookingSelection {
   checkOutDate?: string;
   /** HOURLY: số giờ. */
   hours?: number;
+  /** Mã voucher khách đã áp dụng (đã được server báo giá thành công). */
+  voucherCode?: string;
 }

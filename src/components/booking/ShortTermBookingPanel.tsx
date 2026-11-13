@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CalendarDays, Clock, Minus, Plus } from 'lucide-react';
+import { CalendarDays, Clock, Minus, Plus, Ticket, X } from 'lucide-react';
 import { Room } from '@/types';
 import { bookingApi, BookingQuote, BusyRange } from '@/services/bookingApi';
 import { getApiErrorMessage } from '@/utils/apiError';
@@ -65,6 +65,10 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState('');
   const requestIdRef = useRef(0);
+  // Voucher: `voucherInput` là ô nhập, `voucherCode` là mã đã bấm Áp dụng (đưa vào báo giá + đơn).
+  const [voucherInput, setVoucherInput] = useState('');
+  const [voucherCode, setVoucherCode] = useState('');
+  const [voucherError, setVoucherError] = useState('');
 
   useEffect(() => {
     bookingApi
@@ -82,13 +86,14 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
       : null;
 
   const selection: BookingSelection | null = useMemo(() => {
+    const voucher = voucherCode ? { voucherCode } : {};
     if (mode === 'DAILY') {
       if (!checkIn || !checkOut) return null;
-      return { mode, checkInDate: toDateKey(checkIn), checkOutDate: toDateKey(checkOut) };
+      return { mode, checkInDate: toDateKey(checkIn), checkOutDate: toDateKey(checkOut), ...voucher };
     }
     if (!hourDateValue || startMinute === null || hourlyError) return null;
-    return { mode, checkInDate: vnInstant(hourDateValue, startMinute).toISOString(), hours };
-  }, [mode, checkIn, checkOut, hourDateValue, startMinute, hours, hourlyError]);
+    return { mode, checkInDate: vnInstant(hourDateValue, startMinute).toISOString(), hours, ...voucher };
+  }, [mode, checkIn, checkOut, hourDateValue, startMinute, hours, hourlyError, voucherCode]);
 
   // Khoá chuỗi của lựa chọn: effect báo giá chỉ chạy lại khi NỘI DUNG lựa chọn đổi (không phụ thuộc identity object).
   const selectionKey = JSON.stringify(selection);
@@ -114,6 +119,12 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
       })
       .catch((err: any) => {
         if (requestIdRef.current !== requestId) return;
+        // Lỗi do voucher (mã 00027x): bỏ mã, báo ngay dưới ô nhập — báo giá tự chạy lại không kèm voucher.
+        if (selection.voucherCode && /^00027\d$/.test(String(err?.code))) {
+          setVoucherError(getApiErrorMessage(err));
+          setVoucherCode('');
+          return;
+        }
         setQuote(null);
         setQuoteError(getApiErrorMessage(err) || t('booking.quoteError'));
         onChange(selection, false);
@@ -248,6 +259,57 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
         </div>
       )}
 
+      <div className="space-y-1">
+        {voucherCode ? (
+          <div className="flex items-center justify-between gap-2 rounded-2xl bg-emerald-50 border border-emerald-100 px-3 py-2">
+            <span className="flex items-center gap-2 text-xs font-bold text-emerald-700">
+              <Ticket className="w-4 h-4 shrink-0" />
+              {t('booking.voucherApplied', { code: voucherCode })}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setVoucherCode('');
+                setVoucherInput('');
+                setVoucherError('');
+              }}
+              aria-label={t('booking.voucherRemove')}
+              className="p-1 rounded-lg text-emerald-700 hover:bg-emerald-100"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <input
+              value={voucherInput}
+              onChange={(e) => {
+                setVoucherInput(e.target.value.toUpperCase());
+                setVoucherError('');
+              }}
+              placeholder={t('booking.voucherPlaceholder')}
+              maxLength={30}
+              className={`${inputClass} uppercase`}
+            />
+            <button
+              type="button"
+              disabled={!voucherInput.trim() || !selection}
+              onClick={() => {
+                setVoucherError('');
+                setVoucherCode(voucherInput.replace(/\s+/g, ''));
+              }}
+              className="shrink-0 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold disabled:opacity-40"
+            >
+              {t('booking.voucherApply')}
+            </button>
+          </div>
+        )}
+        {!voucherCode && !selection && voucherInput.trim() && (
+          <p className="text-[11px] text-slate-500 px-1">{t('booking.voucherNeedDates')}</p>
+        )}
+        {voucherError && <p className="text-[11px] text-rose-500 px-1">{voucherError}</p>}
+      </div>
+
       {(quoteLoading || quote || quoteError) && (
         <div className="text-xs rounded-2xl bg-emerald-50 border border-emerald-100 p-3 space-y-1">
           {quoteLoading ? (
@@ -267,8 +329,20 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
                     </span>
                   )}
                 </span>
-                <span className="font-black text-slate-900">{formatVnd(quote.amount)}</span>
+                <span className="font-black text-slate-900">{formatVnd(quote.listAmount ?? quote.amount)}</span>
               </div>
+              {quote.voucher && quote.discountAmount > 0 && (
+                <>
+                  <div className="flex items-center justify-between gap-2 text-emerald-700 font-bold">
+                    <span>{t('booking.voucherDiscountLine', { code: quote.voucher.code })}</span>
+                    <span>-{formatVnd(quote.discountAmount)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 border-t border-emerald-100 pt-1">
+                    <span className="font-bold text-slate-700">{t('booking.voucherTotalLine')}</span>
+                    <span className="font-black text-slate-900">{formatVnd(quote.amount)}</span>
+                  </div>
+                </>
+              )}
               {quote.cappedByDailyPrice && <p className="text-slate-500">{t('booking.quoteCapped')}</p>}
               <p className="text-slate-500">{t('booking.stayFrom', { time: formatInstantVn(quote.checkInAt) })}</p>
               <p className="text-slate-500">{t('booking.stayTo', { time: formatInstantVn(quote.checkOutAt) })}</p>

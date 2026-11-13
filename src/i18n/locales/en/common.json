@@ -351,7 +351,8 @@
     "expiredText": "The QR code has expired without receiving payment. Go back and book again if you still want this room.",
     "backToRoomButton": "Back to room",
     "stayPeriodLabel": "Stay period",
-    "paidToast": "Payment successful! We received {{amount}} đ for room {{room}}."
+    "paidToast": "Payment successful! We received {{amount}} đ for room {{room}}.",
+    "voucherLine": "List price {{list}} − voucher {{code}} (-{{discount}})"
   },
   "booking": {
     "calendarTitle": "Select check-in/check-out dates",
@@ -394,10 +395,20 @@
     "stayFrom": "Check-in: {{time}}",
     "stayTo": "Check-out: {{time}}",
     "toastNeedTime": "Please choose your rental time before booking",
+    "modalTitle": "Choose rental time",
+    "modalCancel": "Cancel",
+    "modalConfirm": "Confirm",
     "quoteLoading": "Calculating price...",
     "quoteError": "Couldn't price this date range, please pick again",
     "toastNeedDates": "Please select check-in/check-out dates before booking",
-    "toastInvalidDateRange": "Check-out time must be after check-in time"
+    "toastInvalidDateRange": "Check-out time must be after check-in time",
+    "voucherPlaceholder": "Enter voucher code (optional)",
+    "voucherApply": "Apply",
+    "voucherApplied": "Code {{code}} applied",
+    "voucherRemove": "Remove voucher",
+    "voucherNeedDates": "Choose your stay time before applying a voucher.",
+    "voucherDiscountLine": "Voucher {{code}}",
+    "voucherTotalLine": "Total to pay"
   },
   "tenantAppointments": {
     "title": "Viewing Appointment History",

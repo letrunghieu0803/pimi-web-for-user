@@ -4,6 +4,28 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-13 — Nhập mã voucher trong modal đặt phòng ngắn hạn
+
+**Vì sao:** Tính năng voucher giảm giá (xem log bff-for-pimi cùng ngày).
+
+**Thay đổi:**
+- `ShortTermBookingPanel`: ô nhập mã + Áp dụng; báo giá hiện giá gốc, dòng "Voucher X −N" và "Cần thanh toán"; mã sai/hết hạn/hết lượt hiện lỗi dưới ô nhập và báo giá tự chạy lại không kèm mã; `voucherCode` nằm trong `BookingSelection` gửi khi tạo đơn.
+- `BookingPayment`: dòng "Giá gốc − voucher (−N)" khi đơn có voucher. Types `BookingQuote`/`Booking`, i18n vi/en.
+- Đã thử trên trình duyệt với backend local: 900.000đ − 80.000đ = 820.000đ; mã không tồn tại báo lỗi và về giá gốc.
+
+## 2026-11-11 — Đặt phòng ngắn hạn: chọn thời gian trong modal khi bấm "Đặt Phòng & Thanh Toán"
+
+**Vì sao:** Khối chọn ngày/giờ nằm trong sidebar trang chi tiết; nút "Đặt Phòng & Thanh Toán" chỉ cuộn tới khối đó khi chưa chọn, và bị mờ khi báo giá chưa xong — người dùng không biết nút có hoạt động không. Đổi sang cùng trải nghiệm với app mobile: bấm nút → modal chọn thời gian → Xác nhận / Hủy.
+
+**Thay đổi:**
+- `components/booking/ShortTermBookingModal.tsx` (mới): modal "Chọn thời gian thuê" bọc `ShortTermBookingPanel` (giữ nguyên logic chọn theo ngày/theo giờ + báo giá do server tính). **Xác nhận** chỉ bấm được khi đã chọn đủ và server báo giá được; bấm xong tạo đơn (`bookingApi.createBooking`) rồi chuyển sang `/payment/<id>`. **Hủy** (nút Hủy, nút ✕, Esc) đóng modal và bỏ lựa chọn; bấm nền mờ KHÔNG đóng (tránh mất lựa chọn do bấm nhầm). Đang tạo đơn: khoá các nút, Xác nhận hiện vòng xoay + "Đang tạo đơn...". Lỗi tạo đơn (phòng vừa có người đặt, chưa cấu hình ngân hàng/QR...) hiện ngay trong modal để đổi lựa chọn thử lại. Khoá cuộn trang nền khi mở, trả lại khi đóng; mobile hiện dạng bottom sheet, desktop hộp giữa màn hình.
+- `pages/RoomDetail.tsx`: bỏ khối chọn thời gian khỏi sidebar và các state `selection`/`quoteOk`/`bookingSubmitting`/`bookingPanelRef`; nút đặt phòng (sidebar + thanh CTA mobile) luôn bấm được — chưa đăng nhập vẫn báo cần đăng nhập và chuyển tới trang đăng nhập như cũ, đã đăng nhập thì mở modal; chuyển sang phòng khác bằng client-side nav thì đóng modal.
+- `i18n` vi/en: thêm `booking.modalTitle`, `booking.modalCancel`, `booking.modalConfirm`.
+
+**Đã kiểm tra (web chạy thật localhost:5173, backend local, tài khoản khách thử đã xoá sau đó):** trang không còn khối chọn thời gian, nút luôn bấm được; modal mở, nền khoá cuộn; chọn theo giờ ngày 12/11 lúc 10:00 → báo giá 2 giờ × 150.000đ = 300.000đ và Xác nhận bật; chưa cấu hình ngân hàng → lỗi "Hệ thống chưa cấu hình tài khoản ngân hàng..." hiện trong modal, Xác nhận bật lại; Esc đóng modal và trả lại cuộn trang; tạm cấu hình ngân hàng thử → Xác nhận → chuyển `/payment/<id>`. `tsc -p tsconfig.app.json` sạch.
+
+**Chưa kiểm tra / lưu ý:** giao diện mobile (bottom sheet) và lịch chọn khoảng ngày của chế độ "theo ngày" chưa thử (mới thử chế độ theo giờ); ảnh chụp của pane trình duyệt không hiện modal nên chưa xem trực quan bố cục (kiểm tra bằng DOM: modal `fixed` phủ toàn màn hình, hộp rộng 448px căn giữa). ESLint của repo này không chạy được do cấu hình có sẵn.
+
 ## 2026-10-15 — Thẻ phòng / chi tiết hiện cả giá NGÀY lẫn giá GIỜ khi thuê ngắn hạn (bước 4)
 
 **Vì sao:** Backend đã tách thuê ngắn hạn thành 2 hình thức (giá ngày, giá giờ); thẻ phòng và trang chi tiết vẫn đọc 3 cột giá cũ (`shortTermPrice/Unit/DurationValue` — bản đại diện = giá ngày, không có thì giá giờ) nên phòng bán cả 2 chỉ hiện 1 giá.
