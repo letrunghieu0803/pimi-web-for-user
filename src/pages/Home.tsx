@@ -12,6 +12,7 @@ import { Search, ShieldCheck, Zap, PhoneCall, Sparkles, Building2, ChevronRight,
 import { useSearchFacets } from '@/hooks/useSearchFacets';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
 import { Seo } from '@/components/common/Seo';
+import { CONTACT, CONTACT_TEL_HREF } from '@/constants/contact';
 import { JsonLd } from '@/components/common/JsonLd';
 import { SITE_URL, SITE_NAME, DEFAULT_SEO } from '@/config/seo';
 import { recentlyViewedApi } from '@/utils/recentlyViewed';
@@ -356,11 +357,11 @@ export const Home: React.FC = () => {
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0 z-10">
             <a
-              href="tel:0987654321"
+              href={CONTACT_TEL_HREF}
               className="bg-white text-indigo-700 hover:bg-indigo-50 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-xl flex items-center gap-2 transition-transform hover:scale-105"
             >
               <PhoneCall className="w-4 h-4 text-indigo-600" />
-              <span>{t('home.ctaCallHotline')}</span>
+              <span>{t('home.ctaCallHotline', { phone: CONTACT.phoneDisplay })}</span>
             </a>
           </div>
         </div>

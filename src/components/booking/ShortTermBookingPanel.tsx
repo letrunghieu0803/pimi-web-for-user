@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CalendarDays, Clock, Minus, Plus, Ticket, X } from 'lucide-react';
 import { Room } from '@/types';
-import { bookingApi, BookingQuote, BusyRange } from '@/services/bookingApi';
+import { bookingApi, BookingQuote, BusyRange, PublicVoucher } from '@/services/bookingApi';
 import { getApiErrorMessage } from '@/utils/apiError';
 import { formatVnd } from '@/utils/money';
 import {
@@ -61,6 +61,7 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
   const [hours, setHours] = useState<number>(opts.minHours);
 
   const [busyRanges, setBusyRanges] = useState<BusyRange[]>([]);
+  const [publicVouchers, setPublicVouchers] = useState<PublicVoucher[]>([]);
   const [quote, setQuote] = useState<BookingQuote | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState('');
@@ -75,6 +76,13 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
       .getAvailability(room.id)
       .then((res: any) => setBusyRanges(res?.data || res || []))
       .catch(() => setBusyRanges([]));
+    bookingApi
+      .getPublicVouchers(room.id)
+      .then((res: any) => {
+        const rows = res?.data?.data ?? res?.data ?? res;
+        setPublicVouchers(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => setPublicVouchers([]));
   }, [room.id]);
 
   const startMinute = timeToMinute(startTime);
@@ -88,8 +96,10 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
   const selection: BookingSelection | null = useMemo(() => {
     const voucher = voucherCode ? { voucherCode } : {};
     if (mode === 'DAILY') {
-      if (!checkIn || !checkOut) return null;
-      return { mode, checkInDate: toDateKey(checkIn), checkOutDate: toDateKey(checkOut), ...voucher };
+      if (!checkIn) return null;
+      // Khách chọn "từ ngày A đến hết ngày B" (B bỏ trống = chỉ ngày A): nhận phòng ngày A, trả phòng ngày B + 1.
+      const checkoutDay = new Date((checkOut ?? checkIn).getFullYear(), (checkOut ?? checkIn).getMonth(), (checkOut ?? checkIn).getDate() + 1);
+      return { mode, checkInDate: toDateKey(checkIn), checkOutDate: toDateKey(checkoutDay), ...voucher };
     }
     if (!hourDateValue || startMinute === null || hourlyError) return null;
     return { mode, checkInDate: vnInstant(hourDateValue, startMinute).toISOString(), hours, ...voucher };
@@ -176,9 +186,11 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
           <button type="button" onClick={() => setShowCalendar(true)} className={dayBtnClass}>
             <span className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-indigo-600 shrink-0" />
-              {checkIn && checkOut ? (
+              {checkIn ? (
                 <span className="text-xs font-bold text-slate-800">
-                  {formatDay(checkIn)} → {formatDay(checkOut)}
+                  {checkOut && checkOut.getTime() !== checkIn.getTime()
+                    ? `${formatDay(checkIn)} → ${formatDay(checkOut)}`
+                    : formatDay(checkIn)}
                 </span>
               ) : (
                 <span className="text-xs font-semibold text-slate-500">{t('booking.selectDatesButton')}</span>
@@ -308,6 +320,51 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
           <p className="text-[11px] text-slate-500 px-1">{t('booking.voucherNeedDates')}</p>
         )}
         {voucherError && <p className="text-[11px] text-rose-500 px-1">{voucherError}</p>}
+
+        {!voucherCode && publicVouchers.length > 0 && (
+          <div className="space-y-1.5 pt-1">
+            <p className="text-[11px] font-bold text-slate-500 px-1">{t('booking.publicVouchersTitle')}</p>
+            <div className="space-y-1.5 max-h-44 overflow-y-auto pr-0.5">
+              {publicVouchers.map((v) => (
+                <button
+                  key={v.code}
+                  type="button"
+                  onClick={() => {
+                    setVoucherError('');
+                    setVoucherInput(v.code);
+                    if (selection) setVoucherCode(v.code);
+                  }}
+                  className="w-full flex items-center gap-3 text-left rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/60 hover:bg-indigo-50 hover:border-indigo-400 px-3 py-2 transition-colors"
+                >
+                  <Ticket className="w-5 h-5 text-indigo-500 shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="text-xs font-black text-indigo-700 tracking-wide">{v.code}</span>
+                      <span className="text-[11px] font-bold text-emerald-700">
+                        {v.discountType === 'PERCENT'
+                          ? t('booking.voucherOffPercent', { percent: v.discountValue })
+                          : t('booking.voucherOffAmount', { amount: formatVnd(v.discountValue) })}
+                      </span>
+                    </span>
+                    {v.title && <span className="block text-[11px] text-slate-600 truncate">{v.title}</span>}
+                    <span className="block text-[10px] text-slate-400">
+                      {[
+                        v.discountType === 'PERCENT' && v.maxDiscountAmount
+                          ? t('booking.voucherMaxOff', { amount: formatVnd(v.maxDiscountAmount) })
+                          : null,
+                        v.endsAt ? t('booking.voucherExpires', { date: new Date(v.endsAt).toLocaleDateString('vi-VN') }) : null,
+                        v.remainingUses !== null ? t('booking.voucherRemaining', { count: v.remainingUses }) : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-[11px] font-bold text-indigo-600">{t('booking.voucherUse')}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {(quoteLoading || quote || quoteError) && (

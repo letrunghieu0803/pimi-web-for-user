@@ -2,12 +2,13 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Room } from '@/types';
-import { MapPin, Maximize2, Users, ShieldCheck, Layers, Navigation, Sparkles, Heart, Globe2 } from 'lucide-react';
+import { MapPin, Maximize2, Users, ShieldCheck, Layers, Navigation, Sparkles, Heart, Globe2, Clock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useToast } from '@/context/ToastContext';
 import { formatVnd } from '@/utils/money';
 import { formatPriceUnit, getRoomPriceDisplay } from '@/utils/roomPrice';
+import { getPostedAgo } from '@/utils/postedAt';
 
 interface RoomCardProps {
   room: Room;
@@ -51,6 +52,13 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
   const formatPrice = (price: number) => formatVnd(price);
   const priceDisplay = getRoomPriceDisplay(room, priceTerm);
 
+  // "Đăng X trước" chỉ hiện ở thẻ phòng thuê DÀI hạn (đang tìm dài hạn, hoặc thẻ không có loại hình thì xem đơn vị giá đang
+  // hiện là tháng/năm). Quá 7 ngày thì getPostedAgo trả null -> không hiện.
+  const isLongTermCard = priceTerm
+    ? priceTerm === 'LONG_TERM'
+    : priceDisplay.unitKey === 'roomCard.unitMonth' || priceDisplay.unitKey === 'roomCard.unitYear';
+  const postedAgo = isLongTermCard ? getPostedAgo(room.createdAt) : null;
+
   // Đang tìm theo loại hình nào thì chuyển loại đó sang trang chi tiết (?term=) để giá + đơn vị + luồng đặt khớp với danh sách.
   const detailBase = room.roomGroupId ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`;
   const detailLink = priceTerm ? `${detailBase}?term=${priceTerm}` : detailBase;
@@ -70,7 +78,7 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
 
         {/* Top Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
             {room.isRecommended && (
               <span className="badge-tag bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black backdrop-blur-md shadow-md">
                 <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
@@ -87,19 +95,40 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {room.distanceInKm !== undefined && (
-              <span className="badge-tag bg-amber-500/95 text-white backdrop-blur-md shadow-sm animate-pulse">
-                <Navigation className="w-3.5 h-3.5" />
-                <span>{room.distanceInKm} km</span>
+          <div className="flex flex-col items-end gap-1.5 shrink-0 whitespace-nowrap">
+            {postedAgo && (
+              <span className="badge-tag bg-slate-900/75 text-white backdrop-blur-md shadow-sm">
+                <Clock className="w-3.5 h-3.5" />
+                <span>
+                  {postedAgo.unit === 'justNow'
+                    ? t('roomCard.postedJustNow')
+                    : t(
+                        postedAgo.unit === 'minute'
+                          ? 'roomCard.postedMinutes'
+                          : postedAgo.unit === 'hour'
+                            ? 'roomCard.postedHours'
+                            : 'roomCard.postedDays',
+                        { count: postedAgo.count },
+                      )}
+                </span>
               </span>
             )}
+            {(room.distanceInKm !== undefined || room.hasMezzanine) && (
+              <div className="flex items-center gap-1.5">
+                {room.distanceInKm !== undefined && (
+                  <span className="badge-tag bg-amber-500/95 text-white backdrop-blur-md shadow-sm animate-pulse">
+                    <Navigation className="w-3.5 h-3.5" />
+                    <span>{room.distanceInKm} km</span>
+                  </span>
+                )}
 
-            {room.hasMezzanine && (
-              <span className="badge-tag bg-indigo-600/90 text-white backdrop-blur-md shadow-sm">
-                <Layers className="w-3.5 h-3.5" />
-                <span>{t('roomCard.hasMezzanine')}</span>
-              </span>
+                {room.hasMezzanine && (
+                  <span className="badge-tag bg-indigo-600/90 text-white backdrop-blur-md shadow-sm">
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>{t('roomCard.hasMezzanine')}</span>
+                  </span>
+                )}
+              </div>
             )}
           </div>
         </div>

@@ -4,6 +4,46 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-18 — Thẻ phòng thuê dài hạn: "Đăng X trước"
+
+**Vì sao:** Cho người xem thấy phòng mới đăng được bao lâu, tạo cảm giác mới mẻ cho căn phòng.
+
+**Thay đổi:** `utils/postedAt.ts` (`getPostedAgo`): từ `room.createdAt` ra "vừa đăng" (<1 phút) / N phút / N giờ / N ngày; quá 7 ngày hoặc thiếu/sai ngày thì ẩn; đồng hồ lệch về tương lai coi như vừa đăng. `RoomCard`: nhãn có biểu tượng đồng hồ ở cột góc trên bên phải ảnh (trên nhãn khoảng cách/gác xép, cột `shrink-0 whitespace-nowrap`, nhóm nhãn bên trái cho phép xuống dòng để không chen nhau); chỉ hiện ở thẻ dài hạn (đang tìm `LONG_TERM`, hoặc thẻ không có loại hình thì xem đơn vị giá là tháng/năm). i18n vi/en `roomCard.posted*`. Backend không đổi (feed đã trả `createdAt`).
+
+**Đã kiểm tra (trình duyệt + backend local):** đặt tạm `createdAt` 3 phòng dài hạn = 5 phút/3 giờ/3 ngày trước → hiện "Posted 5m/3h/3d ago", phòng cũ không hiện; thẻ có nhãn Recommended + Posted không bị xuống dòng. `tsc -p tsconfig.app.json` sạch. Đã trả `createdAt` về giá trị gốc.
+
+## 2026-11-18 — Màn đặt phòng: danh sách voucher công khai áp dụng được
+
+**Thay đổi:** `bookingApi.getPublicVouchers` + type `PublicVoucher`; `ShortTermBookingPanel` hiện mục "Voucher áp dụng được cho phòng này" dưới ô nhập mã (khi chưa áp mã): thẻ nét đứt gồm mã, mức giảm (% hoặc số tiền), mô tả, tối đa/HSD/số lượt còn; bấm thẻ điền mã và áp luôn nếu đã chọn ngày. i18n vi/en (`booking.publicVouchersTitle`, `voucherOff*`, `voucherUse`…).
+
+**Đã kiểm tra (trình duyệt + backend local):** phòng "Test NH 01 - Chỉ ngày" hiện 2 voucher công khai, không hiện voucher riêng; chọn 1 ngày + bấm UIPUBLIC10 → 1 đêm 450.000đ, voucher −45.000đ, cần thanh toán 405.000đ.
+
+## 2026-11-18 — Chọn ngày thuê theo ngày: "từ ngày A đến hết ngày B" (hoặc 1 ngày)
+
+**Vì sao:** Chọn ngày nhận rồi ngày trả dễ nhầm với đêm ở; giờ bấm 1 ngày là thuê 1 ngày, bấm thêm ngày thứ hai là thuê liên tiếp đến hết ngày đó (nhận phòng ngày A, trả phòng ngày B + 1).
+
+**Thay đổi:**
+- `DateRangeCalendar`: ngày thứ hai là ngày CUỐI CÙNG ở (tính cả ngày đó), có thể bỏ trống; kiểm tra ngày bận gồm cả ngày cuối; nút "Xong" dùng được khi đã có ngày nhận; phần tóm tắt hiện "Thuê A → B (N đêm)" và "trả phòng ngày B+1"; bỏ prop `allowSameDay` không còn dùng.
+- `ShortTermBookingPanel`: gửi API `checkOutDate` = (ngày cuối hoặc ngày nhận) + 1 — hợp đồng API không đổi nên backend cũ vẫn đúng; nút chọn hiện 1 ngày hoặc "A → B".
+- i18n vi/en (`booking.calendarTitle/NavHint/selectDatesButton/calStayLabel/calCheckoutNote/dailyTimesHint`); `Terms.tsx` mục 8 mô tả cách chọn ngày mới.
+
+**Đã kiểm tra (trình duyệt + backend local, tài khoản demo):** chọn 1 ngày → 1 đêm, trả hôm sau; chọn 26→28/11 → 3 đêm, nhận 14:00 26/11, trả 11:00 29/11, 3 × 450.000 = 1.350.000. `tsc -p tsconfig.app.json` sạch. Thuê theo giờ không đổi.
+
+## 2026-11-18 — Viết lại Điều khoản sử dụng + Chính sách bảo mật theo hệ thống thật; đổi thông tin liên hệ
+
+**Vì sao:** Hệ thống bên server test đã ổn định, cần bộ điều khoản/chính sách khớp cách hệ thống đang chạy và thông tin liên hệ chính thức (hotline 0889.625.908, email piminest.vn@gmail.com, địa chỉ Xóm Kim Tân, Xã Kim Phượng, tỉnh Thái Nguyên). Bản cũ còn mốc hoàn tiền sai và nhiều chỗ để trống.
+
+**Thay đổi:**
+- `constants/contact.ts` (mới): nguồn duy nhất cho tên đơn vị, người đại diện, hotline, email, địa chỉ và ngày hiệu lực/phiên bản (14/11/2026, v2.0). Footer, `Contact`, `FAQ`, nút gọi ở `Home`, hai trang pháp lý đều đọc từ đây; bỏ key i18n `footer.address` và `*.effectiveDate`; `home.ctaCallHotline` nhận `{{phone}}`.
+- `components/legal/LegalSection.tsx` (mới): khối mục + danh sách liên hệ dùng chung cho `Terms`/`Privacy`.
+- `Terms.tsx` (20 mục): sửa mốc hoàn tiền đúng code backend (huỷ ≤2h sau đặt và còn ≥4h tới giờ nhận: 100%; còn ≥3 ngày: 100%; ≥1 ngày: 50%; còn lại 0%), mức hoàn chỉ là gợi ý và Pimi chốt, yêu cầu huỷ gửi trong app kèm tài khoản nhận tiền; thêm mục đặt lịch xem phòng, mã giảm giá (bên chịu: Pimi trừ vào hoa hồng, chủ nhà trừ vào tiền nhận; hoàn tiền tính trên số thực trả), cộng tác viên, gói thành viên, khoá KYC sau 5 lần thất bại; bỏ cam kết "hoàn trong 7 ngày làm việc".
+- `Privacy.tsx` (14 mục): thêm bên xử lý dữ liệu thật — Google Gemini (đọc giấy tờ, viết tin, nhập bảng tính), Tingee (QR/đối soát), Zalo ZNS, FCM, SMTP, VietMap, AWS S3; quyền camera/thư viện ảnh; bỏ cam kết "xoá hồ sơ KYC bị từ chối sau 90 ngày" (hệ thống không có tác vụ này) và thay bằng lưu trong thời gian cần thiết; thêm cơ chế dọn ảnh mồ côi sau ~24h; thời hạn xử lý yêu cầu xoá dữ liệu theo pháp luật thay vì cam kết 30 ngày.
+- Nhãn "Hotline 24/7" đổi thành "Hotline" (giờ làm việc ở trang Liên hệ là 08:00–20:00).
+
+**Đã kiểm tra:** `tsc -p tsconfig.app.json` sạch; mở `/terms`, `/privacy`, `/contact`, `/faq`, `/` trên trình duyệt — không còn số/email/địa chỉ cũ, link `tel:` và `mailto:` đúng. Repo chưa có cấu hình ESLint nên chưa lint.
+
+**Lưu ý:** tên đơn vị "Công ty TNHH Pimi Nest" và người đại diện giữ như bản cũ; đã bỏ hai dòng "[Bổ sung mã số doanh nghiệp / trụ sở đăng ký]" — nên thêm lại mã số doanh nghiệp khi có. Nội dung là bản soạn theo cách hệ thống hoạt động, cần luật sư rà soát trước khi dùng chính thức (giữ hộ tiền, giới hạn trách nhiệm 6 tháng, lưu chứng từ 5 năm, dữ liệu cá nhân).
+
 ## 2026-11-13 — Nhập mã voucher trong modal đặt phòng ngắn hạn
 
 **Vì sao:** Tính năng voucher giảm giá (xem log bff-for-pimi cùng ngày).

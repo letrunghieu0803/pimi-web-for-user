@@ -33,7 +33,7 @@
     "feature3Desc": "Người đi thuê nhà không phải trả bất kỳ khoản phí môi giới nào. Làm việc & ký hợp đồng trực tiếp với chủ nhà.",
     "ctaTitle": "Bạn Chưa Tìm Được Phòng Trọ Phù Hợp?",
     "ctaDesc": "Gọi ngay Hotline chăm sóc khách hàng của Pimi để được trợ lý hỗ trợ tư vấn và gợi ý danh sách phòng trống mới nhất theo yêu cầu.",
-    "ctaCallHotline": "Gọi Hotline 0987.654.321",
+    "ctaCallHotline": "Gọi Hotline {{phone}}",
     "recentlyViewedTag": "Dành cho bạn",
     "recentlyViewedTitle": "Phòng đã xem gần đây",
     "shortTermTag": "Thuê Theo Ngày/Giờ",
@@ -130,8 +130,7 @@
     "area4": "Căn hộ dịch vụ Phú Nhuận (TP.HCM)",
     "area5": "Căn hộ mini Bình Thạnh (TP.HCM)",
     "hotlineTitle": "Hotline & Văn Phòng",
-    "hotlineLabel": "Hotline Tư Vấn 24/7",
-    "address": "188 Nguyễn Xí, Phường 26, Bình Thạnh, TP.HCM & Cầu Giấy, Hà Nội",
+    "hotlineLabel": "Hotline Tư Vấn",
     "rightsReserved": "All rights reserved.",
     "madeFor": "Thiết kế dành riêng cho người thuê nhà"
   },
@@ -152,7 +151,11 @@
     "unfavorite": "Bỏ khỏi yêu thích",
     "favoriteError": "Không thể cập nhật yêu thích, vui lòng thử lại",
     "acceptsForeignTenants": "Nhận khách nước ngoài",
-    "noForeignTenants": "Không nhận khách nước ngoài"
+    "noForeignTenants": "Không nhận khách nước ngoài",
+    "postedJustNow": "Vừa đăng",
+    "postedMinutes": "Đăng {{count}} phút trước",
+    "postedHours": "Đăng {{count}} giờ trước",
+    "postedDays": "Đăng {{count}} ngày trước"
   },
   "contact": {
     "badge": "Liên Hệ Hỗ Trợ",
@@ -160,7 +163,7 @@
     "subtitle": "Nếu bạn gặp khó khăn trong việc tìm phòng, hẹn lịch xem phòng hoặc cần hợp tác đăng tin, hãy liên hệ Pimi qua các kênh bên dưới.",
     "infoTitle": "Thông Tin Liên Hệ Pimi",
     "mainOffice": "Văn phòng chính",
-    "hotline": "Hotline tư vấn 24/7",
+    "hotline": "Hotline tư vấn",
     "emailSupport": "Email hỗ trợ",
     "workingHours": "Giờ làm việc",
     "workingHoursValue": "Thứ 2 - Chủ Nhật: 08:00 - 20:00"
@@ -170,7 +173,7 @@
     "title": "Giải Đáp Thắc Mắc Người Thuê Nhà",
     "subtitle": "Những câu hỏi phổ biến nhất về cách tìm phòng, hẹn lịch xem phòng và quy trình thuê nhà trọ trên Pimi.",
     "needHelpTitle": "Bạn vẫn còn thắc mắc cần trợ giúp?",
-    "needHelpDesc": "Đội ngũ hỗ trợ của Pimi sẵn sàng giải đáp 24/7 qua Hotline.",
+    "needHelpDesc": "Đội ngũ hỗ trợ của Pimi sẵn sàng giải đáp qua Hotline.",
     "hotlineLabel": "Hotline",
     "items": [
       {
@@ -355,8 +358,8 @@
     "voucherLine": "Giá gốc {{list}} − voucher {{code}} (-{{discount}})"
   },
   "booking": {
-    "calendarTitle": "Chọn ngày nhận/trả phòng",
-    "calendarNavHint": "Bấm 1 lần chọn ngày nhận, bấm lần 2 chọn ngày trả",
+    "calendarTitle": "Chọn ngày thuê",
+    "calendarNavHint": "Bấm 1 ngày để thuê 1 ngày; bấm thêm ngày thứ hai để thuê nhiều ngày liên tiếp",
     "calendarLegendSelected": "Đã chọn",
     "calendarLegendBusy": "Đã kín lịch",
     "calendarDoneButton": "Xong",
@@ -370,7 +373,7 @@
     "checkInLabel": "Nhận phòng",
     "checkOutLabel": "Trả phòng",
     "notSelected": "Chưa chọn",
-    "selectDatesButton": "Chọn ngày nhận/trả phòng",
+    "selectDatesButton": "Chọn ngày thuê",
     "checkInTimeLabel": "Giờ nhận phòng",
     "checkOutTimeLabel": "Giờ trả phòng",
     "quoteNights": "{{count}} đêm",
@@ -378,7 +381,7 @@
     "quoteDiscountApplied": "Đã giảm {{percent}}%",
     "modeDaily": "Thuê theo ngày",
     "modeHourly": "Thuê theo giờ",
-    "dailyTimesHint": "Nhận phòng từ {{checkIn}}, trả phòng trước {{checkOut}} (theo cài đặt của phòng).",
+    "dailyTimesHint": "Nhận phòng từ {{checkIn}} ngày đầu, trả phòng trước {{checkOut}} sáng hôm sau ngày cuối (theo cài đặt của phòng).",
     "todayPassedHint": "Hôm nay đã quá giờ nhận phòng — hãy chọn ngày nhận từ ngày mai.",
     "hourlyDateLabel": "Ngày thuê",
     "startTimeLabel": "Giờ bắt đầu",
@@ -408,7 +411,16 @@
     "voucherRemove": "Bỏ mã voucher",
     "voucherNeedDates": "Chọn thời gian thuê trước khi áp dụng voucher.",
     "voucherDiscountLine": "Voucher {{code}}",
-    "voucherTotalLine": "Cần thanh toán"
+    "voucherTotalLine": "Cần thanh toán",
+    "calStayLabel": "Thuê",
+    "calCheckoutNote": "Nhận phòng ngày đầu, trả phòng ngày {{date}}",
+    "publicVouchersTitle": "Voucher áp dụng được cho phòng này",
+    "voucherOffPercent": "Giảm {{percent}}%",
+    "voucherOffAmount": "Giảm {{amount}}",
+    "voucherMaxOff": "tối đa {{amount}}",
+    "voucherExpires": "HSD {{date}}",
+    "voucherRemaining": "còn {{count}} lượt",
+    "voucherUse": "Dùng"
   },
   "tenantAppointments": {
     "title": "Lịch sử Đặt lịch xem phòng",
@@ -705,13 +717,11 @@
   },
   "privacy": {
     "badge": "Bảo Vệ Thông Tin Người Dùng",
-    "title": "Chính Sách Bảo Vệ Dữ Liệu Và Thông Tin Cá Nhân",
-    "effectiveDate": "Ngày hiệu lực: 22/09/2026 · Phiên bản 1.0 · Công ty TNHH Pimi Nest"
+    "title": "Chính Sách Bảo Vệ Dữ Liệu Và Thông Tin Cá Nhân"
   },
   "terms": {
     "badge": "Thoả Thuận Sử Dụng Nền Tảng",
-    "title": "Điều Khoản Sử Dụng",
-    "effectiveDate": "Ngày hiệu lực: 22/09/2026 · Phiên bản 1.0 · Công ty TNHH Pimi Nest"
+    "title": "Điều Khoản Sử Dụng"
   },
   "requestTourModal": {
     "toastNeedName": "Vui lòng nhập họ và tên của bạn!",

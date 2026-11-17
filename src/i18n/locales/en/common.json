@@ -33,7 +33,7 @@
     "feature3Desc": "Tenants never pay any broker fee. Work with and sign your contract directly with the owner.",
     "ctaTitle": "Haven't Found The Right Room Yet?",
     "ctaDesc": "Call Pimi's customer care hotline now and our team will help you find the newest available rooms that match what you need.",
-    "ctaCallHotline": "Call Hotline 0987.654.321",
+    "ctaCallHotline": "Call Hotline {{phone}}",
     "recentlyViewedTag": "For you",
     "recentlyViewedTitle": "Recently viewed rooms",
     "shortTermTag": "Book By Day/Hour",
@@ -130,8 +130,7 @@
     "area4": "Service apartments in Phú Nhuận (HCMC)",
     "area5": "Mini apartments in Bình Thạnh (HCMC)",
     "hotlineTitle": "Hotline & Offices",
-    "hotlineLabel": "24/7 Support Hotline",
-    "address": "188 Nguyễn Xí, Ward 26, Bình Thạnh, HCMC & Cầu Giấy, Hanoi",
+    "hotlineLabel": "Support Hotline",
     "rightsReserved": "All rights reserved.",
     "madeFor": "Made for tenants"
   },
@@ -152,7 +151,11 @@
     "unfavorite": "Remove from favorites",
     "favoriteError": "Couldn't update favorites, please try again",
     "acceptsForeignTenants": "Accepts foreign tenants",
-    "noForeignTenants": "Vietnamese tenants only"
+    "noForeignTenants": "Vietnamese tenants only",
+    "postedJustNow": "Just posted",
+    "postedMinutes": "Posted {{count}}m ago",
+    "postedHours": "Posted {{count}}h ago",
+    "postedDays": "Posted {{count}}d ago"
   },
   "contact": {
     "badge": "Contact Support",
@@ -160,7 +163,7 @@
     "subtitle": "If you have trouble finding a room, booking a viewing or want to partner on listings, please reach Pimi through the channels below.",
     "infoTitle": "Pimi Contact Info",
     "mainOffice": "Main Office",
-    "hotline": "24/7 Support Hotline",
+    "hotline": "Support hotline",
     "emailSupport": "Support Email",
     "workingHours": "Working Hours",
     "workingHoursValue": "Mon - Sun: 08:00 - 20:00"
@@ -170,7 +173,7 @@
     "title": "Answers For Tenants",
     "subtitle": "The most common questions about finding a room, booking a viewing, and the rental process on Pimi.",
     "needHelpTitle": "Still have questions?",
-    "needHelpDesc": "Pimi's support team is available 24/7 on our hotline.",
+    "needHelpDesc": "Pimi's support team is available on our hotline.",
     "hotlineLabel": "Hotline",
     "items": [
       {
@@ -355,8 +358,8 @@
     "voucherLine": "List price {{list}} − voucher {{code}} (-{{discount}})"
   },
   "booking": {
-    "calendarTitle": "Select check-in/check-out dates",
-    "calendarNavHint": "Click once for check-in, click again for check-out",
+    "calendarTitle": "Select stay dates",
+    "calendarNavHint": "Click one day to rent 1 day; click a second day to rent several consecutive days",
     "calendarLegendSelected": "Selected",
     "calendarLegendBusy": "Fully booked",
     "calendarDoneButton": "Done",
@@ -370,7 +373,7 @@
     "checkInLabel": "Check-in",
     "checkOutLabel": "Check-out",
     "notSelected": "Not selected",
-    "selectDatesButton": "Select check-in/check-out dates",
+    "selectDatesButton": "Select stay dates",
     "checkInTimeLabel": "Check-in time",
     "checkOutTimeLabel": "Check-out time",
     "quoteNights": "{{count}} nights",
@@ -378,7 +381,7 @@
     "quoteDiscountApplied": "{{percent}}% off applied",
     "modeDaily": "By the day",
     "modeHourly": "By the hour",
-    "dailyTimesHint": "Check-in from {{checkIn}}, check-out before {{checkOut}} (set by the room).",
+    "dailyTimesHint": "Check-in from {{checkIn}} on the first day, check-out before {{checkOut}} the morning after the last day (set by the room).",
     "todayPassedHint": "Today's check-in time has passed — pick a check-in date from tomorrow.",
     "hourlyDateLabel": "Date",
     "startTimeLabel": "Start time",
@@ -408,7 +411,16 @@
     "voucherRemove": "Remove voucher",
     "voucherNeedDates": "Choose your stay time before applying a voucher.",
     "voucherDiscountLine": "Voucher {{code}}",
-    "voucherTotalLine": "Total to pay"
+    "voucherTotalLine": "Total to pay",
+    "calStayLabel": "Stay",
+    "calCheckoutNote": "Check-in on the first day, check-out on {{date}}",
+    "publicVouchersTitle": "Vouchers you can use for this room",
+    "voucherOffPercent": "{{percent}}% off",
+    "voucherOffAmount": "{{amount}} off",
+    "voucherMaxOff": "up to {{amount}}",
+    "voucherExpires": "Expires {{date}}",
+    "voucherRemaining": "{{count}} left",
+    "voucherUse": "Use"
   },
   "tenantAppointments": {
     "title": "Viewing Appointment History",
@@ -705,13 +717,11 @@
   },
   "privacy": {
     "badge": "User Data Protection",
-    "title": "Personal Data & Privacy Protection Policy",
-    "effectiveDate": "Effective date: 22/09/2026 · Version 1.0 · Pimi Nest Co., Ltd. (content below is provided in Vietnamese, per Vietnamese legal requirements)"
+    "title": "Personal Data & Privacy Protection Policy"
   },
   "terms": {
     "badge": "Platform Usage Agreement",
-    "title": "Terms of Service",
-    "effectiveDate": "Effective date: 22/09/2026 · Version 1.0 · Pimi Nest Co., Ltd. (content below is provided in Vietnamese, per Vietnamese legal requirements)"
+    "title": "Terms of Service"
   },
   "requestTourModal": {
     "toastNeedName": "Please enter your full name!",

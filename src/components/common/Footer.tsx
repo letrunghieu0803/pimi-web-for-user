@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { CONTACT, CONTACT_MAILTO_HREF, CONTACT_TEL_HREF } from '@/constants/contact';
 import { Building2, Phone, Mail, MapPin, ShieldCheck, Heart, ArrowUpRight, PhoneCall, Shield, FileText, MessageSquare } from 'lucide-react';
 
 export const Footer: React.FC = () => {
@@ -88,7 +89,7 @@ export const Footer: React.FC = () => {
             <div className="space-y-4 text-sm">
               {/* Highlighted Hotline Button */}
               <a
-                href="tel:0987654321"
+                href={CONTACT_TEL_HREF}
                 className="flex items-center gap-3 p-3.5 rounded-2xl bg-indigo-950/80 border border-indigo-500/40 text-indigo-200 hover:bg-indigo-900 transition-all group"
               >
                 <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -96,18 +97,18 @@ export const Footer: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-[10px] uppercase font-bold text-indigo-400 block tracking-wider">{t('footer.hotlineLabel')}</span>
-                  <span className="text-base font-black text-white font-heading">0987.654.321</span>
+                  <span className="text-base font-black text-white font-heading">{CONTACT.phoneDisplay}</span>
                 </div>
               </a>
 
               <ul className="space-y-3">
                 <li className="flex items-start gap-3 text-slate-400 text-xs">
                   <MapPin className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-                  <span>{t('footer.address')}</span>
+                  <span>{CONTACT.address}</span>
                 </li>
                 <li className="flex items-center gap-3 text-slate-400 text-xs">
                   <Mail className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>support@pimi.vn</span>
+                  <a href={CONTACT_MAILTO_HREF} className="hover:text-indigo-300 transition-colors break-all">{CONTACT.email}</a>
                 </li>
               </ul>
             </div>
