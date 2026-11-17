@@ -409,7 +409,14 @@
     "voucherDiscountLine": "Voucher {{code}}",
     "voucherTotalLine": "Total to pay",
     "calStayLabel": "Stay",
-    "calCheckoutNote": "Check-in on the first day, check-out on {{date}}"
+    "calCheckoutNote": "Check-in on the first day, check-out on {{date}}",
+    "publicVouchersTitle": "Vouchers you can use for this room",
+    "voucherOffPercent": "{{percent}}% off",
+    "voucherOffAmount": "{{amount}} off",
+    "voucherMaxOff": "up to {{amount}}",
+    "voucherExpires": "Expires {{date}}",
+    "voucherRemaining": "{{count}} left",
+    "voucherUse": "Use"
   },
   "tenantAppointments": {
     "title": "Viewing Appointment History",

@@ -4,6 +4,12 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-18 — Màn đặt phòng: danh sách voucher công khai áp dụng được
+
+**Thay đổi:** `bookingApi.getPublicVouchers` + type `PublicVoucher`; `ShortTermBookingPanel` hiện mục "Voucher áp dụng được cho phòng này" dưới ô nhập mã (khi chưa áp mã): thẻ nét đứt gồm mã, mức giảm (% hoặc số tiền), mô tả, tối đa/HSD/số lượt còn; bấm thẻ điền mã và áp luôn nếu đã chọn ngày. i18n vi/en (`booking.publicVouchersTitle`, `voucherOff*`, `voucherUse`…).
+
+**Đã kiểm tra (trình duyệt + backend local):** phòng "Test NH 01 - Chỉ ngày" hiện 2 voucher công khai, không hiện voucher riêng; chọn 1 ngày + bấm UIPUBLIC10 → 1 đêm 450.000đ, voucher −45.000đ, cần thanh toán 405.000đ.
+
 ## 2026-11-18 — Chọn ngày thuê theo ngày: "từ ngày A đến hết ngày B" (hoặc 1 ngày)
 
 **Vì sao:** Chọn ngày nhận rồi ngày trả dễ nhầm với đêm ở; giờ bấm 1 ngày là thuê 1 ngày, bấm thêm ngày thứ hai là thuê liên tiếp đến hết ngày đó (nhận phòng ngày A, trả phòng ngày B + 1).

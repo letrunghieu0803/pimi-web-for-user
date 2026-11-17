@@ -113,6 +113,11 @@ export const bookingApi = {
     return axiosClient.post('/v1/bookings/quote', { rentRoomId, ...time });
   },
 
+  // Voucher công khai khách có thể áp dụng cho phòng này (màn thanh toán) — không trả mã của voucher riêng.
+  getPublicVouchers: (roomId: string) => {
+    return axiosClient.get(`/v1/public-vouchers/rooms/${roomId}`);
+  },
+
   getAvailability: (roomId: string) => {
     return axiosClient.get(`/v1/rent-rooms/public/${roomId}/availability`);
   },
@@ -133,3 +138,17 @@ export const bookingApi = {
     return axiosClient.get('/v1/bookings/tenant', { params });
   },
 };
+
+export interface PublicVoucher {
+  code: string;
+  title: string | null;
+  funder: 'PLATFORM' | 'OWNER';
+  discountType: 'FIXED' | 'PERCENT';
+  discountValue: number;
+  maxDiscountAmount: number | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  maxUsesPerUser: number;
+  /** null = không giới hạn tổng lượt. */
+  remainingUses: number | null;
+}
