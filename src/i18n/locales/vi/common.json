@@ -151,7 +151,11 @@
     "unfavorite": "Bỏ khỏi yêu thích",
     "favoriteError": "Không thể cập nhật yêu thích, vui lòng thử lại",
     "acceptsForeignTenants": "Nhận khách nước ngoài",
-    "noForeignTenants": "Không nhận khách nước ngoài"
+    "noForeignTenants": "Không nhận khách nước ngoài",
+    "postedJustNow": "Vừa đăng",
+    "postedMinutes": "Đăng {{count}} phút trước",
+    "postedHours": "Đăng {{count}} giờ trước",
+    "postedDays": "Đăng {{count}} ngày trước"
   },
   "contact": {
     "badge": "Liên Hệ Hỗ Trợ",

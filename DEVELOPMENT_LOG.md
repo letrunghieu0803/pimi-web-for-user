@@ -4,6 +4,14 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-18 — Thẻ phòng thuê dài hạn: "Đăng X trước"
+
+**Vì sao:** Cho người xem thấy phòng mới đăng được bao lâu, tạo cảm giác mới mẻ cho căn phòng.
+
+**Thay đổi:** `utils/postedAt.ts` (`getPostedAgo`): từ `room.createdAt` ra "vừa đăng" (<1 phút) / N phút / N giờ / N ngày; quá 7 ngày hoặc thiếu/sai ngày thì ẩn; đồng hồ lệch về tương lai coi như vừa đăng. `RoomCard`: nhãn có biểu tượng đồng hồ ở cột góc trên bên phải ảnh (trên nhãn khoảng cách/gác xép, cột `shrink-0 whitespace-nowrap`, nhóm nhãn bên trái cho phép xuống dòng để không chen nhau); chỉ hiện ở thẻ dài hạn (đang tìm `LONG_TERM`, hoặc thẻ không có loại hình thì xem đơn vị giá là tháng/năm). i18n vi/en `roomCard.posted*`. Backend không đổi (feed đã trả `createdAt`).
+
+**Đã kiểm tra (trình duyệt + backend local):** đặt tạm `createdAt` 3 phòng dài hạn = 5 phút/3 giờ/3 ngày trước → hiện "Posted 5m/3h/3d ago", phòng cũ không hiện; thẻ có nhãn Recommended + Posted không bị xuống dòng. `tsc -p tsconfig.app.json` sạch. Đã trả `createdAt` về giá trị gốc.
+
 ## 2026-11-18 — Màn đặt phòng: danh sách voucher công khai áp dụng được
 
 **Thay đổi:** `bookingApi.getPublicVouchers` + type `PublicVoucher`; `ShortTermBookingPanel` hiện mục "Voucher áp dụng được cho phòng này" dưới ô nhập mã (khi chưa áp mã): thẻ nét đứt gồm mã, mức giảm (% hoặc số tiền), mô tả, tối đa/HSD/số lượt còn; bấm thẻ điền mã và áp luôn nếu đã chọn ngày. i18n vi/en (`booking.publicVouchersTitle`, `voucherOff*`, `voucherUse`…).
