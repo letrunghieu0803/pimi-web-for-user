@@ -33,7 +33,7 @@
     "feature3Desc": "Người đi thuê nhà không phải trả bất kỳ khoản phí môi giới nào. Làm việc & ký hợp đồng trực tiếp với chủ nhà.",
     "ctaTitle": "Bạn Chưa Tìm Được Phòng Trọ Phù Hợp?",
     "ctaDesc": "Gọi ngay Hotline chăm sóc khách hàng của Pimi để được trợ lý hỗ trợ tư vấn và gợi ý danh sách phòng trống mới nhất theo yêu cầu.",
-    "ctaCallHotline": "Gọi Hotline 0987.654.321",
+    "ctaCallHotline": "Gọi Hotline {{phone}}",
     "recentlyViewedTag": "Dành cho bạn",
     "recentlyViewedTitle": "Phòng đã xem gần đây",
     "shortTermTag": "Thuê Theo Ngày/Giờ",
@@ -130,8 +130,7 @@
     "area4": "Căn hộ dịch vụ Phú Nhuận (TP.HCM)",
     "area5": "Căn hộ mini Bình Thạnh (TP.HCM)",
     "hotlineTitle": "Hotline & Văn Phòng",
-    "hotlineLabel": "Hotline Tư Vấn 24/7",
-    "address": "188 Nguyễn Xí, Phường 26, Bình Thạnh, TP.HCM & Cầu Giấy, Hà Nội",
+    "hotlineLabel": "Hotline Tư Vấn",
     "rightsReserved": "All rights reserved.",
     "madeFor": "Thiết kế dành riêng cho người thuê nhà"
   },
@@ -160,7 +159,7 @@
     "subtitle": "Nếu bạn gặp khó khăn trong việc tìm phòng, hẹn lịch xem phòng hoặc cần hợp tác đăng tin, hãy liên hệ Pimi qua các kênh bên dưới.",
     "infoTitle": "Thông Tin Liên Hệ Pimi",
     "mainOffice": "Văn phòng chính",
-    "hotline": "Hotline tư vấn 24/7",
+    "hotline": "Hotline tư vấn",
     "emailSupport": "Email hỗ trợ",
     "workingHours": "Giờ làm việc",
     "workingHoursValue": "Thứ 2 - Chủ Nhật: 08:00 - 20:00"
@@ -170,7 +169,7 @@
     "title": "Giải Đáp Thắc Mắc Người Thuê Nhà",
     "subtitle": "Những câu hỏi phổ biến nhất về cách tìm phòng, hẹn lịch xem phòng và quy trình thuê nhà trọ trên Pimi.",
     "needHelpTitle": "Bạn vẫn còn thắc mắc cần trợ giúp?",
-    "needHelpDesc": "Đội ngũ hỗ trợ của Pimi sẵn sàng giải đáp 24/7 qua Hotline.",
+    "needHelpDesc": "Đội ngũ hỗ trợ của Pimi sẵn sàng giải đáp qua Hotline.",
     "hotlineLabel": "Hotline",
     "items": [
       {
@@ -705,13 +704,11 @@
   },
   "privacy": {
     "badge": "Bảo Vệ Thông Tin Người Dùng",
-    "title": "Chính Sách Bảo Vệ Dữ Liệu Và Thông Tin Cá Nhân",
-    "effectiveDate": "Ngày hiệu lực: 22/09/2026 · Phiên bản 1.0 · Công ty TNHH Pimi Nest"
+    "title": "Chính Sách Bảo Vệ Dữ Liệu Và Thông Tin Cá Nhân"
   },
   "terms": {
     "badge": "Thoả Thuận Sử Dụng Nền Tảng",
-    "title": "Điều Khoản Sử Dụng",
-    "effectiveDate": "Ngày hiệu lực: 22/09/2026 · Phiên bản 1.0 · Công ty TNHH Pimi Nest"
+    "title": "Điều Khoản Sử Dụng"
   },
   "requestTourModal": {
     "toastNeedName": "Vui lòng nhập họ và tên của bạn!",

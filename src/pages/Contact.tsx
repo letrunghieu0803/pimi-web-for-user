@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { Seo } from '@/components/common/Seo';
+import { CONTACT, CONTACT_MAILTO_HREF, CONTACT_TEL_HREF } from '@/constants/contact';
 
 // Trang liên hệ chỉ hiện thông tin liên hệ tĩnh — trước đây có form gửi tin nhưng không có backend nào
 // nhận (chỉ giả lập thành công bằng setTimeout rồi xoá form), nên bỏ hẳn thay vì lừa người dùng là đã gửi.
@@ -35,7 +36,7 @@ export const Contact: React.FC = () => {
                 <MapPin className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="block text-white font-bold">{t('contact.mainOffice')}</strong>
-                  <span className="text-xs text-slate-400">188 Nguyễn Xí, Phường 26, Bình Thạnh, TP. Hồ Chí Minh & Cầu Giấy, Hà Nội</span>
+                  <span className="text-xs text-slate-400">{CONTACT.address}</span>
                 </div>
               </div>
 
@@ -43,8 +44,8 @@ export const Contact: React.FC = () => {
                 <Phone className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="block text-white font-bold">{t('contact.hotline')}</strong>
-                  <a href="tel:0987654321" className="text-xs text-indigo-300 hover:underline">
-                    0987.654.321
+                  <a href={CONTACT_TEL_HREF} className="text-xs text-indigo-300 hover:underline">
+                    {CONTACT.phoneDisplay}
                   </a>
                 </div>
               </div>
@@ -53,7 +54,7 @@ export const Contact: React.FC = () => {
                 <Mail className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="block text-white font-bold">{t('contact.emailSupport')}</strong>
-                  <span className="text-xs text-slate-400">support@pimi.vn</span>
+                  <a href={CONTACT_MAILTO_HREF} className="text-xs text-slate-400 hover:text-indigo-300 hover:underline break-all">{CONTACT.email}</a>
                 </div>
               </div>
 

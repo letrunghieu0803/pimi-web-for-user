@@ -4,6 +4,21 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-18 — Viết lại Điều khoản sử dụng + Chính sách bảo mật theo hệ thống thật; đổi thông tin liên hệ
+
+**Vì sao:** Hệ thống bên server test đã ổn định, cần bộ điều khoản/chính sách khớp cách hệ thống đang chạy và thông tin liên hệ chính thức (hotline 0889.625.908, email piminest.vn@gmail.com, địa chỉ Xóm Kim Tân, Xã Kim Phượng, tỉnh Thái Nguyên). Bản cũ còn mốc hoàn tiền sai và nhiều chỗ để trống.
+
+**Thay đổi:**
+- `constants/contact.ts` (mới): nguồn duy nhất cho tên đơn vị, người đại diện, hotline, email, địa chỉ và ngày hiệu lực/phiên bản (14/11/2026, v2.0). Footer, `Contact`, `FAQ`, nút gọi ở `Home`, hai trang pháp lý đều đọc từ đây; bỏ key i18n `footer.address` và `*.effectiveDate`; `home.ctaCallHotline` nhận `{{phone}}`.
+- `components/legal/LegalSection.tsx` (mới): khối mục + danh sách liên hệ dùng chung cho `Terms`/`Privacy`.
+- `Terms.tsx` (20 mục): sửa mốc hoàn tiền đúng code backend (huỷ ≤2h sau đặt và còn ≥4h tới giờ nhận: 100%; còn ≥3 ngày: 100%; ≥1 ngày: 50%; còn lại 0%), mức hoàn chỉ là gợi ý và Pimi chốt, yêu cầu huỷ gửi trong app kèm tài khoản nhận tiền; thêm mục đặt lịch xem phòng, mã giảm giá (bên chịu: Pimi trừ vào hoa hồng, chủ nhà trừ vào tiền nhận; hoàn tiền tính trên số thực trả), cộng tác viên, gói thành viên, khoá KYC sau 5 lần thất bại; bỏ cam kết "hoàn trong 7 ngày làm việc".
+- `Privacy.tsx` (14 mục): thêm bên xử lý dữ liệu thật — Google Gemini (đọc giấy tờ, viết tin, nhập bảng tính), Tingee (QR/đối soát), Zalo ZNS, FCM, SMTP, VietMap, AWS S3; quyền camera/thư viện ảnh; bỏ cam kết "xoá hồ sơ KYC bị từ chối sau 90 ngày" (hệ thống không có tác vụ này) và thay bằng lưu trong thời gian cần thiết; thêm cơ chế dọn ảnh mồ côi sau ~24h; thời hạn xử lý yêu cầu xoá dữ liệu theo pháp luật thay vì cam kết 30 ngày.
+- Nhãn "Hotline 24/7" đổi thành "Hotline" (giờ làm việc ở trang Liên hệ là 08:00–20:00).
+
+**Đã kiểm tra:** `tsc -p tsconfig.app.json` sạch; mở `/terms`, `/privacy`, `/contact`, `/faq`, `/` trên trình duyệt — không còn số/email/địa chỉ cũ, link `tel:` và `mailto:` đúng. Repo chưa có cấu hình ESLint nên chưa lint.
+
+**Lưu ý:** tên đơn vị "Công ty TNHH Pimi Nest" và người đại diện giữ như bản cũ; đã bỏ hai dòng "[Bổ sung mã số doanh nghiệp / trụ sở đăng ký]" — nên thêm lại mã số doanh nghiệp khi có. Nội dung là bản soạn theo cách hệ thống hoạt động, cần luật sư rà soát trước khi dùng chính thức (giữ hộ tiền, giới hạn trách nhiệm 6 tháng, lưu chứng từ 5 năm, dữ liệu cá nhân).
+
 ## 2026-11-13 — Nhập mã voucher trong modal đặt phòng ngắn hạn
 
 **Vì sao:** Tính năng voucher giảm giá (xem log bff-for-pimi cùng ngày).

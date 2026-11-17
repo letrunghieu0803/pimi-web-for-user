@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HelpCircle, ChevronDown, Calendar, ShieldCheck, FileText, PhoneCall } from 'lucide-react';
 import { Seo } from '@/components/common/Seo';
+import { CONTACT, CONTACT_TEL_HREF } from '@/constants/contact';
 import { JsonLd } from '@/components/common/JsonLd';
 
 interface FAQItem {
@@ -93,11 +94,11 @@ export const FAQ: React.FC = () => {
           <p className="text-xs text-slate-400 mt-1">{t('faq.needHelpDesc')}</p>
         </div>
         <a
-          href="tel:0987654321"
+          href={CONTACT_TEL_HREF}
           className="gradient-bg text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-lg shrink-0 flex items-center gap-2 hover:scale-105 transition-transform"
         >
           <PhoneCall className="w-4 h-4" />
-          <span>{t('faq.hotlineLabel')}: 0987.654.321</span>
+          <span>{t('faq.hotlineLabel')}: {CONTACT.phoneDisplay}</span>
         </a>
       </div>
 
