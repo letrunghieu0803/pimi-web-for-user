@@ -354,8 +354,8 @@
     "voucherLine": "Giá gốc {{list}} − voucher {{code}} (-{{discount}})"
   },
   "booking": {
-    "calendarTitle": "Chọn ngày nhận/trả phòng",
-    "calendarNavHint": "Bấm 1 lần chọn ngày nhận, bấm lần 2 chọn ngày trả",
+    "calendarTitle": "Chọn ngày thuê",
+    "calendarNavHint": "Bấm 1 ngày để thuê 1 ngày; bấm thêm ngày thứ hai để thuê nhiều ngày liên tiếp",
     "calendarLegendSelected": "Đã chọn",
     "calendarLegendBusy": "Đã kín lịch",
     "calendarDoneButton": "Xong",
@@ -369,7 +369,7 @@
     "checkInLabel": "Nhận phòng",
     "checkOutLabel": "Trả phòng",
     "notSelected": "Chưa chọn",
-    "selectDatesButton": "Chọn ngày nhận/trả phòng",
+    "selectDatesButton": "Chọn ngày thuê",
     "checkInTimeLabel": "Giờ nhận phòng",
     "checkOutTimeLabel": "Giờ trả phòng",
     "quoteNights": "{{count}} đêm",
@@ -377,7 +377,7 @@
     "quoteDiscountApplied": "Đã giảm {{percent}}%",
     "modeDaily": "Thuê theo ngày",
     "modeHourly": "Thuê theo giờ",
-    "dailyTimesHint": "Nhận phòng từ {{checkIn}}, trả phòng trước {{checkOut}} (theo cài đặt của phòng).",
+    "dailyTimesHint": "Nhận phòng từ {{checkIn}} ngày đầu, trả phòng trước {{checkOut}} sáng hôm sau ngày cuối (theo cài đặt của phòng).",
     "todayPassedHint": "Hôm nay đã quá giờ nhận phòng — hãy chọn ngày nhận từ ngày mai.",
     "hourlyDateLabel": "Ngày thuê",
     "startTimeLabel": "Giờ bắt đầu",
@@ -407,7 +407,9 @@
     "voucherRemove": "Bỏ mã voucher",
     "voucherNeedDates": "Chọn thời gian thuê trước khi áp dụng voucher.",
     "voucherDiscountLine": "Voucher {{code}}",
-    "voucherTotalLine": "Cần thanh toán"
+    "voucherTotalLine": "Cần thanh toán",
+    "calStayLabel": "Thuê",
+    "calCheckoutNote": "Nhận phòng ngày đầu, trả phòng ngày {{date}}"
   },
   "tenantAppointments": {
     "title": "Lịch sử Đặt lịch xem phòng",

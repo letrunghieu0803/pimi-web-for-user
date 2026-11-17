@@ -354,8 +354,8 @@
     "voucherLine": "List price {{list}} − voucher {{code}} (-{{discount}})"
   },
   "booking": {
-    "calendarTitle": "Select check-in/check-out dates",
-    "calendarNavHint": "Click once for check-in, click again for check-out",
+    "calendarTitle": "Select stay dates",
+    "calendarNavHint": "Click one day to rent 1 day; click a second day to rent several consecutive days",
     "calendarLegendSelected": "Selected",
     "calendarLegendBusy": "Fully booked",
     "calendarDoneButton": "Done",
@@ -369,7 +369,7 @@
     "checkInLabel": "Check-in",
     "checkOutLabel": "Check-out",
     "notSelected": "Not selected",
-    "selectDatesButton": "Select check-in/check-out dates",
+    "selectDatesButton": "Select stay dates",
     "checkInTimeLabel": "Check-in time",
     "checkOutTimeLabel": "Check-out time",
     "quoteNights": "{{count}} nights",
@@ -377,7 +377,7 @@
     "quoteDiscountApplied": "{{percent}}% off applied",
     "modeDaily": "By the day",
     "modeHourly": "By the hour",
-    "dailyTimesHint": "Check-in from {{checkIn}}, check-out before {{checkOut}} (set by the room).",
+    "dailyTimesHint": "Check-in from {{checkIn}} on the first day, check-out before {{checkOut}} the morning after the last day (set by the room).",
     "todayPassedHint": "Today's check-in time has passed — pick a check-in date from tomorrow.",
     "hourlyDateLabel": "Date",
     "startTimeLabel": "Start time",
@@ -407,7 +407,9 @@
     "voucherRemove": "Remove voucher",
     "voucherNeedDates": "Choose your stay time before applying a voucher.",
     "voucherDiscountLine": "Voucher {{code}}",
-    "voucherTotalLine": "Total to pay"
+    "voucherTotalLine": "Total to pay",
+    "calStayLabel": "Stay",
+    "calCheckoutNote": "Check-in on the first day, check-out on {{date}}"
   },
   "tenantAppointments": {
     "title": "Viewing Appointment History",

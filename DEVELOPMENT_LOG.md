@@ -4,6 +4,17 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-18 — Chọn ngày thuê theo ngày: "từ ngày A đến hết ngày B" (hoặc 1 ngày)
+
+**Vì sao:** Chọn ngày nhận rồi ngày trả dễ nhầm với đêm ở; giờ bấm 1 ngày là thuê 1 ngày, bấm thêm ngày thứ hai là thuê liên tiếp đến hết ngày đó (nhận phòng ngày A, trả phòng ngày B + 1).
+
+**Thay đổi:**
+- `DateRangeCalendar`: ngày thứ hai là ngày CUỐI CÙNG ở (tính cả ngày đó), có thể bỏ trống; kiểm tra ngày bận gồm cả ngày cuối; nút "Xong" dùng được khi đã có ngày nhận; phần tóm tắt hiện "Thuê A → B (N đêm)" và "trả phòng ngày B+1"; bỏ prop `allowSameDay` không còn dùng.
+- `ShortTermBookingPanel`: gửi API `checkOutDate` = (ngày cuối hoặc ngày nhận) + 1 — hợp đồng API không đổi nên backend cũ vẫn đúng; nút chọn hiện 1 ngày hoặc "A → B".
+- i18n vi/en (`booking.calendarTitle/NavHint/selectDatesButton/calStayLabel/calCheckoutNote/dailyTimesHint`); `Terms.tsx` mục 8 mô tả cách chọn ngày mới.
+
+**Đã kiểm tra (trình duyệt + backend local, tài khoản demo):** chọn 1 ngày → 1 đêm, trả hôm sau; chọn 26→28/11 → 3 đêm, nhận 14:00 26/11, trả 11:00 29/11, 3 × 450.000 = 1.350.000. `tsc -p tsconfig.app.json` sạch. Thuê theo giờ không đổi.
+
 ## 2026-11-18 — Viết lại Điều khoản sử dụng + Chính sách bảo mật theo hệ thống thật; đổi thông tin liên hệ
 
 **Vì sao:** Hệ thống bên server test đã ổn định, cần bộ điều khoản/chính sách khớp cách hệ thống đang chạy và thông tin liên hệ chính thức (hotline 0889.625.908, email piminest.vn@gmail.com, địa chỉ Xóm Kim Tân, Xã Kim Phượng, tỉnh Thái Nguyên). Bản cũ còn mốc hoàn tiền sai và nhiều chỗ để trống.

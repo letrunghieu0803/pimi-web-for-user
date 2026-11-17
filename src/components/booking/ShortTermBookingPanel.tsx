@@ -88,8 +88,10 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
   const selection: BookingSelection | null = useMemo(() => {
     const voucher = voucherCode ? { voucherCode } : {};
     if (mode === 'DAILY') {
-      if (!checkIn || !checkOut) return null;
-      return { mode, checkInDate: toDateKey(checkIn), checkOutDate: toDateKey(checkOut), ...voucher };
+      if (!checkIn) return null;
+      // Khách chọn "từ ngày A đến hết ngày B" (B bỏ trống = chỉ ngày A): nhận phòng ngày A, trả phòng ngày B + 1.
+      const checkoutDay = new Date((checkOut ?? checkIn).getFullYear(), (checkOut ?? checkIn).getMonth(), (checkOut ?? checkIn).getDate() + 1);
+      return { mode, checkInDate: toDateKey(checkIn), checkOutDate: toDateKey(checkoutDay), ...voucher };
     }
     if (!hourDateValue || startMinute === null || hourlyError) return null;
     return { mode, checkInDate: vnInstant(hourDateValue, startMinute).toISOString(), hours, ...voucher };
@@ -176,9 +178,11 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
           <button type="button" onClick={() => setShowCalendar(true)} className={dayBtnClass}>
             <span className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-indigo-600 shrink-0" />
-              {checkIn && checkOut ? (
+              {checkIn ? (
                 <span className="text-xs font-bold text-slate-800">
-                  {formatDay(checkIn)} → {formatDay(checkOut)}
+                  {checkOut && checkOut.getTime() !== checkIn.getTime()
+                    ? `${formatDay(checkIn)} → ${formatDay(checkOut)}`
+                    : formatDay(checkIn)}
                 </span>
               ) : (
                 <span className="text-xs font-semibold text-slate-500">{t('booking.selectDatesButton')}</span>

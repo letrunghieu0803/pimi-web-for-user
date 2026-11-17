@@ -132,7 +132,7 @@ export const Terms: React.FC = () => {
         <LegalSection icon={Wallet} title="8. Đặt Phòng Ngắn Hạn & Thanh Toán">
           <p className="font-semibold text-slate-800">Quy trình đặt phòng:</p>
           <ol className="list-decimal pl-5 space-y-1">
-            <li>Bạn chọn hình thức thuê theo ngày hoặc theo giờ, thời điểm nhận/trả phòng; hệ thống báo giá theo công thức đã công bố, hiển thị rõ giá niêm yết, mã giảm giá (nếu có) và số tiền phải trả <strong>trước khi</strong> Bạn xác nhận.</li>
+            <li>Bạn chọn hình thức thuê theo ngày hoặc theo giờ. Thuê theo ngày: chọn một ngày (thuê 1 ngày) hoặc từ ngày A đến hết ngày B — nhận phòng ngày A, trả phòng sáng ngày hôm sau ngày B, mỗi ngày tính là một đêm; hệ thống báo giá theo công thức đã công bố, hiển thị rõ giá niêm yết, mã giảm giá (nếu có) và số tiền phải trả <strong>trước khi</strong> Bạn xác nhận.</li>
             <li>Sau khi xác nhận, hệ thống kiểm tra phòng còn trống đúng khoảng thời gian đã chọn và tạo mã QR chuyển khoản (chuẩn VietQR) có thời hạn thanh toán hiển thị ngay trên màn hình thanh toán.</li>
             <li>Quá thời hạn mà chưa nhận được tiền, đơn tự động hết hạn và phòng được mở lại cho người khác đặt. Bạn cần chuyển <strong>đúng số tiền và đúng nội dung</strong> trên mã QR để hệ thống tự động ghi nhận.</li>
             <li>Khi ngân hàng xác nhận đã nhận tiền, đơn chuyển sang "Đã thanh toán". Bạn liên hệ Chủ nhà/Quản lý toà nhà theo thông tin hiển thị để nhận phòng đúng lịch.</li>
