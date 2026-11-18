@@ -4,6 +4,14 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-19 — Thẻ phòng: bỏ nhãn "Phòng trống"/"Có gác xép"; "Đăng X trước" tối đa 7 ngày
+
+**Vì sao:** Người dùng luôn tìm phòng trống nên nhãn "Phòng trống" thừa; "Có gác xép" cũng không cần trên thẻ (vẫn xem được ở trang chi tiết). Phòng đăng quá 7 ngày không nên mất nhãn đăng mà giữ mốc "7 ngày trước".
+
+**Thay đổi:** `RoomCard`: xoá nhãn xanh "Phòng trống / N phòng trống" và nhãn "Có gác xép" (bỏ import `ShieldCheck`, `Layers`); nhãn khoảng cách đứng riêng dưới nhãn đăng. `utils/postedAt.ts`: quá 7 ngày trả `{ day, 7 }` thay vì `null` (chỉ còn `null` khi thiếu/sai ngày). Thẻ nhóm phòng không còn hiện số phòng trống.
+
+**Đã kiểm tra:** `tsc -p tsconfig.app.json` sạch; chưa mở trình duyệt.
+
 ## 2026-11-18 — Thẻ phòng thuê dài hạn: "Đăng X trước"
 
 **Vì sao:** Cho người xem thấy phòng mới đăng được bao lâu, tạo cảm giác mới mẻ cho căn phòng.
