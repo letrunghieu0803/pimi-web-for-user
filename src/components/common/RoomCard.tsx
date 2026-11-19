@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Room } from '@/types';
-import { MapPin, Maximize2, Users, ShieldCheck, Layers, Navigation, Sparkles, Heart, Globe2, Clock } from 'lucide-react';
+import { MapPin, Maximize2, Users, Navigation, Sparkles, Heart, Globe2, Clock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useToast } from '@/context/ToastContext';
@@ -53,7 +53,7 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
   const priceDisplay = getRoomPriceDisplay(room, priceTerm);
 
   // "Đăng X trước" chỉ hiện ở thẻ phòng thuê DÀI hạn (đang tìm dài hạn, hoặc thẻ không có loại hình thì xem đơn vị giá đang
-  // hiện là tháng/năm). Quá 7 ngày thì getPostedAgo trả null -> không hiện.
+  // hiện là tháng/năm). Quá 7 ngày thì getPostedAgo vẫn trả mốc 7 ngày.
   const isLongTermCard = priceTerm
     ? priceTerm === 'LONG_TERM'
     : priceDisplay.unitKey === 'roomCard.unitMonth' || priceDisplay.unitKey === 'roomCard.unitYear';
@@ -85,14 +85,6 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
                 <span>{t('roomCard.recommendedBadge')}</span>
               </span>
             )}
-            <span className="badge-tag bg-emerald-500/90 text-white backdrop-blur-md shadow-sm">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>
-                {room.roomGroupId && room.availableCount !== undefined
-                  ? `${room.availableCount} ${t('roomCard.roomsAvailable')}`
-                  : t('roomCard.roomAvailable')}
-              </span>
-            </span>
           </div>
 
           <div className="flex flex-col items-end gap-1.5 shrink-0 whitespace-nowrap">
@@ -113,22 +105,11 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
                 </span>
               </span>
             )}
-            {(room.distanceInKm !== undefined || room.hasMezzanine) && (
-              <div className="flex items-center gap-1.5">
-                {room.distanceInKm !== undefined && (
-                  <span className="badge-tag bg-amber-500/95 text-white backdrop-blur-md shadow-sm animate-pulse">
-                    <Navigation className="w-3.5 h-3.5" />
-                    <span>{room.distanceInKm} km</span>
-                  </span>
-                )}
-
-                {room.hasMezzanine && (
-                  <span className="badge-tag bg-indigo-600/90 text-white backdrop-blur-md shadow-sm">
-                    <Layers className="w-3.5 h-3.5" />
-                    <span>{t('roomCard.hasMezzanine')}</span>
-                  </span>
-                )}
-              </div>
+            {room.distanceInKm !== undefined && (
+              <span className="badge-tag bg-amber-500/95 text-white backdrop-blur-md shadow-sm animate-pulse">
+                <Navigation className="w-3.5 h-3.5" />
+                <span>{room.distanceInKm} km</span>
+              </span>
             )}
           </div>
         </div>
