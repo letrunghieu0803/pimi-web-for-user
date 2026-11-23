@@ -420,7 +420,9 @@
     "voucherMaxOff": "up to {{amount}}",
     "voucherExpires": "Expires {{date}}",
     "voucherRemaining": "{{count}} left",
-    "voucherUse": "Use"
+    "voucherUse": "Use",
+    "calendarLegendSpecialPrice": "Special price",
+    "quoteNightsVariedLine": "{{count}} night(s) (price per night)"
   },
   "tenantAppointments": {
     "title": "Viewing Appointment History",

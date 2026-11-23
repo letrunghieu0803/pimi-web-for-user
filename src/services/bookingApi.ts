@@ -88,6 +88,8 @@ export interface BookingQuote {
   checkOutAt: string;
   unitPrice: number;
   cappedByDailyPrice: boolean;
+  // Giá từng đêm — chỉ có khi ít nhất 1 đêm dùng giá riêng của chủ nhà (giá không đều giữa các đêm).
+  nightPrices?: { date: string; price: number }[];
   // `amount` đã trừ voucher (số khách trả); `listAmount` là giá trước voucher.
   listAmount: number;
   discountAmount: number;
@@ -120,6 +122,11 @@ export const bookingApi = {
 
   getAvailability: (roomId: string) => {
     return axiosClient.get(`/v1/rent-rooms/public/${roomId}/availability`);
+  },
+
+  // Giá riêng theo đêm do chủ nhà đặt (chỉ các đêm khác giá ngày mặc định), từ hôm nay trở đi: [{ date: 'YYYY-MM-DD', price }].
+  getDayPrices: (roomId: string) => {
+    return axiosClient.get(`/v1/rent-rooms/public/${roomId}/day-prices`);
   },
 
   getOne: (id: string) => {
