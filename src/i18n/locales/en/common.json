@@ -420,7 +420,9 @@
     "voucherMaxOff": "up to {{amount}}",
     "voucherExpires": "Expires {{date}}",
     "voucherRemaining": "{{count}} left",
-    "voucherUse": "Use"
+    "voucherUse": "Use",
+    "calendarLegendSpecialPrice": "Special price",
+    "quoteNightsVariedLine": "{{count}} night(s) (price per night)"
   },
   "tenantAppointments": {
     "title": "Viewing Appointment History",
@@ -778,7 +780,11 @@
     "priceOver8": "Over 8.000.000đ",
     "amenitiesLabel": "Amenities",
     "moreFiltersButton": "Filters",
-    "searchButton": "Search"
+    "searchButton": "Search",
+    "stayDatesLabel": "Stay dates",
+    "stayDatesPlaceholder": "Select dates",
+    "stayDatesClear": "Clear dates",
+    "stayNights": "{{count}} night(s)"
   },
   "pagination": {
     "showingRange": "Showing {{start}}–{{end}} of {{total}}"

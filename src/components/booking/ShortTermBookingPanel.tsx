@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { CalendarDays, Clock, Minus, Plus, Ticket, X } from 'lucide-react';
 import { Room } from '@/types';
 import { bookingApi, BookingQuote, BusyRange, PublicVoucher } from '@/services/bookingApi';
@@ -53,14 +54,34 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
   const opts = useMemo(() => getShortTermOptions(room), [room]);
   const [mode, setMode] = useState<BookingMode>(opts.hasDaily ? 'DAILY' : 'HOURLY');
 
-  const [checkIn, setCheckIn] = useState<Date | null>(null);
-  const [checkOut, setCheckOut] = useState<Date | null>(null);
+  // Khách vào từ kết quả tìm theo ngày (?checkIn=A&checkOut=B, B = ngày trả loại trừ): chọn sẵn ngày, bỏ qua ngày đã qua / sai định dạng.
+  const [urlParams] = useSearchParams();
+  const initialStay = useMemo(() => {
+    const dateOk = (v: string | null) => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+    const inKey = urlParams.get('checkIn');
+    if (!opts.hasDaily || !dateOk(inKey)) return null;
+    const start = fromDateKey(inKey as string);
+    if (start.getTime() < vnToday().getTime()) return null;
+    const outKey = urlParams.get('checkOut');
+    let lastNight: Date | null = null;
+    if (dateOk(outKey)) {
+      const checkout = fromDateKey(outKey as string);
+      const last = new Date(checkout.getFullYear(), checkout.getMonth(), checkout.getDate() - 1);
+      if (last.getTime() > start.getTime()) lastNight = last;
+    }
+    return { start, lastNight };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const [checkIn, setCheckIn] = useState<Date | null>(initialStay?.start ?? null);
+  const [checkOut, setCheckOut] = useState<Date | null>(initialStay?.lastNight ?? null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [hourDate, setHourDate] = useState<string>('');
   const [startTime, setStartTime] = useState<string>('');
   const [hours, setHours] = useState<number>(opts.minHours);
 
   const [busyRanges, setBusyRanges] = useState<BusyRange[]>([]);
+  // Giá riêng theo đêm do chủ nhà đặt ({ 'YYYY-MM-DD': giá }) — hiện trên lịch chọn ngày; đêm không có thì dùng giá ngày mặc định.
+  const [dayPrices, setDayPrices] = useState<Record<string, number>>({});
   const [publicVouchers, setPublicVouchers] = useState<PublicVoucher[]>([]);
   const [quote, setQuote] = useState<BookingQuote | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
@@ -76,6 +97,15 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
       .getAvailability(room.id)
       .then((res: any) => setBusyRanges(res?.data || res || []))
       .catch(() => setBusyRanges([]));
+    bookingApi
+      .getDayPrices(room.id)
+      .then((res: any) => {
+        const rows = res?.data ?? res;
+        const map: Record<string, number> = {};
+        if (Array.isArray(rows)) rows.forEach((r: { date: string; price: number }) => (map[r.date] = Number(r.price)));
+        setDayPrices(map);
+      })
+      .catch(() => setDayPrices({}));
     bookingApi
       .getPublicVouchers(room.id)
       .then((res: any) => {
@@ -379,7 +409,9 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
                 <span className="text-slate-600">
                   {quote.mode === 'HOURLY'
                     ? t('booking.quoteHoursLine', { count: quote.hours as number, price: formatVnd(quote.unitPrice) })
-                    : t('booking.quoteNightsLine', { count: quote.nights as number, price: formatVnd(quote.unitPrice) })}
+                    : quote.nightPrices
+                      ? t('booking.quoteNightsVariedLine', { count: quote.nights as number })
+                      : t('booking.quoteNightsLine', { count: quote.nights as number, price: formatVnd(quote.unitPrice) })}
                   {quote.discountPercent > 0 && (
                     <span className="text-emerald-600 font-bold ml-1">
                       ({t('booking.quoteDiscountApplied', { percent: quote.discountPercent })})
@@ -388,6 +420,17 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
                 </span>
                 <span className="font-black text-slate-900">{formatVnd(quote.listAmount ?? quote.amount)}</span>
               </div>
+              {/* Giá không đều giữa các đêm (chủ nhà đặt giá riêng) — liệt kê từng đêm để khách thấy giá tổng từ đâu ra. */}
+              {quote.mode === 'DAILY' && quote.nightPrices && (
+                <ul className="mt-1 mb-1 space-y-0.5 text-[11px] text-slate-500">
+                  {quote.nightPrices.map((n) => (
+                    <li key={n.date} className="flex items-center justify-between gap-2">
+                      <span>{`${n.date.slice(8, 10)}/${n.date.slice(5, 7)}`}</span>
+                      <span className="tabular-nums">{formatVnd(n.price)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
               {quote.voucher && quote.discountAmount > 0 && (
                 <>
                   <div className="flex items-center justify-between gap-2 text-emerald-700 font-bold">
@@ -418,6 +461,8 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
             setCheckOut(newOut);
           }}
           onClose={() => setShowCalendar(false)}
+          basePrice={room.shortTermDayPrice ?? null}
+          priceOf={room.shortTermDayPrice ? (d) => dayPrices[toDateKey(d)] ?? (room.shortTermDayPrice as number) : undefined}
         />
       )}
     </div>

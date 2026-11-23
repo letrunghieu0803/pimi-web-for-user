@@ -11,7 +11,18 @@ interface DateRangeCalendarProps {
   checkOutDate: Date | null;
   onChange: (checkInDate: Date | null, checkOutDate: Date | null) => void;
   onClose: () => void;
+  /** Giá 1 đêm bắt đầu từ ngày này (đ), null = không biết. Có thì hiện giá dưới số ngày — lịch tìm kiếm không truyền nên không hiện giá. */
+  priceOf?: (d: Date) => number | null;
+  /** Giá ngày mặc định của phòng — đêm khác giá này được tô nổi (giá riêng do chủ nhà đặt). */
+  basePrice?: number | null;
 }
+
+/** Giá gọn trong ô lịch: 350.000 → "350k", 1.300.000 → "1,3tr"; giá lẻ hơn hiện đầy đủ. */
+const compactPrice = (price: number): string => {
+  if (price >= 1_000_000 && price % 100_000 === 0) return `${String(price / 1_000_000).replace('.', ',')}tr`;
+  if (price % 1000 === 0) return `${price / 1000}k`;
+  return price.toLocaleString('vi-VN');
+};
 
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
@@ -61,6 +72,8 @@ export const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
   checkOutDate,
   onChange,
   onClose,
+  priceOf,
+  basePrice,
 }) => {
   const { t } = useTranslation();
   const today = toVnCalendarDay(new Date());
@@ -139,6 +152,8 @@ export const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
             const inRange =
               checkInDate && checkOutDate && d.getTime() > checkInDate.getTime() && d.getTime() < checkOutDate.getTime();
             const disabled = past || busy;
+            const price = priceOf && !disabled ? priceOf(d) : null;
+            const special = price !== null && basePrice != null && price !== basePrice;
 
             return (
               <button
@@ -146,7 +161,7 @@ export const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
                 type="button"
                 disabled={disabled}
                 onClick={() => handleDayClick(d)}
-                className={`aspect-square rounded-xl text-xs font-semibold transition-colors ${
+                className={`aspect-square rounded-xl text-xs font-semibold transition-colors ${priceOf ? 'flex flex-col items-center justify-center leading-tight' : ''} ${
                   isCheckIn || isCheckOut
                     ? 'bg-indigo-600 text-white'
                     : inRange
@@ -157,6 +172,19 @@ export const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
                 }`}
               >
                 {d.getDate()}
+                {price !== null && (
+                  <span
+                    className={`text-[9px] tabular-nums ${
+                      isCheckIn || isCheckOut
+                        ? 'font-medium text-white/80'
+                        : special
+                          ? 'font-bold text-amber-600'
+                          : 'font-medium text-slate-400'
+                    }`}
+                  >
+                    {compactPrice(price)}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -207,6 +235,11 @@ export const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
             <span className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded bg-slate-200 inline-block" /> {t('booking.calendarLegendBusy')}
             </span>
+            {priceOf && basePrice != null && (
+              <span className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold text-amber-600">1,3tr</span> {t('booking.calendarLegendSpecialPrice')}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center justify-between gap-3 pt-3">

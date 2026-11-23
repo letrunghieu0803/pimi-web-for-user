@@ -420,7 +420,9 @@
     "voucherMaxOff": "tối đa {{amount}}",
     "voucherExpires": "HSD {{date}}",
     "voucherRemaining": "còn {{count}} lượt",
-    "voucherUse": "Dùng"
+    "voucherUse": "Dùng",
+    "calendarLegendSpecialPrice": "Giá khác ngày thường",
+    "quoteNightsVariedLine": "{{count}} đêm (giá từng đêm)"
   },
   "tenantAppointments": {
     "title": "Lịch sử Đặt lịch xem phòng",
@@ -778,7 +780,11 @@
     "priceOver8": "Trên 8.000.000đ",
     "amenitiesLabel": "Tiện Ích Đi Kèm",
     "moreFiltersButton": "Bộ lọc",
-    "searchButton": "Tìm kiếm"
+    "searchButton": "Tìm kiếm",
+    "stayDatesLabel": "Ngày ở",
+    "stayDatesPlaceholder": "Chọn ngày ở",
+    "stayDatesClear": "Bỏ chọn ngày",
+    "stayNights": "{{count}} đêm"
   },
   "pagination": {
     "showingRange": "Hiển thị {{start}}–{{end}} trong {{total}}"

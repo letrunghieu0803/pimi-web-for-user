@@ -4,6 +4,32 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-24 — Lịch chọn ngày hiện giá từng đêm
+
+**Thay đổi:** `DateRangeCalendar` nhận thêm `priceOf?` và `basePrice?`: có thì mỗi ô ngày hiện giá đêm bắt đầu từ ngày đó (gọn "350k"/"1,3tr"; ngày đã qua/kín lịch không hiện), đêm khác giá ngày mặc định (giá riêng của chủ nhà) tô cam đậm + chú giải "Giá khác ngày thường"; lịch trong bộ lọc tìm kiếm không truyền nên giữ nguyên. `ShortTermBookingPanel` nạp `GET /rent-rooms/public/:roomId/day-prices` (`bookingApi.getDayPrices`) và truyền giá vào lịch. Bảng báo giá: khi `quote.nightPrices` có (có đêm giá riêng) hiện "N đêm (giá từng đêm)" và liệt kê từng đêm, ngược lại giữ dòng "N đêm × giá" cũ. i18n vi/en `booking.calendarLegendSpecialPrice`, `quoteNightsVariedLine`.
+
+**Đã kiểm tra (trình duyệt + backend local):** đặt giá riêng 26/12 = 1.300.000, 27/12 = 900.000, 28/12 = 500.000 cho phòng demo → lịch hiện 350k ngày thường và 1,3tr/900k/500k màu cam; chọn 26→28 → báo giá liệt kê 3 đêm, tổng 2.700.000đ. `tsc -p tsconfig.app.json` sạch. App di động chưa hiện giá từng đêm.
+
+## 2026-11-24 — Tìm phòng trống theo ngày ở
+
+**Thay đổi:** `RoomFilterBar` thêm ô "Chọn ngày ở" (chỉ thuê ngắn hạn; dùng lại `DateRangeCalendar` qua portal, có nút bỏ chọn; chuyển sang dài hạn thì xoá ngày; tính vào badge số bộ lọc). `FilterState.checkIn/checkOut` ('YYYY-MM-DD', ngày trả loại trừ) ghi vào URL (`?checkIn&checkOut`) và gửi API (`checkInDate/checkOutDate`) qua `roomApi`. `RoomCard` mang ngày sang link chi tiết; `ShortTermBookingPanel` chọn sẵn ngày từ URL (bỏ qua ngày đã qua/sai định dạng/phòng không bán theo ngày). `RoomDetail`: đường dẫn quay lại sau đăng nhập giữ `checkIn/checkOut` và được `encodeURIComponent` (trước đó `&` cắt mất tham số). `BusyRange.source` thêm `'blocked'` (ngày chủ nhà đóng — lịch đặt phòng tự tô xám vì đã xử lý theo startDate/endDate).
+
+**Đã kiểm tra (trình duyệt + backend local):** đóng 2 ngày của 1 phòng rồi tìm đúng 2 ngày đó → phòng biến mất (14 → 10 phòng), URL có `checkIn/checkOut`, API nhận `checkInDate/checkOutDate`; mở phòng với 27→29/12 → đăng nhập → quay lại đúng trang → ngày chọn sẵn, báo giá 2 đêm × 350.000đ = 700.000đ. `tsc -p tsconfig.app.json` sạch. Chưa hiện giá từng đêm trong lịch chọn ngày (API `day-prices` đã có); app di động chưa có tìm theo ngày.
+
+## 2026-11-23 — Tìm phòng: nút "Tìm kiếm" luôn làm mới dữ liệu
+
+**Vì sao:** Bấm "Tìm kiếm" khi không đổi điều kiện thì không có gì xảy ra: queryKey của react-query y hệt lần trước (và còn trong staleTime 5 phút) nên không gọi lại API.
+
+**Thay đổi:** `pages/RoomList.tsx`: thêm bộ đếm `searchNonce` tăng mỗi lần `handleSearchSubmit` và đưa vào `queryKey` của `rooms-paginated` → mỗi lần bấm là 1 truy vấn mới, luôn gọi lại API và hiện khung chờ như lúc tìm lần đầu. Tìm kiếm luôn về trang 1 (`setPageNumber(1)` tường minh vì effect theo `filters` không chạy khi điều kiện không đổi).
+
+**Đã kiểm tra (trình duyệt + backend local):** bấm Tìm kiếm 2 lần không đổi gì → thêm đúng 2 request `public/feed`; đang ở trang 2 (4/14) bấm Tìm kiếm → về trang 1 (10/14). `tsc -p tsconfig.app.json` sạch.
+
+**Lỗi có sẵn, chưa sửa:** mở thẳng `/rooms?page=2` ở chế độ dev bị đưa về trang 1 (StrictMode chạy effect đặt lại trang 2 lần); kiểm tra với code gốc cũng vậy.
+
+## 2026-11-23 — Kiểu dữ liệu lịch bận: thêm nguồn `external`
+
+**Thay đổi:** `bookingApi.ts`: `source` của khoảng bận phòng thêm giá trị `'external'` (khoảng bận nhập từ lịch Airbnb, backend mới trả). Chỉ là kiểu dữ liệu, giao diện lịch chọn ngày vẫn tô xám mọi khoảng bận như cũ.
+
 ## 2026-11-19 — Thẻ phòng: bỏ nhãn "Phòng trống"/"Có gác xép"; "Đăng X trước" tối đa 7 ngày
 
 **Vì sao:** Người dùng luôn tìm phòng trống nên nhãn "Phòng trống" thừa; "Có gác xép" cũng không cần trên thẻ (vẫn xem được ở trang chi tiết). Phòng đăng quá 7 ngày không nên mất nhãn đăng mà giữ mốc "7 ngày trước".
