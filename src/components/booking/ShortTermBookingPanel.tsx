@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { CalendarDays, Clock, Minus, Plus, Ticket, X } from 'lucide-react';
 import { Room } from '@/types';
 import { bookingApi, BookingQuote, BusyRange, PublicVoucher } from '@/services/bookingApi';
@@ -53,8 +54,26 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
   const opts = useMemo(() => getShortTermOptions(room), [room]);
   const [mode, setMode] = useState<BookingMode>(opts.hasDaily ? 'DAILY' : 'HOURLY');
 
-  const [checkIn, setCheckIn] = useState<Date | null>(null);
-  const [checkOut, setCheckOut] = useState<Date | null>(null);
+  // Khách vào từ kết quả tìm theo ngày (?checkIn=A&checkOut=B, B = ngày trả loại trừ): chọn sẵn ngày, bỏ qua ngày đã qua / sai định dạng.
+  const [urlParams] = useSearchParams();
+  const initialStay = useMemo(() => {
+    const dateOk = (v: string | null) => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+    const inKey = urlParams.get('checkIn');
+    if (!opts.hasDaily || !dateOk(inKey)) return null;
+    const start = fromDateKey(inKey as string);
+    if (start.getTime() < vnToday().getTime()) return null;
+    const outKey = urlParams.get('checkOut');
+    let lastNight: Date | null = null;
+    if (dateOk(outKey)) {
+      const checkout = fromDateKey(outKey as string);
+      const last = new Date(checkout.getFullYear(), checkout.getMonth(), checkout.getDate() - 1);
+      if (last.getTime() > start.getTime()) lastNight = last;
+    }
+    return { start, lastNight };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const [checkIn, setCheckIn] = useState<Date | null>(initialStay?.start ?? null);
+  const [checkOut, setCheckOut] = useState<Date | null>(initialStay?.lastNight ?? null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [hourDate, setHourDate] = useState<string>('');
   const [startTime, setStartTime] = useState<string>('');

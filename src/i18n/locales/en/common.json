@@ -778,7 +778,11 @@
     "priceOver8": "Over 8.000.000đ",
     "amenitiesLabel": "Amenities",
     "moreFiltersButton": "Filters",
-    "searchButton": "Search"
+    "searchButton": "Search",
+    "stayDatesLabel": "Stay dates",
+    "stayDatesPlaceholder": "Select dates",
+    "stayDatesClear": "Clear dates",
+    "stayNights": "{{count}} night(s)"
   },
   "pagination": {
     "showingRange": "Showing {{start}}–{{end}} of {{total}}"

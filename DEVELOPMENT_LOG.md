@@ -4,6 +4,12 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-24 — Tìm phòng trống theo ngày ở
+
+**Thay đổi:** `RoomFilterBar` thêm ô "Chọn ngày ở" (chỉ thuê ngắn hạn; dùng lại `DateRangeCalendar` qua portal, có nút bỏ chọn; chuyển sang dài hạn thì xoá ngày; tính vào badge số bộ lọc). `FilterState.checkIn/checkOut` ('YYYY-MM-DD', ngày trả loại trừ) ghi vào URL (`?checkIn&checkOut`) và gửi API (`checkInDate/checkOutDate`) qua `roomApi`. `RoomCard` mang ngày sang link chi tiết; `ShortTermBookingPanel` chọn sẵn ngày từ URL (bỏ qua ngày đã qua/sai định dạng/phòng không bán theo ngày). `RoomDetail`: đường dẫn quay lại sau đăng nhập giữ `checkIn/checkOut` và được `encodeURIComponent` (trước đó `&` cắt mất tham số). `BusyRange.source` thêm `'blocked'` (ngày chủ nhà đóng — lịch đặt phòng tự tô xám vì đã xử lý theo startDate/endDate).
+
+**Đã kiểm tra (trình duyệt + backend local):** đóng 2 ngày của 1 phòng rồi tìm đúng 2 ngày đó → phòng biến mất (14 → 10 phòng), URL có `checkIn/checkOut`, API nhận `checkInDate/checkOutDate`; mở phòng với 27→29/12 → đăng nhập → quay lại đúng trang → ngày chọn sẵn, báo giá 2 đêm × 350.000đ = 700.000đ. `tsc -p tsconfig.app.json` sạch. Chưa hiện giá từng đêm trong lịch chọn ngày (API `day-prices` đã có); app di động chưa có tìm theo ngày.
+
 ## 2026-11-23 — Tìm phòng: nút "Tìm kiếm" luôn làm mới dữ liệu
 
 **Vì sao:** Bấm "Tìm kiếm" khi không đổi điều kiện thì không có gì xảy ra: queryKey của react-query y hệt lần trước (và còn trong staleTime 5 phút) nên không gọi lại API.

@@ -39,6 +39,8 @@ const LEGACY_ALL_DISTRICTS = 'Tất cả quận/huyện';
 // diện chính xác cho 1 lượt tìm kiếm cụ thể, dùng để: (1) chia sẻ link kèm đúng kết quả đang xem,
 // (2) vào thẳng URL đã lưu/bookmark ra đúng kết quả đó, (3) Google index/hiển thị link có ngữ
 // cảnh (kèm ?search=... khi phù hợp) thay vì luôn chỉ mỗi "/rooms" trần.
+const dateKeyFromParam = (raw: string | null): string | null => (raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null);
+
 const filtersFromSearchParams = (sp: URLSearchParams): FilterState => ({
   district: sp.get('district') === LEGACY_ALL_DISTRICTS ? DEFAULT_DISTRICT : sp.get('district') || DEFAULT_DISTRICT,
   priceRange: sp.get('priceRange') || 'ALL',
@@ -53,6 +55,8 @@ const filtersFromSearchParams = (sp: URLSearchParams): FilterState => ({
   userLat: sp.get('lat') ? Number(sp.get('lat')) : null,
   userLng: sp.get('lng') ? Number(sp.get('lng')) : null,
   radiusInKm: sp.get('radius') ? Number(sp.get('radius')) : null,
+  checkIn: dateKeyFromParam(sp.get('checkIn')),
+  checkOut: dateKeyFromParam(sp.get('checkOut')),
 });
 
 const sortFromSearchParams = (sp: URLSearchParams, fallback: SortKey): SortKey => {
@@ -85,6 +89,10 @@ const buildSearchParams = (
     params.lat = String(filters.userLat);
     params.lng = String(filters.userLng);
     if (filters.radiusInKm != null) params.radius = String(filters.radiusInKm);
+  }
+  if (filters.rentalTermType === 'SHORT_TERM' && filters.checkIn) {
+    params.checkIn = filters.checkIn;
+    if (filters.checkOut) params.checkOut = filters.checkOut;
   }
   if (sortBy !== 'NEWEST') params.sort = sortBy;
   if (pageNumber > 1) params.page = String(pageNumber);
@@ -325,6 +333,8 @@ export const RoomList: React.FC = () => {
       userLat: null,
       userLng: null,
       radiusInKm: null,
+      checkIn: null,
+      checkOut: null,
     });
     setSortBy('NEWEST');
   };
@@ -466,7 +476,12 @@ export const RoomList: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {rooms.map((room) => (
-            <RoomCard key={room.id} room={room} priceTerm={filters.rentalTermType} />
+            <RoomCard
+              key={room.id}
+              room={room}
+              priceTerm={filters.rentalTermType}
+              stay={filters.rentalTermType === 'SHORT_TERM' && filters.checkIn ? { checkIn: filters.checkIn, checkOut: filters.checkOut ?? null } : undefined}
+            />
           ))}
         </div>
       )}

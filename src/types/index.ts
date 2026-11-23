@@ -79,4 +79,7 @@ export interface FilterState {
   userLat?: number | null;
   userLng?: number | null;
   radiusInKm?: number | null;
+  // Tìm phòng còn trống cho các đêm từ ngày nhận (checkIn) tới TRƯỚC ngày trả (checkOut) — 'YYYY-MM-DD'. Chỉ thuê ngắn hạn.
+  checkIn?: string | null;
+  checkOut?: string | null;
 }

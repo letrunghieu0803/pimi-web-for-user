@@ -165,7 +165,7 @@ export const RoomDetail: React.FC = () => {
   const handleRequestViewing = () => {
     if (!isAuthenticated) {
       toast.warning(t('roomDetail.toastNeedLogin'));
-      navigate(`/login?redirect=${redirectPath}`);
+      navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
       return;
     }
 
@@ -252,7 +252,7 @@ export const RoomDetail: React.FC = () => {
   const handleBookAndPay = () => {
     if (!isAuthenticated) {
       toast.warning(t('roomDetail.toastNeedLogin'));
-      navigate(`/login?redirect=${redirectPath}`);
+      navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
       return;
     }
     setShowBookingModal(true);
@@ -265,7 +265,18 @@ export const RoomDetail: React.FC = () => {
 
   const detailPath = isGroupView ? `/room-groups/${targetId}` : `/rooms/${targetId}`;
   // Đường dẫn quay lại sau đăng nhập giữ loại hình đang xem (detailPath riêng cho SEO/canonical, không kèm ?term=).
-  const redirectPath = termParam ? `${detailPath}?term=${termParam}` : detailPath;
+  // Giữ cả ngày khách đã tìm (?checkIn/checkOut) để sau đăng nhập lịch đặt phòng vẫn chọn sẵn ngày; mã hoá khi đưa vào ?redirect=
+  // (nếu không dấu & cắt mất các tham số phía sau).
+  const redirectParams = new URLSearchParams();
+  if (termParam) redirectParams.set('term', termParam);
+  const stayIn = searchParams.get('checkIn');
+  const stayOut = searchParams.get('checkOut');
+  if (stayIn && /^\d{4}-\d{2}-\d{2}$/.test(stayIn)) {
+    redirectParams.set('checkIn', stayIn);
+    if (stayOut && /^\d{4}-\d{2}-\d{2}$/.test(stayOut)) redirectParams.set('checkOut', stayOut);
+  }
+  const redirectQuery = redirectParams.toString();
+  const redirectPath = redirectQuery ? `${detailPath}?${redirectQuery}` : detailPath;
   const effectivePrice = room.price || room.shortTermDayPrice || room.shortTermHourPrice || room.shortTermPrice || 0;
   const roomSeoDescription = (room.description || '').replace(/\s+/g, ' ').trim().slice(0, 160) ||
     t('seo.roomDetailFallbackDescription', { name: room.name, address: room.address });
@@ -381,7 +392,7 @@ export const RoomDetail: React.FC = () => {
             onClick={async () => {
               if (!isAuthenticated) {
                 toast.warning(t('roomDetail.toastNeedLogin'));
-                navigate(`/login?redirect=${redirectPath}`);
+                navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
                 return;
               }
               try {

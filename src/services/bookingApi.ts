@@ -73,7 +73,7 @@ export interface BusyRange {
   endDate?: string;
   mode?: 'DAILY' | 'HOURLY' | null;
   bufferMinutes?: number;
-  source: 'booking' | 'contract' | 'external';
+  source: 'booking' | 'contract' | 'external' | 'blocked';
 }
 
 export interface BookingQuote {

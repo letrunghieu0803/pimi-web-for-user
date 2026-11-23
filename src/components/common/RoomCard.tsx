@@ -16,6 +16,8 @@ interface RoomCardProps {
   // hạn (phòng toà nhà "cả hai" có đủ 2 giá, không được lấy giá ngắn hạn đặt vào mục dài hạn).
   // Bỏ trống (yêu thích, đã xem...) thì giữ cách cũ: có giá ngắn hạn thì hiện giá ngắn hạn.
   priceTerm?: 'SHORT_TERM' | 'LONG_TERM';
+  /** Khách đang tìm theo ngày: mang ngày nhận/trả sang trang chi tiết để lịch đặt phòng chọn sẵn. */
+  stay?: { checkIn: string; checkOut: string | null };
 }
 
 // React.memo: RoomCard được render lặp lại rất nhiều lần trong 1 danh sách (RoomList/Home/...) —
@@ -24,7 +26,7 @@ interface RoomCardProps {
 // mounted re-render khi có 1 phòng BẤT KỲ được toggle yêu thích (FavoritesContext broadcast theo
 // Context API, không phân biệt theo từng roomId) — đó là hạn chế kiến trúc sâu hơn, cần tách
 // context theo từng item mới giải quyết triệt để, ngoài phạm vi sửa nhanh này.
-const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
+const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm, stay }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const toast = useToast();
@@ -61,7 +63,14 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm }) => {
 
   // Đang tìm theo loại hình nào thì chuyển loại đó sang trang chi tiết (?term=) để giá + đơn vị + luồng đặt khớp với danh sách.
   const detailBase = room.roomGroupId ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`;
-  const detailLink = priceTerm ? `${detailBase}?term=${priceTerm}` : detailBase;
+  const detailParams = new URLSearchParams();
+  if (priceTerm) detailParams.set('term', priceTerm);
+  if (stay?.checkIn) {
+    detailParams.set('checkIn', stay.checkIn);
+    if (stay.checkOut) detailParams.set('checkOut', stay.checkOut);
+  }
+  const detailQuery = detailParams.toString();
+  const detailLink = detailQuery ? `${detailBase}?${detailQuery}` : detailBase;
 
   return (
     <article className="relative glass-card rounded-3xl overflow-hidden flex flex-col group border border-slate-200/80 hover:border-indigo-200">
