@@ -4,6 +4,10 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-23 — Kiểu dữ liệu lịch bận: thêm nguồn `external`
+
+**Thay đổi:** `bookingApi.ts`: `source` của khoảng bận phòng thêm giá trị `'external'` (khoảng bận nhập từ lịch Airbnb, backend mới trả). Chỉ là kiểu dữ liệu, giao diện lịch chọn ngày vẫn tô xám mọi khoảng bận như cũ.
+
 ## 2026-11-19 — Thẻ phòng: bỏ nhãn "Phòng trống"/"Có gác xép"; "Đăng X trước" tối đa 7 ngày
 
 **Vì sao:** Người dùng luôn tìm phòng trống nên nhãn "Phòng trống" thừa; "Có gác xép" cũng không cần trên thẻ (vẫn xem được ở trang chi tiết). Phòng đăng quá 7 ngày không nên mất nhãn đăng mà giữ mốc "7 ngày trước".
