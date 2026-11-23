@@ -230,8 +230,16 @@ export const RoomList: React.FC = () => {
   );
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
 
+  // Mỗi lần bấm "Tìm kiếm" tăng bộ đếm này và đưa vào queryKey. Trước đây khi điều kiện KHÔNG đổi, queryKey y hệt nên
+  // react-query coi là cùng truy vấn (và còn trong staleTime 5 phút) -> nút "Tìm kiếm" không làm gì cả. Có nonce thì mỗi lần
+  // bấm là 1 truy vấn mới: luôn gọi lại API (làm mới dữ liệu), hiện khung chờ như lúc tìm lần đầu.
+  const [searchNonce, setSearchNonce] = useState(0);
+
   const handleSearchSubmit = (newFilters: FilterState) => {
     setFilters(newFilters);
+    // Tìm kiếm luôn về trang 1 (kể cả khi điều kiện không đổi — effect theo `filters` bên dưới không chạy trong trường hợp đó).
+    setPageNumber(1);
+    setSearchNonce((n) => n + 1);
   };
 
   // Auto-acquire location if nearby flag is passed in URL
@@ -285,7 +293,7 @@ export const RoomList: React.FC = () => {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ['rooms-paginated', filters, sortBy, pageNumber],
+    queryKey: ['rooms-paginated', filters, sortBy, pageNumber, searchNonce],
     queryFn: async () => {
       const result = await roomApi.getRoomsPaginated({
         ...filters,

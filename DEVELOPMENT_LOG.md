@@ -4,6 +4,16 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-23 — Tìm phòng: nút "Tìm kiếm" luôn làm mới dữ liệu
+
+**Vì sao:** Bấm "Tìm kiếm" khi không đổi điều kiện thì không có gì xảy ra: queryKey của react-query y hệt lần trước (và còn trong staleTime 5 phút) nên không gọi lại API.
+
+**Thay đổi:** `pages/RoomList.tsx`: thêm bộ đếm `searchNonce` tăng mỗi lần `handleSearchSubmit` và đưa vào `queryKey` của `rooms-paginated` → mỗi lần bấm là 1 truy vấn mới, luôn gọi lại API và hiện khung chờ như lúc tìm lần đầu. Tìm kiếm luôn về trang 1 (`setPageNumber(1)` tường minh vì effect theo `filters` không chạy khi điều kiện không đổi).
+
+**Đã kiểm tra (trình duyệt + backend local):** bấm Tìm kiếm 2 lần không đổi gì → thêm đúng 2 request `public/feed`; đang ở trang 2 (4/14) bấm Tìm kiếm → về trang 1 (10/14). `tsc -p tsconfig.app.json` sạch.
+
+**Lỗi có sẵn, chưa sửa:** mở thẳng `/rooms?page=2` ở chế độ dev bị đưa về trang 1 (StrictMode chạy effect đặt lại trang 2 lần); kiểm tra với code gốc cũng vậy.
+
 ## 2026-11-23 — Kiểu dữ liệu lịch bận: thêm nguồn `external`
 
 **Thay đổi:** `bookingApi.ts`: `source` của khoảng bận phòng thêm giá trị `'external'` (khoảng bận nhập từ lịch Airbnb, backend mới trả). Chỉ là kiểu dữ liệu, giao diện lịch chọn ngày vẫn tô xám mọi khoảng bận như cũ.
