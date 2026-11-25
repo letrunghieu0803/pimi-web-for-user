@@ -49,6 +49,11 @@ export interface Appointment {
     id: string;
     name: string;
     address?: string;
+    // "Hướng dẫn xem nhà" đơn giản do chủ nhà cài ở toà nhà (liên hệ trước 30 phút / hướng dẫn /
+    // SĐT) — xem ViewingGuideSummary. Trang xem công khai chỉ trả khi lịch đã xác nhận.
+    viewingContactBeforeEnabled?: boolean;
+    viewingInstructions?: string | null;
+    viewingContactPhone?: string | null;
   };
   timeSlots?: TimeSlot[];
   // Snapshot nội dung "hướng dẫn xem nhà" chủ nhà/cộng tác viên đã gửi (HTML, xem

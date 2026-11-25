@@ -909,6 +909,11 @@
     "submitting": "Booking...",
     "submitButton": "Confirm viewing booking"
   },
+  "viewingGuideSummary": {
+    "title": "Viewing guide",
+    "contactBefore": "Please contact the owner at least 30 minutes before you come.",
+    "phoneLabel": "Viewing contact phone"
+  },
   "viewingConfirmationPanel": {
     "title": "Viewing booked successfully!",
     "subtitle": "Your appointment is confirmed right away — no need to wait for the owner's response.",

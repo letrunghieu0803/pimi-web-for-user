@@ -909,6 +909,11 @@
     "submitting": "Đang đặt lịch...",
     "submitButton": "Xác nhận đặt lịch xem phòng"
   },
+  "viewingGuideSummary": {
+    "title": "Hướng dẫn xem nhà",
+    "contactBefore": "Vui lòng liên hệ chủ nhà trước khi qua xem tối thiểu 30 phút.",
+    "phoneLabel": "SĐT liên hệ xem phòng"
+  },
   "viewingConfirmationPanel": {
     "title": "Đặt lịch xem phòng thành công!",
     "subtitle": "Lịch hẹn của bạn đã được xác nhận ngay, không cần chờ chủ nhà phản hồi.",

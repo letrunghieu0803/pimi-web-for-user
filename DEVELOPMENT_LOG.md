@@ -4,6 +4,12 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-25 — Hiện "Hướng dẫn xem nhà" của chủ nhà sau khi đặt lịch xem
+
+**Thay đổi:** component mới `ViewingGuideSummary` (liên hệ chủ nhà trước tối thiểu 30 phút / SĐT liên hệ xem phòng bấm để gọi / hướng dẫn tự nhập, xuống dòng đúng, chỉ in mục chủ nhà đã điền). Hiện ở panel xác nhận ngay sau khi đặt lịch (`ViewingConfirmationPanel`, kèm trang xem công khai cho người xem hộ vì dùng chung panel) và ở thẻ lịch hẹn trong `TenantAppointments`. Chỉ hiện khi lịch `CONFIRMED`/`COMPLETED` (lịch chờ chủ nhà duyệt thì chưa). Kiểu `Appointment.rentHouse` thêm 3 trường; i18n vi/en `viewingGuideSummary.*`. Khối rich-text cũ (`guideContent`) giữ nguyên bên dưới.
+
+**Đã kiểm tra (trình duyệt + BE local):** lịch `CONFIRMED` hiện đủ 3 dòng, lịch `PENDING_APPROVAL` không hiện. `tsc -p tsconfig.app.json` không lỗi ở file đã sửa. **Chưa kiểm tra:** panel ngay sau khi đặt (cùng component với danh sách, chưa chạy luồng đặt thật) và trang xem công khai bằng link ZNS thật. Cần BE mới (xem log bff).
+
 ## 2026-11-24 — Lịch chọn ngày hiện giá từng đêm
 
 **Thay đổi:** `DateRangeCalendar` nhận thêm `priceOf?` và `basePrice?`: có thì mỗi ô ngày hiện giá đêm bắt đầu từ ngày đó (gọn "350k"/"1,3tr"; ngày đã qua/kín lịch không hiện), đêm khác giá ngày mặc định (giá riêng của chủ nhà) tô cam đậm + chú giải "Giá khác ngày thường"; lịch trong bộ lọc tìm kiếm không truyền nên giữ nguyên. `ShortTermBookingPanel` nạp `GET /rent-rooms/public/:roomId/day-prices` (`bookingApi.getDayPrices`) và truyền giá vào lịch. Bảng báo giá: khi `quote.nightPrices` có (có đêm giá riêng) hiện "N đêm (giá từng đêm)" và liệt kê từng đêm, ngược lại giữ dòng "N đêm × giá" cũ. i18n vi/en `booking.calendarLegendSpecialPrice`, `quoteNightsVariedLine`.
