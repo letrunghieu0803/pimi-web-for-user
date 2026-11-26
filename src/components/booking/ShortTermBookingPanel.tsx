@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CalendarDays, Clock, Minus, Plus } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { CalendarDays, Clock, Minus, Plus, Ticket, X } from 'lucide-react';
 import { Room } from '@/types';
-import { bookingApi, BookingQuote, BusyRange } from '@/services/bookingApi';
+import { bookingApi, BookingQuote, BusyRange, PublicVoucher } from '@/services/bookingApi';
 import { getApiErrorMessage } from '@/utils/apiError';
 import { formatVnd } from '@/utils/money';
 import {
@@ -16,7 +17,6 @@ import {
   toDateKey,
   validateHourlySelection,
   vnInstant,
-  vnMinuteNow,
   vnToday,
 } from '@/utils/shortTermBooking';
 import { DateRangeCalendar } from './DateRangeCalendar';
@@ -53,24 +53,65 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
   const opts = useMemo(() => getShortTermOptions(room), [room]);
   const [mode, setMode] = useState<BookingMode>(opts.hasDaily ? 'DAILY' : 'HOURLY');
 
-  const [checkIn, setCheckIn] = useState<Date | null>(null);
-  const [checkOut, setCheckOut] = useState<Date | null>(null);
+  // Khách vào từ kết quả tìm theo ngày (?checkIn=A&checkOut=B, B = ngày trả loại trừ): chọn sẵn ngày, bỏ qua ngày đã qua / sai định dạng.
+  const [urlParams] = useSearchParams();
+  const initialStay = useMemo(() => {
+    const dateOk = (v: string | null) => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+    const inKey = urlParams.get('checkIn');
+    if (!opts.hasDaily || !dateOk(inKey)) return null;
+    const start = fromDateKey(inKey as string);
+    if (start.getTime() < vnToday().getTime()) return null;
+    const outKey = urlParams.get('checkOut');
+    let lastNight: Date | null = null;
+    if (dateOk(outKey)) {
+      const checkout = fromDateKey(outKey as string);
+      const last = new Date(checkout.getFullYear(), checkout.getMonth(), checkout.getDate() - 1);
+      if (last.getTime() > start.getTime()) lastNight = last;
+    }
+    return { start, lastNight };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const [checkIn, setCheckIn] = useState<Date | null>(initialStay?.start ?? null);
+  const [checkOut, setCheckOut] = useState<Date | null>(initialStay?.lastNight ?? null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [hourDate, setHourDate] = useState<string>('');
   const [startTime, setStartTime] = useState<string>('');
   const [hours, setHours] = useState<number>(opts.minHours);
 
   const [busyRanges, setBusyRanges] = useState<BusyRange[]>([]);
+  // Giá riêng theo đêm do chủ nhà đặt ({ 'YYYY-MM-DD': giá }) — hiện trên lịch chọn ngày; đêm không có thì dùng giá ngày mặc định.
+  const [dayPrices, setDayPrices] = useState<Record<string, number>>({});
+  const [publicVouchers, setPublicVouchers] = useState<PublicVoucher[]>([]);
   const [quote, setQuote] = useState<BookingQuote | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState('');
   const requestIdRef = useRef(0);
+  // Voucher: `voucherInput` là ô nhập, `voucherCode` là mã đã bấm Áp dụng (đưa vào báo giá + đơn).
+  const [voucherInput, setVoucherInput] = useState('');
+  const [voucherCode, setVoucherCode] = useState('');
+  const [voucherError, setVoucherError] = useState('');
 
   useEffect(() => {
     bookingApi
       .getAvailability(room.id)
       .then((res: any) => setBusyRanges(res?.data || res || []))
       .catch(() => setBusyRanges([]));
+    bookingApi
+      .getDayPrices(room.id)
+      .then((res: any) => {
+        const rows = res?.data ?? res;
+        const map: Record<string, number> = {};
+        if (Array.isArray(rows)) rows.forEach((r: { date: string; price: number }) => (map[r.date] = Number(r.price)));
+        setDayPrices(map);
+      })
+      .catch(() => setDayPrices({}));
+    bookingApi
+      .getPublicVouchers(room.id)
+      .then((res: any) => {
+        const rows = res?.data?.data ?? res?.data ?? res;
+        setPublicVouchers(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => setPublicVouchers([]));
   }, [room.id]);
 
   const startMinute = timeToMinute(startTime);
@@ -82,13 +123,16 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
       : null;
 
   const selection: BookingSelection | null = useMemo(() => {
+    const voucher = voucherCode ? { voucherCode } : {};
     if (mode === 'DAILY') {
-      if (!checkIn || !checkOut) return null;
-      return { mode, checkInDate: toDateKey(checkIn), checkOutDate: toDateKey(checkOut) };
+      if (!checkIn) return null;
+      // Khách chọn "từ ngày A đến hết ngày B" (B bỏ trống = chỉ ngày A): nhận phòng ngày A, trả phòng ngày B + 1.
+      const checkoutDay = new Date((checkOut ?? checkIn).getFullYear(), (checkOut ?? checkIn).getMonth(), (checkOut ?? checkIn).getDate() + 1);
+      return { mode, checkInDate: toDateKey(checkIn), checkOutDate: toDateKey(checkoutDay), ...voucher };
     }
     if (!hourDateValue || startMinute === null || hourlyError) return null;
-    return { mode, checkInDate: vnInstant(hourDateValue, startMinute).toISOString(), hours };
-  }, [mode, checkIn, checkOut, hourDateValue, startMinute, hours, hourlyError]);
+    return { mode, checkInDate: vnInstant(hourDateValue, startMinute).toISOString(), hours, ...voucher };
+  }, [mode, checkIn, checkOut, hourDateValue, startMinute, hours, hourlyError, voucherCode]);
 
   // Khoá chuỗi của lựa chọn: effect báo giá chỉ chạy lại khi NỘI DUNG lựa chọn đổi (không phụ thuộc identity object).
   const selectionKey = JSON.stringify(selection);
@@ -114,6 +158,12 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
       })
       .catch((err: any) => {
         if (requestIdRef.current !== requestId) return;
+        // Lỗi do voucher (mã 00027x): bỏ mã, báo ngay dưới ô nhập — báo giá tự chạy lại không kèm voucher.
+        if (selection.voucherCode && /^00027\d$/.test(String(err?.code))) {
+          setVoucherError(getApiErrorMessage(err));
+          setVoucherCode('');
+          return;
+        }
         setQuote(null);
         setQuoteError(getApiErrorMessage(err) || t('booking.quoteError'));
         onChange(selection, false);
@@ -128,8 +178,8 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
   const today = vnToday();
   const todayKey = toDateKey(today);
   const hourDateMin = todayKey;
-  // Trên lịch chọn ngày: nếu hôm nay đã quá giờ nhận phòng thì không cho chọn hôm nay làm ngày nhận (backend cũng chặn).
-  const checkInPassedToday = vnMinuteNow() >= opts.checkInMinute;
+  // Đặt cho hôm nay vẫn được dù đã quá giờ nhận phòng (backend chỉ chặn ngày đã qua và đặt trùng), nên lịch chọn ngày
+  // không cần xử lý riêng cho "hôm nay".
 
   const dayBtnClass =
     'w-full flex items-center justify-between gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-indigo-300 transition-colors text-left';
@@ -165,9 +215,11 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
           <button type="button" onClick={() => setShowCalendar(true)} className={dayBtnClass}>
             <span className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-indigo-600 shrink-0" />
-              {checkIn && checkOut ? (
+              {checkIn ? (
                 <span className="text-xs font-bold text-slate-800">
-                  {formatDay(checkIn)} → {formatDay(checkOut)}
+                  {checkOut && checkOut.getTime() !== checkIn.getTime()
+                    ? `${formatDay(checkIn)} → ${formatDay(checkOut)}`
+                    : formatDay(checkIn)}
                 </span>
               ) : (
                 <span className="text-xs font-semibold text-slate-500">{t('booking.selectDatesButton')}</span>
@@ -179,7 +231,6 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
               checkIn: minuteToTime(opts.checkInMinute),
               checkOut: minuteToTime(opts.checkOutMinute),
             })}
-            {checkInPassedToday && ` ${t('booking.todayPassedHint')}`}
           </p>
         </>
       ) : (
@@ -248,6 +299,102 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
         </div>
       )}
 
+      <div className="space-y-1">
+        {voucherCode ? (
+          <div className="flex items-center justify-between gap-2 rounded-2xl bg-emerald-50 border border-emerald-100 px-3 py-2">
+            <span className="flex items-center gap-2 text-xs font-bold text-emerald-700">
+              <Ticket className="w-4 h-4 shrink-0" />
+              {t('booking.voucherApplied', { code: voucherCode })}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setVoucherCode('');
+                setVoucherInput('');
+                setVoucherError('');
+              }}
+              aria-label={t('booking.voucherRemove')}
+              className="p-1 rounded-lg text-emerald-700 hover:bg-emerald-100"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <input
+              value={voucherInput}
+              onChange={(e) => {
+                setVoucherInput(e.target.value.toUpperCase());
+                setVoucherError('');
+              }}
+              placeholder={t('booking.voucherPlaceholder')}
+              maxLength={30}
+              className={`${inputClass} uppercase`}
+            />
+            <button
+              type="button"
+              disabled={!voucherInput.trim() || !selection}
+              onClick={() => {
+                setVoucherError('');
+                setVoucherCode(voucherInput.replace(/\s+/g, ''));
+              }}
+              className="shrink-0 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold disabled:opacity-40"
+            >
+              {t('booking.voucherApply')}
+            </button>
+          </div>
+        )}
+        {!voucherCode && !selection && voucherInput.trim() && (
+          <p className="text-[11px] text-slate-500 px-1">{t('booking.voucherNeedDates')}</p>
+        )}
+        {voucherError && <p className="text-[11px] text-rose-500 px-1">{voucherError}</p>}
+
+        {!voucherCode && publicVouchers.length > 0 && (
+          <div className="space-y-1.5 pt-1">
+            <p className="text-[11px] font-bold text-slate-500 px-1">{t('booking.publicVouchersTitle')}</p>
+            <div className="space-y-1.5 max-h-44 overflow-y-auto pr-0.5">
+              {publicVouchers.map((v) => (
+                <button
+                  key={v.code}
+                  type="button"
+                  onClick={() => {
+                    setVoucherError('');
+                    setVoucherInput(v.code);
+                    if (selection) setVoucherCode(v.code);
+                  }}
+                  className="w-full flex items-center gap-3 text-left rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/60 hover:bg-indigo-50 hover:border-indigo-400 px-3 py-2 transition-colors"
+                >
+                  <Ticket className="w-5 h-5 text-indigo-500 shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="text-xs font-black text-indigo-700 tracking-wide">{v.code}</span>
+                      <span className="text-[11px] font-bold text-emerald-700">
+                        {v.discountType === 'PERCENT'
+                          ? t('booking.voucherOffPercent', { percent: v.discountValue })
+                          : t('booking.voucherOffAmount', { amount: formatVnd(v.discountValue) })}
+                      </span>
+                    </span>
+                    {v.title && <span className="block text-[11px] text-slate-600 truncate">{v.title}</span>}
+                    <span className="block text-[10px] text-slate-400">
+                      {[
+                        v.discountType === 'PERCENT' && v.maxDiscountAmount
+                          ? t('booking.voucherMaxOff', { amount: formatVnd(v.maxDiscountAmount) })
+                          : null,
+                        v.endsAt ? t('booking.voucherExpires', { date: new Date(v.endsAt).toLocaleDateString('vi-VN') }) : null,
+                        v.remainingUses !== null ? t('booking.voucherRemaining', { count: v.remainingUses }) : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-[11px] font-bold text-indigo-600">{t('booking.voucherUse')}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       {(quoteLoading || quote || quoteError) && (
         <div className="text-xs rounded-2xl bg-emerald-50 border border-emerald-100 p-3 space-y-1">
           {quoteLoading ? (
@@ -260,15 +407,40 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
                 <span className="text-slate-600">
                   {quote.mode === 'HOURLY'
                     ? t('booking.quoteHoursLine', { count: quote.hours as number, price: formatVnd(quote.unitPrice) })
-                    : t('booking.quoteNightsLine', { count: quote.nights as number, price: formatVnd(quote.unitPrice) })}
+                    : quote.nightPrices
+                      ? t('booking.quoteNightsVariedLine', { count: quote.nights as number })
+                      : t('booking.quoteNightsLine', { count: quote.nights as number, price: formatVnd(quote.unitPrice) })}
                   {quote.discountPercent > 0 && (
                     <span className="text-emerald-600 font-bold ml-1">
                       ({t('booking.quoteDiscountApplied', { percent: quote.discountPercent })})
                     </span>
                   )}
                 </span>
-                <span className="font-black text-slate-900">{formatVnd(quote.amount)}</span>
+                <span className="font-black text-slate-900">{formatVnd(quote.listAmount ?? quote.amount)}</span>
               </div>
+              {/* Giá không đều giữa các đêm (chủ nhà đặt giá riêng) — liệt kê từng đêm để khách thấy giá tổng từ đâu ra. */}
+              {quote.mode === 'DAILY' && quote.nightPrices && (
+                <ul className="mt-1 mb-1 space-y-0.5 text-[11px] text-slate-500">
+                  {quote.nightPrices.map((n) => (
+                    <li key={n.date} className="flex items-center justify-between gap-2">
+                      <span>{`${n.date.slice(8, 10)}/${n.date.slice(5, 7)}`}</span>
+                      <span className="tabular-nums">{formatVnd(n.price)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {quote.voucher && quote.discountAmount > 0 && (
+                <>
+                  <div className="flex items-center justify-between gap-2 text-emerald-700 font-bold">
+                    <span>{t('booking.voucherDiscountLine', { code: quote.voucher.code })}</span>
+                    <span>-{formatVnd(quote.discountAmount)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 border-t border-emerald-100 pt-1">
+                    <span className="font-bold text-slate-700">{t('booking.voucherTotalLine')}</span>
+                    <span className="font-black text-slate-900">{formatVnd(quote.amount)}</span>
+                  </div>
+                </>
+              )}
               {quote.cappedByDailyPrice && <p className="text-slate-500">{t('booking.quoteCapped')}</p>}
               <p className="text-slate-500">{t('booking.stayFrom', { time: formatInstantVn(quote.checkInAt) })}</p>
               <p className="text-slate-500">{t('booking.stayTo', { time: formatInstantVn(quote.checkOutAt) })}</p>
@@ -287,6 +459,8 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
             setCheckOut(newOut);
           }}
           onClose={() => setShowCalendar(false)}
+          basePrice={room.shortTermDayPrice ?? null}
+          priceOf={room.shortTermDayPrice ? (d) => dayPrices[toDateKey(d)] ?? (room.shortTermDayPrice as number) : undefined}
         />
       )}
     </div>

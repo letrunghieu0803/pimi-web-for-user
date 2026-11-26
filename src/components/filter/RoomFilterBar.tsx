@@ -6,7 +6,9 @@ import { FilterState } from '@/types';
 import { useSearchFacets } from '@/hooks/useSearchFacets';
 import { useToast } from '@/context/ToastContext';
 import { formatRoomTypeLabel } from '@/utils/roomType';
-import { Search, MapPin, DollarSign, Home, SlidersHorizontal, RotateCcw, Layers, Check, Sparkles, Zap, Calendar, X } from 'lucide-react';
+import { DateRangeCalendar } from '@/components/booking/DateRangeCalendar';
+import { fromDateKey, toDateKey } from '@/utils/shortTermBooking';
+import { Search, CalendarDays, MapPin, DollarSign, Home, SlidersHorizontal, RotateCcw, Layers, Check, Sparkles, Zap, Calendar, X } from 'lucide-react';
 
 interface RoomFilterBarProps {
   /** Bộ lọc ĐANG ÁP DỤNG thật sự (đã submit, đang dùng để gọi API) — dùng để khởi tạo/đồng bộ
@@ -46,6 +48,33 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
   const knownDistricts = new Set(facets?.locations.flatMap((loc) => loc.districts.map((d) => d.name)) ?? []);
   const knownRoomTypes = new Set(facets?.roomTypes.map((rt) => rt.type) ?? []);
   const amenityOptions = Array.from(new Set([...(facets?.amenities ?? []), ...draft.amenities]));
+
+  // Tìm theo ngày ở (chỉ thuê ngắn hạn): bản nháp giữ ngày nhận + ngày trả (loại trừ) dạng 'YYYY-MM-DD'; lịch chọn làm việc với
+  // "ngày đầu" và "ngày cuối cùng ở" (= ngày trả - 1) như lịch đặt phòng.
+  const [showStayCalendar, setShowStayCalendar] = useState(false);
+  const stayIn = draft.checkIn ? fromDateKey(draft.checkIn) : null;
+  const stayLastNight = (() => {
+    if (!stayIn || !draft.checkOut) return null;
+    const out = fromDateKey(draft.checkOut);
+    const last = new Date(out.getFullYear(), out.getMonth(), out.getDate() - 1);
+    return last.getTime() > stayIn.getTime() ? last : null;
+  })();
+  const stayNights = stayIn
+    ? Math.round(((stayLastNight ?? stayIn).getTime() - stayIn.getTime()) / 86_400_000) + 1
+    : 0;
+  const stayCheckoutDate = stayIn
+    ? new Date((stayLastNight ?? stayIn).getFullYear(), (stayLastNight ?? stayIn).getMonth(), (stayLastNight ?? stayIn).getDate() + 1)
+    : null;
+  const shortDay = (d: Date) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const handleStayChange = (newIn: Date | null, newLast: Date | null) => {
+    if (!newIn) {
+      setDraft((prev) => ({ ...prev, checkIn: null, checkOut: null }));
+      return;
+    }
+    const last = newLast ?? newIn;
+    const checkout = new Date(last.getFullYear(), last.getMonth(), last.getDate() + 1);
+    setDraft((prev) => ({ ...prev, checkIn: toDateKey(newIn), checkOut: toDateKey(checkout) }));
+  };
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -101,6 +130,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
     (appliedFilters.isRecommended === true ? 1 : 0) +
     (appliedFilters.priceRange !== 'ALL' ? 1 : 0) +
     appliedFilters.amenities.length +
+    (appliedFilters.checkIn ? 1 : 0) +
     (appliedFilters.userLat && appliedFilters.userLng ? 1 : 0);
 
   // Nút submit dùng lại NGUYÊN VẸN cả inline (>= lg) lẫn trong modal mobile (< lg) — modal mobile
@@ -406,7 +436,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
 
         <button
           type="button"
-          onClick={() => setDraft((prev) => ({ ...prev, rentalTermType: 'LONG_TERM', priceRange: 'ALL' }))}
+          onClick={() => setDraft((prev) => ({ ...prev, rentalTermType: 'LONG_TERM', priceRange: 'ALL', checkIn: null, checkOut: null }))}
           className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
             draft.rentalTermType === 'LONG_TERM'
               ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
@@ -431,6 +461,33 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
             className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 font-medium"
           />
         </div>
+        {draft.rentalTermType === 'SHORT_TERM' && (
+          <div className="shrink-0 flex items-stretch rounded-2xl bg-white border border-slate-200 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100">
+            <button
+              type="button"
+              onClick={() => setShowStayCalendar(true)}
+              aria-label={t('roomFilterBar.stayDatesLabel')}
+              className="flex-1 flex items-center justify-center gap-2 pl-4 pr-3 py-3 text-sm font-semibold text-slate-800 focus:outline-none"
+            >
+              <CalendarDays className="w-4 h-4 text-indigo-600" />
+              <span className="whitespace-nowrap">
+                {stayIn && stayCheckoutDate
+                  ? `${shortDay(stayIn)} → ${shortDay(stayCheckoutDate)} · ${t('roomFilterBar.stayNights', { count: stayNights })}`
+                  : t('roomFilterBar.stayDatesPlaceholder')}
+              </span>
+            </button>
+            {stayIn && (
+              <button
+                type="button"
+                onClick={() => setDraft((prev) => ({ ...prev, checkIn: null, checkOut: null }))}
+                aria-label={t('roomFilterBar.stayDatesClear')}
+                className="px-3 text-slate-400 hover:text-rose-600 focus:outline-none"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )}
         <SearchSubmitButton className="shrink-0 flex items-center justify-center gap-2 px-6 py-3 rounded-2xl gradient-bg text-white font-bold text-sm shadow-lg shadow-indigo-500/25 hover:opacity-95 transition-opacity" />
       </div>
 
@@ -453,6 +510,18 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
           )}
         </button>
       </div>
+
+      {showStayCalendar &&
+        createPortal(
+          <DateRangeCalendar
+            busyRanges={[]}
+            checkInDate={stayIn}
+            checkOutDate={stayLastNight}
+            onChange={handleStayChange}
+            onClose={() => setShowStayCalendar(false)}
+          />,
+          document.body
+        )}
 
       {showMobileFilterModal && createPortal(
         <div className="lg:hidden fixed inset-0 z-50 flex flex-col bg-white animate-fadeIn">

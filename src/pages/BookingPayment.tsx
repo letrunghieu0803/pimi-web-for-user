@@ -135,6 +135,15 @@ export const BookingPayment: React.FC = () => {
         <div className="space-y-1 text-center">
           <h1 className="text-lg font-black text-slate-900 font-heading">{booking.roomName}</h1>
           <p className="text-2xl font-black text-emerald-600 font-heading">{formatMoney(booking.amount)}</p>
+          {booking.voucherCode && Number(booking.discountAmount) > 0 && (
+            <p className="text-xs font-semibold text-slate-500">
+              {t('bookingPayment.voucherLine', {
+                code: booking.voucherCode,
+                list: formatMoney(booking.listAmount as string | number),
+                discount: formatMoney(booking.discountAmount as string | number),
+              })}
+            </p>
+          )}
           {/* checkInDate/checkOutDate null ở các đơn tạo trước tính năng chọn ngày (không backfill). */}
           {booking.checkInDate && booking.checkOutDate && (
             <p className="text-xs text-slate-500">

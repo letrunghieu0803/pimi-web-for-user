@@ -118,6 +118,8 @@ interface PublicFeedParams {
   userLat?: number | null;
   userLng?: number | null;
   radiusInKm?: number | null;
+  checkInDate?: string | null;
+  checkOutDate?: string | null;
   pageNumber?: number;
   pageSize?: number;
   sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'distance';
@@ -169,6 +171,8 @@ const fetchPublicFeed = (params: PublicFeedParams): Promise<PublicFeedResult> =>
         userLat: params.userLat ?? undefined,
         userLng: params.userLng ?? undefined,
         radiusInKm: params.radiusInKm ?? undefined,
+        checkInDate: params.checkInDate ?? undefined,
+        checkOutDate: params.checkOutDate ?? undefined,
         pageNumber: params.pageNumber,
         pageSize: params.pageSize,
         sortBy: params.sortBy,
@@ -275,6 +279,8 @@ export const roomApi = {
     userLat?: number | null;
     userLng?: number | null;
     radiusInKm?: number | null;
+    checkIn?: string | null;
+    checkOut?: string | null;
     pageNumber?: number;
     pageSize?: number;
     sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'distance';
@@ -293,6 +299,8 @@ export const roomApi = {
       userLat: params?.userLat,
       userLng: params?.userLng,
       radiusInKm: params?.radiusInKm,
+      checkInDate: params?.checkIn,
+      checkOutDate: params?.checkOut,
       pageNumber: params?.pageNumber,
       pageSize: params?.pageSize,
       sortBy: params?.sortBy,

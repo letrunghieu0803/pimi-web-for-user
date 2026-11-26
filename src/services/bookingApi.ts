@@ -20,6 +20,10 @@ export interface Booking {
   rentRoomId: string;
   rentHouseId: string;
   refund?: BookingRefund | null;
+  // Voucher đã áp dụng (null/0 nếu không dùng): `amount` là số khách phải trả sau giảm, `listAmount` là giá niêm yết.
+  voucherCode?: string | null;
+  listAmount?: string | number | null;
+  discountAmount?: string | number;
   [key: string]: unknown;
 }
 
@@ -69,7 +73,7 @@ export interface BusyRange {
   endDate?: string;
   mode?: 'DAILY' | 'HOURLY' | null;
   bufferMinutes?: number;
-  source: 'booking' | 'contract';
+  source: 'booking' | 'contract' | 'external' | 'blocked';
 }
 
 export interface BookingQuote {
@@ -84,6 +88,12 @@ export interface BookingQuote {
   checkOutAt: string;
   unitPrice: number;
   cappedByDailyPrice: boolean;
+  // Giá từng đêm — chỉ có khi ít nhất 1 đêm dùng giá riêng của chủ nhà (giá không đều giữa các đêm).
+  nightPrices?: { date: string; price: number }[];
+  // `amount` đã trừ voucher (số khách trả); `listAmount` là giá trước voucher.
+  listAmount: number;
+  discountAmount: number;
+  voucher: { code: string; title: string | null; funder: 'PLATFORM' | 'OWNER'; discountType: 'FIXED' | 'PERCENT'; discountValue: number } | null;
 }
 
 // Lựa chọn thời gian thuê gửi cho báo giá/đặt phòng: DAILY gửi 2 ngày (YYYY-MM-DD, giờ nhận/trả theo phòng),
@@ -93,6 +103,7 @@ export interface BookingTimePayload {
   checkInDate: string;
   checkOutDate?: string;
   hours?: number;
+  voucherCode?: string;
 }
 
 export const bookingApi = {
@@ -104,8 +115,18 @@ export const bookingApi = {
     return axiosClient.post('/v1/bookings/quote', { rentRoomId, ...time });
   },
 
+  // Voucher công khai khách có thể áp dụng cho phòng này (màn thanh toán) — không trả mã của voucher riêng.
+  getPublicVouchers: (roomId: string) => {
+    return axiosClient.get(`/v1/public-vouchers/rooms/${roomId}`);
+  },
+
   getAvailability: (roomId: string) => {
     return axiosClient.get(`/v1/rent-rooms/public/${roomId}/availability`);
+  },
+
+  // Giá riêng theo đêm do chủ nhà đặt (chỉ các đêm khác giá ngày mặc định), từ hôm nay trở đi: [{ date: 'YYYY-MM-DD', price }].
+  getDayPrices: (roomId: string) => {
+    return axiosClient.get(`/v1/rent-rooms/public/${roomId}/day-prices`);
   },
 
   getOne: (id: string) => {
@@ -124,3 +145,17 @@ export const bookingApi = {
     return axiosClient.get('/v1/bookings/tenant', { params });
   },
 };
+
+export interface PublicVoucher {
+  code: string;
+  title: string | null;
+  funder: 'PLATFORM' | 'OWNER';
+  discountType: 'FIXED' | 'PERCENT';
+  discountValue: number;
+  maxDiscountAmount: number | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  maxUsesPerUser: number;
+  /** null = không giới hạn tổng lượt. */
+  remainingUses: number | null;
+}

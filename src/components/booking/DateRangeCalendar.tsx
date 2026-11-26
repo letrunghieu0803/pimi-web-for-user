@@ -5,15 +5,24 @@ import { BusyRange } from '@/services/bookingApi';
 
 interface DateRangeCalendarProps {
   busyRanges: BusyRange[];
+  /** Ngày ĐẦU TIÊN ở (= ngày nhận phòng). */
   checkInDate: Date | null;
+  /** Ngày CUỐI CÙNG ở (tính cả ngày này). null = chỉ thuê 1 ngày (ngày nhận). Ngày trả phòng thật = ngày này + 1. */
   checkOutDate: Date | null;
   onChange: (checkInDate: Date | null, checkOutDate: Date | null) => void;
   onClose: () => void;
-  // Phòng PER_HOUR: nhận/trả phòng cùng 1 ngày là trường hợp BÌNH THƯỜNG (khác giờ, chọn ở ô giờ
-  // riêng bên ngoài lịch này) — cho phép bấm lại đúng ngày đã chọn làm ngày trả. Phòng PER_DAY:
-  // bắt buộc ngày trả phải SAU ngày nhận (tối thiểu 1 đêm), giữ hành vi mặc định.
-  allowSameDay?: boolean;
+  /** Giá 1 đêm bắt đầu từ ngày này (đ), null = không biết. Có thì hiện giá dưới số ngày — lịch tìm kiếm không truyền nên không hiện giá. */
+  priceOf?: (d: Date) => number | null;
+  /** Giá ngày mặc định của phòng — đêm khác giá này được tô nổi (giá riêng do chủ nhà đặt). */
+  basePrice?: number | null;
 }
+
+/** Giá gọn trong ô lịch: 350.000 → "350k", 1.300.000 → "1,3tr"; giá lẻ hơn hiện đầy đủ. */
+const compactPrice = (price: number): string => {
+  if (price >= 1_000_000 && price % 100_000 === 0) return `${String(price / 1_000_000).replace('.', ',')}tr`;
+  if (price % 1000 === 0) return `${price / 1000}k`;
+  return price.toLocaleString('vi-VN');
+};
 
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
@@ -55,14 +64,16 @@ const buildMonthGrid = (monthStart: Date): (Date | null)[] => {
 };
 
 // Lưới lịch tự viết (không thêm thư viện calendar mới) — lưới 1 tháng, chuyển tháng trước/sau,
-// tự xám ngày quá khứ + ngày bận (từ busyRanges), click lần 1 chọn ngày nhận, lần 2 chọn ngày trả.
+// tự xám ngày quá khứ + ngày bận (từ busyRanges). Mỗi ô ngày = 1 đêm ở: bấm 1 ngày A là thuê 1 ngày (nhận ngày A,
+// trả ngày A+1); bấm thêm ngày B (sau A) là thuê liên tiếp từ A đến hết ngày B (trả ngày B+1).
 export const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
   busyRanges,
   checkInDate,
   checkOutDate,
   onChange,
   onClose,
-  allowSameDay = false,
+  priceOf,
+  basePrice,
 }) => {
   const { t } = useTranslation();
   const today = toVnCalendarDay(new Date());
@@ -82,12 +93,15 @@ export const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
   }, [busyRanges]);
 
   const isBusy = (d: Date) => busyDayTimestamps.has(d.getTime());
+  // Ngày cuối cùng ở: đã chọn ngày cuối thì dùng nó, chưa thì thuê đúng 1 ngày (= ngày nhận).
+  const lastDay = checkInDate ? (checkOutDate ?? checkInDate) : null;
+  const nights = checkInDate && lastDay ? Math.round((lastDay.getTime() - checkInDate.getTime()) / 86_400_000) + 1 : 0;
   const isPast = (d: Date) => d.getTime() < today.getTime();
 
-  // Khoảng [checkIn, d) có cắt ngang ngày bận nào không — chặn chọn ngày trả nếu có.
+  // Khoảng [start, end] (gồm cả 2 đầu) có ngày bận nào không — chặn chọn nếu có.
   const rangeCrossesBusyDay = (start: Date, end: Date) => {
     let cursor = start;
-    while (cursor.getTime() < end.getTime()) {
+    while (cursor.getTime() <= end.getTime()) {
       if (isBusy(cursor)) return true;
       cursor = addDays(cursor, 1);
     }
@@ -98,16 +112,12 @@ export const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
     if (isPast(d) || isBusy(d)) return;
 
     if (!checkInDate || checkOutDate) {
-      // Chưa chọn gì, hoặc đã chọn đủ cả 2 — bắt đầu chọn lại từ đầu.
+      // Chưa chọn gì, hoặc đã chọn xong cả khoảng — bắt đầu chọn lại từ ngày vừa bấm (mặc định thuê 1 ngày).
       onChange(d, null);
       return;
     }
-    // Đã có checkInDate, đang chờ chọn checkOutDate. Phòng PER_HOUR cho phép trả phòng CÙNG
-    // ngày nhận (allowSameDay) — chỉ chặn ngày trả sớm hơn ngày nhận, không chặn bằng nhau.
-    const isTooEarly = allowSameDay
-      ? d.getTime() < checkInDate.getTime()
-      : d.getTime() <= checkInDate.getTime();
-    if (isTooEarly) {
+    // Đã có ngày nhận, đang chờ ngày cuối. Bấm lại đúng ngày nhận = chốt 1 ngày; bấm ngày sớm hơn = chọn lại.
+    if (d.getTime() < checkInDate.getTime()) {
       onChange(d, null);
       return;
     }
@@ -142,6 +152,8 @@ export const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
             const inRange =
               checkInDate && checkOutDate && d.getTime() > checkInDate.getTime() && d.getTime() < checkOutDate.getTime();
             const disabled = past || busy;
+            const price = priceOf && !disabled ? priceOf(d) : null;
+            const special = price !== null && basePrice != null && price !== basePrice;
 
             return (
               <button
@@ -149,7 +161,7 @@ export const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
                 type="button"
                 disabled={disabled}
                 onClick={() => handleDayClick(d)}
-                className={`aspect-square rounded-xl text-xs font-semibold transition-colors ${
+                className={`aspect-square rounded-xl text-xs font-semibold transition-colors ${priceOf ? 'flex flex-col items-center justify-center leading-tight' : ''} ${
                   isCheckIn || isCheckOut
                     ? 'bg-indigo-600 text-white'
                     : inRange
@@ -160,6 +172,19 @@ export const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
                 }`}
               >
                 {d.getDate()}
+                {price !== null && (
+                  <span
+                    className={`text-[9px] tabular-nums ${
+                      isCheckIn || isCheckOut
+                        ? 'font-medium text-white/80'
+                        : special
+                          ? 'font-bold text-amber-600'
+                          : 'font-medium text-slate-400'
+                    }`}
+                  >
+                    {compactPrice(price)}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -210,23 +235,37 @@ export const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
             <span className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded bg-slate-200 inline-block" /> {t('booking.calendarLegendBusy')}
             </span>
+            {priceOf && basePrice != null && (
+              <span className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold text-amber-600">1,3tr</span> {t('booking.calendarLegendSpecialPrice')}
+              </span>
+            )}
           </div>
 
-          <div className="flex items-center justify-between pt-3">
-            <div className="text-sm">
-              <span className="text-slate-500">{t('booking.checkInLabel')}: </span>
-              <span className="font-bold text-slate-800">
-                {checkInDate ? checkInDate.toLocaleDateString('vi-VN') : t('booking.notSelected')}
-              </span>
-              <span className="text-slate-500"> — {t('booking.checkOutLabel')}: </span>
-              <span className="font-bold text-slate-800">
-                {checkOutDate ? checkOutDate.toLocaleDateString('vi-VN') : t('booking.notSelected')}
-              </span>
+          <div className="flex items-center justify-between gap-3 pt-3">
+            <div className="text-sm space-y-0.5">
+              {checkInDate ? (
+                <>
+                  <p>
+                    <span className="text-slate-500">{t('booking.calStayLabel')}: </span>
+                    <span className="font-bold text-slate-800">
+                      {checkInDate.toLocaleDateString('vi-VN')}
+                      {lastDay && !isSameDay(checkInDate, lastDay) ? ` → ${lastDay.toLocaleDateString('vi-VN')}` : ''}
+                    </span>
+                    <span className="text-slate-500"> ({t('booking.quoteNights', { count: nights })})</span>
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {t('booking.calCheckoutNote', { date: addDays(lastDay as Date, 1).toLocaleDateString('vi-VN') })}
+                  </p>
+                </>
+              ) : (
+                <span className="text-slate-500">{t('booking.notSelected')}</span>
+              )}
             </div>
             <button
               type="button"
               onClick={onClose}
-              disabled={!checkInDate || !checkOutDate}
+              disabled={!checkInDate}
               className="px-5 py-2.5 rounded-xl gradient-bg text-white font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {t('booking.calendarDoneButton')}

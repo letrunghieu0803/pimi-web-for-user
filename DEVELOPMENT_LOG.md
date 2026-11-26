@@ -4,6 +4,120 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-26 — Đặt theo ngày cho hôm nay vẫn được dù đã quá giờ nhận phòng
+
+**Thay đổi:** bỏ dòng gợi ý "Hôm nay đã quá giờ nhận phòng — hãy chọn ngày nhận từ ngày mai" ở hộp đặt phòng (`ShortTermBookingPanel`, kèm `vnMinuteNow` không còn dùng và chuỗi i18n `booking.todayPassedHint`). Lịch chọn ngày (`DateRangeCalendar`) vốn chỉ chặn ngày đã qua nên khách chọn được hôm nay; backend giờ cũng cho đặt hôm nay sau giờ nhận phòng, chỉ chặn ngày đã qua và đặt trùng.
+
+**Đã kiểm tra:** `tsc` không lỗi. **Chưa kiểm tra:** đặt thật trên trình duyệt vào hôm nay sau giờ nhận phòng. Cần BE bản mới (xem log bff).
+
+## 2026-11-26 — Ẩn cho thuê ngắn hạn theo giờ
+
+**Thay đổi:** cờ `HOURLY_RENTAL_ENABLED` (`config/features.ts`, đọc `VITE_HOURLY_RENTAL_ENABLED === 'true'`, mặc định TẮT). Khi tắt: `getShortTermPrices` (`utils/roomPrice.ts`) coi phòng không có giá giờ (kể cả kiểu cũ 1 giá + đơn vị `PER_HOUR`) nên thẻ phòng không còn giá phụ theo giờ và phòng chỉ có giá giờ coi như chưa có giá ngắn hạn (không đặt được); `getShortTermOptions` (`utils/shortTermBooking.ts`) không bao giờ có lựa chọn đặt theo giờ nên hộp đặt phòng chỉ còn "Theo ngày"; `RoomDetail` không dùng giá giờ làm giá hiển thị. Nhãn "Thuê Theo Ngày/Giờ", "Thuê Ngắn Hạn (Ngày/Giờ)", "(VNĐ / Giờ Hoặc Ngày)" đổi thành chỉ "ngày".
+
+**Đã kiểm tra (trình duyệt + BE local):** tìm phòng chỉ hiện "600.000đ / day" cho phòng có cả giá ngày và giờ; chi tiết phòng không có chữ giờ; hộp "Book & Pay" chỉ có "By the day". `tsc` không lỗi. **Chưa kiểm tra:** bật cờ lại để xác nhận lựa chọn "Thuê theo giờ" hiện lại. Cần BE có cờ tương ứng (xem log bff).
+
+## 2026-11-25 — Hiện "Hướng dẫn xem nhà" của chủ nhà sau khi đặt lịch xem
+
+**Thay đổi:** component mới `ViewingGuideSummary` (liên hệ chủ nhà trước tối thiểu 30 phút / SĐT liên hệ xem phòng bấm để gọi / hướng dẫn tự nhập, xuống dòng đúng, chỉ in mục chủ nhà đã điền). Hiện ở panel xác nhận ngay sau khi đặt lịch (`ViewingConfirmationPanel`, kèm trang xem công khai cho người xem hộ vì dùng chung panel) và ở thẻ lịch hẹn trong `TenantAppointments`. Chỉ hiện khi lịch `CONFIRMED`/`COMPLETED` (lịch chờ chủ nhà duyệt thì chưa). Kiểu `Appointment.rentHouse` thêm 3 trường; i18n vi/en `viewingGuideSummary.*`. Khối rich-text cũ (`guideContent`) giữ nguyên bên dưới.
+
+**Đã kiểm tra (trình duyệt + BE local):** lịch `CONFIRMED` hiện đủ 3 dòng, lịch `PENDING_APPROVAL` không hiện. `tsc -p tsconfig.app.json` không lỗi ở file đã sửa. **Chưa kiểm tra:** panel ngay sau khi đặt (cùng component với danh sách, chưa chạy luồng đặt thật) và trang xem công khai bằng link ZNS thật. Cần BE mới (xem log bff).
+
+## 2026-11-24 — Lịch chọn ngày hiện giá từng đêm
+
+**Thay đổi:** `DateRangeCalendar` nhận thêm `priceOf?` và `basePrice?`: có thì mỗi ô ngày hiện giá đêm bắt đầu từ ngày đó (gọn "350k"/"1,3tr"; ngày đã qua/kín lịch không hiện), đêm khác giá ngày mặc định (giá riêng của chủ nhà) tô cam đậm + chú giải "Giá khác ngày thường"; lịch trong bộ lọc tìm kiếm không truyền nên giữ nguyên. `ShortTermBookingPanel` nạp `GET /rent-rooms/public/:roomId/day-prices` (`bookingApi.getDayPrices`) và truyền giá vào lịch. Bảng báo giá: khi `quote.nightPrices` có (có đêm giá riêng) hiện "N đêm (giá từng đêm)" và liệt kê từng đêm, ngược lại giữ dòng "N đêm × giá" cũ. i18n vi/en `booking.calendarLegendSpecialPrice`, `quoteNightsVariedLine`.
+
+**Đã kiểm tra (trình duyệt + backend local):** đặt giá riêng 26/12 = 1.300.000, 27/12 = 900.000, 28/12 = 500.000 cho phòng demo → lịch hiện 350k ngày thường và 1,3tr/900k/500k màu cam; chọn 26→28 → báo giá liệt kê 3 đêm, tổng 2.700.000đ. `tsc -p tsconfig.app.json` sạch. App di động chưa hiện giá từng đêm.
+
+## 2026-11-24 — Tìm phòng trống theo ngày ở
+
+**Thay đổi:** `RoomFilterBar` thêm ô "Chọn ngày ở" (chỉ thuê ngắn hạn; dùng lại `DateRangeCalendar` qua portal, có nút bỏ chọn; chuyển sang dài hạn thì xoá ngày; tính vào badge số bộ lọc). `FilterState.checkIn/checkOut` ('YYYY-MM-DD', ngày trả loại trừ) ghi vào URL (`?checkIn&checkOut`) và gửi API (`checkInDate/checkOutDate`) qua `roomApi`. `RoomCard` mang ngày sang link chi tiết; `ShortTermBookingPanel` chọn sẵn ngày từ URL (bỏ qua ngày đã qua/sai định dạng/phòng không bán theo ngày). `RoomDetail`: đường dẫn quay lại sau đăng nhập giữ `checkIn/checkOut` và được `encodeURIComponent` (trước đó `&` cắt mất tham số). `BusyRange.source` thêm `'blocked'` (ngày chủ nhà đóng — lịch đặt phòng tự tô xám vì đã xử lý theo startDate/endDate).
+
+**Đã kiểm tra (trình duyệt + backend local):** đóng 2 ngày của 1 phòng rồi tìm đúng 2 ngày đó → phòng biến mất (14 → 10 phòng), URL có `checkIn/checkOut`, API nhận `checkInDate/checkOutDate`; mở phòng với 27→29/12 → đăng nhập → quay lại đúng trang → ngày chọn sẵn, báo giá 2 đêm × 350.000đ = 700.000đ. `tsc -p tsconfig.app.json` sạch. Chưa hiện giá từng đêm trong lịch chọn ngày (API `day-prices` đã có); app di động chưa có tìm theo ngày.
+
+## 2026-11-23 — Tìm phòng: nút "Tìm kiếm" luôn làm mới dữ liệu
+
+**Vì sao:** Bấm "Tìm kiếm" khi không đổi điều kiện thì không có gì xảy ra: queryKey của react-query y hệt lần trước (và còn trong staleTime 5 phút) nên không gọi lại API.
+
+**Thay đổi:** `pages/RoomList.tsx`: thêm bộ đếm `searchNonce` tăng mỗi lần `handleSearchSubmit` và đưa vào `queryKey` của `rooms-paginated` → mỗi lần bấm là 1 truy vấn mới, luôn gọi lại API và hiện khung chờ như lúc tìm lần đầu. Tìm kiếm luôn về trang 1 (`setPageNumber(1)` tường minh vì effect theo `filters` không chạy khi điều kiện không đổi).
+
+**Đã kiểm tra (trình duyệt + backend local):** bấm Tìm kiếm 2 lần không đổi gì → thêm đúng 2 request `public/feed`; đang ở trang 2 (4/14) bấm Tìm kiếm → về trang 1 (10/14). `tsc -p tsconfig.app.json` sạch.
+
+**Lỗi có sẵn, chưa sửa:** mở thẳng `/rooms?page=2` ở chế độ dev bị đưa về trang 1 (StrictMode chạy effect đặt lại trang 2 lần); kiểm tra với code gốc cũng vậy.
+
+## 2026-11-23 — Kiểu dữ liệu lịch bận: thêm nguồn `external`
+
+**Thay đổi:** `bookingApi.ts`: `source` của khoảng bận phòng thêm giá trị `'external'` (khoảng bận nhập từ lịch Airbnb, backend mới trả). Chỉ là kiểu dữ liệu, giao diện lịch chọn ngày vẫn tô xám mọi khoảng bận như cũ.
+
+## 2026-11-19 — Thẻ phòng: bỏ nhãn "Phòng trống"/"Có gác xép"; "Đăng X trước" tối đa 7 ngày
+
+**Vì sao:** Người dùng luôn tìm phòng trống nên nhãn "Phòng trống" thừa; "Có gác xép" cũng không cần trên thẻ (vẫn xem được ở trang chi tiết). Phòng đăng quá 7 ngày không nên mất nhãn đăng mà giữ mốc "7 ngày trước".
+
+**Thay đổi:** `RoomCard`: xoá nhãn xanh "Phòng trống / N phòng trống" và nhãn "Có gác xép" (bỏ import `ShieldCheck`, `Layers`); nhãn khoảng cách đứng riêng dưới nhãn đăng. `utils/postedAt.ts`: quá 7 ngày trả `{ day, 7 }` thay vì `null` (chỉ còn `null` khi thiếu/sai ngày). Thẻ nhóm phòng không còn hiện số phòng trống.
+
+**Đã kiểm tra:** `tsc -p tsconfig.app.json` sạch; chưa mở trình duyệt.
+
+## 2026-11-18 — Thẻ phòng thuê dài hạn: "Đăng X trước"
+
+**Vì sao:** Cho người xem thấy phòng mới đăng được bao lâu, tạo cảm giác mới mẻ cho căn phòng.
+
+**Thay đổi:** `utils/postedAt.ts` (`getPostedAgo`): từ `room.createdAt` ra "vừa đăng" (<1 phút) / N phút / N giờ / N ngày; quá 7 ngày hoặc thiếu/sai ngày thì ẩn; đồng hồ lệch về tương lai coi như vừa đăng. `RoomCard`: nhãn có biểu tượng đồng hồ ở cột góc trên bên phải ảnh (trên nhãn khoảng cách/gác xép, cột `shrink-0 whitespace-nowrap`, nhóm nhãn bên trái cho phép xuống dòng để không chen nhau); chỉ hiện ở thẻ dài hạn (đang tìm `LONG_TERM`, hoặc thẻ không có loại hình thì xem đơn vị giá là tháng/năm). i18n vi/en `roomCard.posted*`. Backend không đổi (feed đã trả `createdAt`).
+
+**Đã kiểm tra (trình duyệt + backend local):** đặt tạm `createdAt` 3 phòng dài hạn = 5 phút/3 giờ/3 ngày trước → hiện "Posted 5m/3h/3d ago", phòng cũ không hiện; thẻ có nhãn Recommended + Posted không bị xuống dòng. `tsc -p tsconfig.app.json` sạch. Đã trả `createdAt` về giá trị gốc.
+
+## 2026-11-18 — Màn đặt phòng: danh sách voucher công khai áp dụng được
+
+**Thay đổi:** `bookingApi.getPublicVouchers` + type `PublicVoucher`; `ShortTermBookingPanel` hiện mục "Voucher áp dụng được cho phòng này" dưới ô nhập mã (khi chưa áp mã): thẻ nét đứt gồm mã, mức giảm (% hoặc số tiền), mô tả, tối đa/HSD/số lượt còn; bấm thẻ điền mã và áp luôn nếu đã chọn ngày. i18n vi/en (`booking.publicVouchersTitle`, `voucherOff*`, `voucherUse`…).
+
+**Đã kiểm tra (trình duyệt + backend local):** phòng "Test NH 01 - Chỉ ngày" hiện 2 voucher công khai, không hiện voucher riêng; chọn 1 ngày + bấm UIPUBLIC10 → 1 đêm 450.000đ, voucher −45.000đ, cần thanh toán 405.000đ.
+
+## 2026-11-18 — Chọn ngày thuê theo ngày: "từ ngày A đến hết ngày B" (hoặc 1 ngày)
+
+**Vì sao:** Chọn ngày nhận rồi ngày trả dễ nhầm với đêm ở; giờ bấm 1 ngày là thuê 1 ngày, bấm thêm ngày thứ hai là thuê liên tiếp đến hết ngày đó (nhận phòng ngày A, trả phòng ngày B + 1).
+
+**Thay đổi:**
+- `DateRangeCalendar`: ngày thứ hai là ngày CUỐI CÙNG ở (tính cả ngày đó), có thể bỏ trống; kiểm tra ngày bận gồm cả ngày cuối; nút "Xong" dùng được khi đã có ngày nhận; phần tóm tắt hiện "Thuê A → B (N đêm)" và "trả phòng ngày B+1"; bỏ prop `allowSameDay` không còn dùng.
+- `ShortTermBookingPanel`: gửi API `checkOutDate` = (ngày cuối hoặc ngày nhận) + 1 — hợp đồng API không đổi nên backend cũ vẫn đúng; nút chọn hiện 1 ngày hoặc "A → B".
+- i18n vi/en (`booking.calendarTitle/NavHint/selectDatesButton/calStayLabel/calCheckoutNote/dailyTimesHint`); `Terms.tsx` mục 8 mô tả cách chọn ngày mới.
+
+**Đã kiểm tra (trình duyệt + backend local, tài khoản demo):** chọn 1 ngày → 1 đêm, trả hôm sau; chọn 26→28/11 → 3 đêm, nhận 14:00 26/11, trả 11:00 29/11, 3 × 450.000 = 1.350.000. `tsc -p tsconfig.app.json` sạch. Thuê theo giờ không đổi.
+
+## 2026-11-18 — Viết lại Điều khoản sử dụng + Chính sách bảo mật theo hệ thống thật; đổi thông tin liên hệ
+
+**Vì sao:** Hệ thống bên server test đã ổn định, cần bộ điều khoản/chính sách khớp cách hệ thống đang chạy và thông tin liên hệ chính thức (hotline 0889.625.908, email piminest.vn@gmail.com, địa chỉ Xóm Kim Tân, Xã Kim Phượng, tỉnh Thái Nguyên). Bản cũ còn mốc hoàn tiền sai và nhiều chỗ để trống.
+
+**Thay đổi:**
+- `constants/contact.ts` (mới): nguồn duy nhất cho tên đơn vị, người đại diện, hotline, email, địa chỉ và ngày hiệu lực/phiên bản (14/11/2026, v2.0). Footer, `Contact`, `FAQ`, nút gọi ở `Home`, hai trang pháp lý đều đọc từ đây; bỏ key i18n `footer.address` và `*.effectiveDate`; `home.ctaCallHotline` nhận `{{phone}}`.
+- `components/legal/LegalSection.tsx` (mới): khối mục + danh sách liên hệ dùng chung cho `Terms`/`Privacy`.
+- `Terms.tsx` (20 mục): sửa mốc hoàn tiền đúng code backend (huỷ ≤2h sau đặt và còn ≥4h tới giờ nhận: 100%; còn ≥3 ngày: 100%; ≥1 ngày: 50%; còn lại 0%), mức hoàn chỉ là gợi ý và Pimi chốt, yêu cầu huỷ gửi trong app kèm tài khoản nhận tiền; thêm mục đặt lịch xem phòng, mã giảm giá (bên chịu: Pimi trừ vào hoa hồng, chủ nhà trừ vào tiền nhận; hoàn tiền tính trên số thực trả), cộng tác viên, gói thành viên, khoá KYC sau 5 lần thất bại; bỏ cam kết "hoàn trong 7 ngày làm việc".
+- `Privacy.tsx` (14 mục): thêm bên xử lý dữ liệu thật — Google Gemini (đọc giấy tờ, viết tin, nhập bảng tính), Tingee (QR/đối soát), Zalo ZNS, FCM, SMTP, VietMap, AWS S3; quyền camera/thư viện ảnh; bỏ cam kết "xoá hồ sơ KYC bị từ chối sau 90 ngày" (hệ thống không có tác vụ này) và thay bằng lưu trong thời gian cần thiết; thêm cơ chế dọn ảnh mồ côi sau ~24h; thời hạn xử lý yêu cầu xoá dữ liệu theo pháp luật thay vì cam kết 30 ngày.
+- Nhãn "Hotline 24/7" đổi thành "Hotline" (giờ làm việc ở trang Liên hệ là 08:00–20:00).
+
+**Đã kiểm tra:** `tsc -p tsconfig.app.json` sạch; mở `/terms`, `/privacy`, `/contact`, `/faq`, `/` trên trình duyệt — không còn số/email/địa chỉ cũ, link `tel:` và `mailto:` đúng. Repo chưa có cấu hình ESLint nên chưa lint.
+
+**Lưu ý:** tên đơn vị "Công ty TNHH Pimi Nest" và người đại diện giữ như bản cũ; đã bỏ hai dòng "[Bổ sung mã số doanh nghiệp / trụ sở đăng ký]" — nên thêm lại mã số doanh nghiệp khi có. Nội dung là bản soạn theo cách hệ thống hoạt động, cần luật sư rà soát trước khi dùng chính thức (giữ hộ tiền, giới hạn trách nhiệm 6 tháng, lưu chứng từ 5 năm, dữ liệu cá nhân).
+
+## 2026-11-13 — Nhập mã voucher trong modal đặt phòng ngắn hạn
+
+**Vì sao:** Tính năng voucher giảm giá (xem log bff-for-pimi cùng ngày).
+
+**Thay đổi:**
+- `ShortTermBookingPanel`: ô nhập mã + Áp dụng; báo giá hiện giá gốc, dòng "Voucher X −N" và "Cần thanh toán"; mã sai/hết hạn/hết lượt hiện lỗi dưới ô nhập và báo giá tự chạy lại không kèm mã; `voucherCode` nằm trong `BookingSelection` gửi khi tạo đơn.
+- `BookingPayment`: dòng "Giá gốc − voucher (−N)" khi đơn có voucher. Types `BookingQuote`/`Booking`, i18n vi/en.
+- Đã thử trên trình duyệt với backend local: 900.000đ − 80.000đ = 820.000đ; mã không tồn tại báo lỗi và về giá gốc.
+
+## 2026-11-11 — Đặt phòng ngắn hạn: chọn thời gian trong modal khi bấm "Đặt Phòng & Thanh Toán"
+
+**Vì sao:** Khối chọn ngày/giờ nằm trong sidebar trang chi tiết; nút "Đặt Phòng & Thanh Toán" chỉ cuộn tới khối đó khi chưa chọn, và bị mờ khi báo giá chưa xong — người dùng không biết nút có hoạt động không. Đổi sang cùng trải nghiệm với app mobile: bấm nút → modal chọn thời gian → Xác nhận / Hủy.
+
+**Thay đổi:**
+- `components/booking/ShortTermBookingModal.tsx` (mới): modal "Chọn thời gian thuê" bọc `ShortTermBookingPanel` (giữ nguyên logic chọn theo ngày/theo giờ + báo giá do server tính). **Xác nhận** chỉ bấm được khi đã chọn đủ và server báo giá được; bấm xong tạo đơn (`bookingApi.createBooking`) rồi chuyển sang `/payment/<id>`. **Hủy** (nút Hủy, nút ✕, Esc) đóng modal và bỏ lựa chọn; bấm nền mờ KHÔNG đóng (tránh mất lựa chọn do bấm nhầm). Đang tạo đơn: khoá các nút, Xác nhận hiện vòng xoay + "Đang tạo đơn...". Lỗi tạo đơn (phòng vừa có người đặt, chưa cấu hình ngân hàng/QR...) hiện ngay trong modal để đổi lựa chọn thử lại. Khoá cuộn trang nền khi mở, trả lại khi đóng; mobile hiện dạng bottom sheet, desktop hộp giữa màn hình.
+- `pages/RoomDetail.tsx`: bỏ khối chọn thời gian khỏi sidebar và các state `selection`/`quoteOk`/`bookingSubmitting`/`bookingPanelRef`; nút đặt phòng (sidebar + thanh CTA mobile) luôn bấm được — chưa đăng nhập vẫn báo cần đăng nhập và chuyển tới trang đăng nhập như cũ, đã đăng nhập thì mở modal; chuyển sang phòng khác bằng client-side nav thì đóng modal.
+- `i18n` vi/en: thêm `booking.modalTitle`, `booking.modalCancel`, `booking.modalConfirm`.
+
+**Đã kiểm tra (web chạy thật localhost:5173, backend local, tài khoản khách thử đã xoá sau đó):** trang không còn khối chọn thời gian, nút luôn bấm được; modal mở, nền khoá cuộn; chọn theo giờ ngày 12/11 lúc 10:00 → báo giá 2 giờ × 150.000đ = 300.000đ và Xác nhận bật; chưa cấu hình ngân hàng → lỗi "Hệ thống chưa cấu hình tài khoản ngân hàng..." hiện trong modal, Xác nhận bật lại; Esc đóng modal và trả lại cuộn trang; tạm cấu hình ngân hàng thử → Xác nhận → chuyển `/payment/<id>`. `tsc -p tsconfig.app.json` sạch.
+
+**Chưa kiểm tra / lưu ý:** giao diện mobile (bottom sheet) và lịch chọn khoảng ngày của chế độ "theo ngày" chưa thử (mới thử chế độ theo giờ); ảnh chụp của pane trình duyệt không hiện modal nên chưa xem trực quan bố cục (kiểm tra bằng DOM: modal `fixed` phủ toàn màn hình, hộp rộng 448px căn giữa). ESLint của repo này không chạy được do cấu hình có sẵn.
+
 ## 2026-10-15 — Thẻ phòng / chi tiết hiện cả giá NGÀY lẫn giá GIỜ khi thuê ngắn hạn (bước 4)
 
 **Vì sao:** Backend đã tách thuê ngắn hạn thành 2 hình thức (giá ngày, giá giờ); thẻ phòng và trang chi tiết vẫn đọc 3 cột giá cũ (`shortTermPrice/Unit/DurationValue` — bản đại diện = giá ngày, không có thì giá giờ) nên phòng bán cả 2 chỉ hiện 1 giá.
