@@ -1,4 +1,5 @@
 import type { Room } from '@/types';
+import { HOURLY_RENTAL_ENABLED } from '@/config/features';
 
 // Loại hình đang tìm/xem. Đơn vị tháng/năm chỉ thuộc thuê DÀI hạn, giờ/ngày chỉ thuộc thuê NGẮN hạn; giá và đơn vị luôn đi
 // cùng nhau theo đúng loại hình (không ghép số tiền loại này với đơn vị loại kia).
@@ -35,12 +36,14 @@ const positive = (v: unknown): number | undefined => (Number(v) > 0 ? Number(v) 
 /** Giá thuê ngắn hạn theo NGÀY và theo GIỜ của phòng (bản ghi cũ chỉ có 1 giá + 1 đơn vị thì quy theo đơn vị đó). */
 export const getShortTermPrices = (room: Partial<PriceFields>): { day?: number; hour?: number } => {
   let day = positive(room.shortTermDayPrice);
-  let hour = positive(room.shortTermHourPrice);
+  // Thuê theo giờ đang ẩn (xem config/features.ts): coi như phòng không có giá giờ dù server còn lưu.
+  let hour = HOURLY_RENTAL_ENABLED ? positive(room.shortTermHourPrice) : undefined;
   if (day === undefined && hour === undefined) {
     const legacy = positive(room.shortTermPrice);
     if (legacy !== undefined) {
-      if (room.shortTermPriceUnit === 'PER_HOUR') hour = legacy;
-      else day = legacy;
+      if (room.shortTermPriceUnit === 'PER_HOUR') {
+        if (HOURLY_RENTAL_ENABLED) hour = legacy;
+      } else day = legacy;
     }
   }
   return { day, hour };

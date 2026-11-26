@@ -27,6 +27,7 @@ import { absoluteUrl } from '@/config/seo';
 import { formatVnd } from '@/utils/money';
 import { formatMoney } from '@/utils/money';
 import { formatPriceUnit, getRoomPriceDisplay, hasRoomPriceForTerm, resolveRoomPriceTerm, RoomPriceTerm } from '@/utils/roomPrice';
+import { HOURLY_RENTAL_ENABLED } from '@/config/features';
 
 export const RoomDetail: React.FC = () => {
   const { t } = useTranslation();
@@ -277,7 +278,8 @@ export const RoomDetail: React.FC = () => {
   }
   const redirectQuery = redirectParams.toString();
   const redirectPath = redirectQuery ? `${detailPath}?${redirectQuery}` : detailPath;
-  const effectivePrice = room.price || room.shortTermDayPrice || room.shortTermHourPrice || room.shortTermPrice || 0;
+  const effectivePrice =
+    room.price || room.shortTermDayPrice || (HOURLY_RENTAL_ENABLED ? room.shortTermHourPrice : 0) || room.shortTermPrice || 0;
   const roomSeoDescription = (room.description || '').replace(/\s+/g, ' ').trim().slice(0, 160) ||
     t('seo.roomDetailFallbackDescription', { name: room.name, address: room.address });
 
