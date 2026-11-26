@@ -1,4 +1,5 @@
 import type { Room } from '@/types';
+import { HOURLY_RENTAL_ENABLED } from '@/config/features';
 
 /**
  * Thuê ngắn hạn có 2 hình thức độc lập (xem backend booking-pricing.helper.ts):
@@ -24,10 +25,11 @@ const positive = (v: unknown) => Number(v) > 0;
 
 export const getShortTermOptions = (room: Partial<Room>): ShortTermOptions => {
   let hasDaily = positive(room.shortTermDayPrice);
-  let hasHourly = positive(room.shortTermHourPrice);
+  // Thuê theo giờ đang ẩn (xem config/features.ts): không bao giờ có lựa chọn đặt theo giờ.
+  let hasHourly = HOURLY_RENTAL_ENABLED && positive(room.shortTermHourPrice);
   // Phòng chỉ còn giá ngắn hạn kiểu cũ (1 giá + 1 đơn vị) -> quy theo đơn vị cũ.
   if (!hasDaily && !hasHourly && positive(room.shortTermPrice)) {
-    if (room.shortTermPriceUnit === 'PER_HOUR') hasHourly = true;
+    if (room.shortTermPriceUnit === 'PER_HOUR') hasHourly = HOURLY_RENTAL_ENABLED;
     else hasDaily = true;
   }
   return {

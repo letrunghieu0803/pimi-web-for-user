@@ -4,6 +4,24 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-26 — Đặt theo ngày cho hôm nay vẫn được dù đã quá giờ nhận phòng
+
+**Thay đổi:** bỏ dòng gợi ý "Hôm nay đã quá giờ nhận phòng — hãy chọn ngày nhận từ ngày mai" ở hộp đặt phòng (`ShortTermBookingPanel`, kèm `vnMinuteNow` không còn dùng và chuỗi i18n `booking.todayPassedHint`). Lịch chọn ngày (`DateRangeCalendar`) vốn chỉ chặn ngày đã qua nên khách chọn được hôm nay; backend giờ cũng cho đặt hôm nay sau giờ nhận phòng, chỉ chặn ngày đã qua và đặt trùng.
+
+**Đã kiểm tra:** `tsc` không lỗi. **Chưa kiểm tra:** đặt thật trên trình duyệt vào hôm nay sau giờ nhận phòng. Cần BE bản mới (xem log bff).
+
+## 2026-11-26 — Ẩn cho thuê ngắn hạn theo giờ
+
+**Thay đổi:** cờ `HOURLY_RENTAL_ENABLED` (`config/features.ts`, đọc `VITE_HOURLY_RENTAL_ENABLED === 'true'`, mặc định TẮT). Khi tắt: `getShortTermPrices` (`utils/roomPrice.ts`) coi phòng không có giá giờ (kể cả kiểu cũ 1 giá + đơn vị `PER_HOUR`) nên thẻ phòng không còn giá phụ theo giờ và phòng chỉ có giá giờ coi như chưa có giá ngắn hạn (không đặt được); `getShortTermOptions` (`utils/shortTermBooking.ts`) không bao giờ có lựa chọn đặt theo giờ nên hộp đặt phòng chỉ còn "Theo ngày"; `RoomDetail` không dùng giá giờ làm giá hiển thị. Nhãn "Thuê Theo Ngày/Giờ", "Thuê Ngắn Hạn (Ngày/Giờ)", "(VNĐ / Giờ Hoặc Ngày)" đổi thành chỉ "ngày".
+
+**Đã kiểm tra (trình duyệt + BE local):** tìm phòng chỉ hiện "600.000đ / day" cho phòng có cả giá ngày và giờ; chi tiết phòng không có chữ giờ; hộp "Book & Pay" chỉ có "By the day". `tsc` không lỗi. **Chưa kiểm tra:** bật cờ lại để xác nhận lựa chọn "Thuê theo giờ" hiện lại. Cần BE có cờ tương ứng (xem log bff).
+
+## 2026-11-25 — Hiện "Hướng dẫn xem nhà" của chủ nhà sau khi đặt lịch xem
+
+**Thay đổi:** component mới `ViewingGuideSummary` (liên hệ chủ nhà trước tối thiểu 30 phút / SĐT liên hệ xem phòng bấm để gọi / hướng dẫn tự nhập, xuống dòng đúng, chỉ in mục chủ nhà đã điền). Hiện ở panel xác nhận ngay sau khi đặt lịch (`ViewingConfirmationPanel`, kèm trang xem công khai cho người xem hộ vì dùng chung panel) và ở thẻ lịch hẹn trong `TenantAppointments`. Chỉ hiện khi lịch `CONFIRMED`/`COMPLETED` (lịch chờ chủ nhà duyệt thì chưa). Kiểu `Appointment.rentHouse` thêm 3 trường; i18n vi/en `viewingGuideSummary.*`. Khối rich-text cũ (`guideContent`) giữ nguyên bên dưới.
+
+**Đã kiểm tra (trình duyệt + BE local):** lịch `CONFIRMED` hiện đủ 3 dòng, lịch `PENDING_APPROVAL` không hiện. `tsc -p tsconfig.app.json` không lỗi ở file đã sửa. **Chưa kiểm tra:** panel ngay sau khi đặt (cùng component với danh sách, chưa chạy luồng đặt thật) và trang xem công khai bằng link ZNS thật. Cần BE mới (xem log bff).
+
 ## 2026-11-24 — Lịch chọn ngày hiện giá từng đêm
 
 **Thay đổi:** `DateRangeCalendar` nhận thêm `priceOf?` và `basePrice?`: có thì mỗi ô ngày hiện giá đêm bắt đầu từ ngày đó (gọn "350k"/"1,3tr"; ngày đã qua/kín lịch không hiện), đêm khác giá ngày mặc định (giá riêng của chủ nhà) tô cam đậm + chú giải "Giá khác ngày thường"; lịch trong bộ lọc tìm kiếm không truyền nên giữ nguyên. `ShortTermBookingPanel` nạp `GET /rent-rooms/public/:roomId/day-prices` (`bookingApi.getDayPrices`) và truyền giá vào lịch. Bảng báo giá: khi `quote.nightPrices` có (có đêm giá riêng) hiện "N đêm (giá từng đêm)" và liệt kê từng đêm, ngược lại giữ dòng "N đêm × giá" cũ. i18n vi/en `booking.calendarLegendSpecialPrice`, `quoteNightsVariedLine`.

@@ -36,7 +36,7 @@
     "ctaCallHotline": "Gọi Hotline {{phone}}",
     "recentlyViewedTag": "Dành cho bạn",
     "recentlyViewedTitle": "Phòng đã xem gần đây",
-    "shortTermTag": "Thuê Theo Ngày/Giờ",
+    "shortTermTag": "Thuê Theo Ngày",
     "shortTermTitle": "Nhà Ở Ngắn Hạn",
     "longTermTag": "Thuê Theo Tháng/Năm",
     "longTermTitle": "Nhà Ở Dài Hạn",
@@ -382,7 +382,6 @@
     "modeDaily": "Thuê theo ngày",
     "modeHourly": "Thuê theo giờ",
     "dailyTimesHint": "Nhận phòng từ {{checkIn}} ngày đầu, trả phòng trước {{checkOut}} sáng hôm sau ngày cuối (theo cài đặt của phòng).",
-    "todayPassedHint": "Hôm nay đã quá giờ nhận phòng — hãy chọn ngày nhận từ ngày mai.",
     "hourlyDateLabel": "Ngày thuê",
     "startTimeLabel": "Giờ bắt đầu",
     "windowHint": "Nhận khách {{open}} – {{close}}",
@@ -766,7 +765,7 @@
     "radiusLabel": "Bán kính:",
     "radiusAll": "Tất cả bán kính",
     "radiusUnder": "Dưới {{km}} km",
-    "shortTermTab": "⚡ Thuê Ngắn Hạn (Ngày/Giờ)",
+    "shortTermTab": "⚡ Thuê Ngắn Hạn (Theo ngày)",
     "longTermTab": "📅 Thuê Dài Hạn (Tháng/Năm)",
     "searchPlaceholder": "Tìm theo tên đường, tên tòa nhà, vị trí...",
     "districtLabel": "Khu Vực / Quận Huyện",
@@ -775,7 +774,7 @@
     "designTypeLabel": "Kiểu Thiết Kế",
     "mezzanineToggle": "Có gác xép kiên cố",
     "priceRangeLabel": "Mức Giá Thuê (VNĐ / Tháng)",
-    "priceRangeLabelShortTerm": "Mức Giá Thuê Ngắn Hạn (VNĐ / Giờ Hoặc Ngày)",
+    "priceRangeLabelShortTerm": "Mức Giá Thuê Ngắn Hạn (VNĐ / Ngày)",
     "priceAll": "Tất cả giá",
     "priceOver8": "Trên 8.000.000đ",
     "amenitiesLabel": "Tiện Ích Đi Kèm",
@@ -908,6 +907,11 @@
     "backButton": "Quay lại",
     "submitting": "Đang đặt lịch...",
     "submitButton": "Xác nhận đặt lịch xem phòng"
+  },
+  "viewingGuideSummary": {
+    "title": "Hướng dẫn xem nhà",
+    "contactBefore": "Vui lòng liên hệ chủ nhà trước khi qua xem tối thiểu 30 phút.",
+    "phoneLabel": "SĐT liên hệ xem phòng"
   },
   "viewingConfirmationPanel": {
     "title": "Đặt lịch xem phòng thành công!",

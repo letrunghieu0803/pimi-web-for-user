@@ -4,6 +4,7 @@ import DOMPurify from 'dompurify';
 import { CheckCircle2, Clock, MapPin, CalendarClock, User, Wallet, BookOpen, X } from 'lucide-react';
 import { Appointment } from '@/services/appointmentApi';
 import { formatVnd } from '@/utils/money';
+import { ViewingGuideSummary } from './ViewingGuideSummary';
 
 interface ViewingConfirmationPanelProps {
   appointment: Appointment;
@@ -118,7 +119,10 @@ export const ViewingConfirmationPanel: React.FC<ViewingConfirmationPanelProps> =
             </div>
           )}
 
-          {/* 5. Cách thức xem phòng / lưu ý — chỉ hiện khi chủ nhà đã cấu hình mẫu hướng dẫn mặc
+          {/* 5a. Hướng dẫn xem nhà đơn giản (liên hệ trước / SĐT / hướng dẫn tự nhập) — chỉ khi lịch đã xác nhận. */}
+          <ViewingGuideSummary status={appointment.status} rentHouse={appointment.rentHouse} />
+
+          {/* 5b. Cách thức xem phòng / lưu ý — chỉ hiện khi chủ nhà đã cấu hình mẫu hướng dẫn mặc
               định (guideContent snapshot ngay lúc tạo lịch hẹn). Sanitize trước khi render — cùng
               cách TenantAppointments.tsx đang làm với field này (HTML do chủ nhà soạn). */}
           {appointment.guideContent && (

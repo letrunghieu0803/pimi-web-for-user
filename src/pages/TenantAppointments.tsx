@@ -22,6 +22,7 @@ import { AppointmentListSkeleton } from '@/components/ui/Skeleton';
 import { getApiErrorMessage } from '@/utils/apiError';
 import { Seo } from '@/components/common/Seo';
 import { AttendanceSurveyModal } from '@/components/appointment/AttendanceSurveyModal';
+import { ViewingGuideSummary } from '@/components/appointment/ViewingGuideSummary';
 
 const PAGE_SIZE = 10;
 // 'CONFIRMED'/'PENDING_APPROVAL' — lịch hẹn tự đặt trực tiếp (luồng mới). PENDING_APPROVAL chỉ
@@ -392,6 +393,9 @@ export const TenantAppointments: React.FC = () => {
                       )}
                     </div>
                   )}
+
+                  {/* Hướng dẫn xem nhà đơn giản của toà nhà (liên hệ trước / SĐT / hướng dẫn tự nhập). */}
+                  <ViewingGuideSummary status={app.status} rentHouse={app.rentHouse} className="!p-3 !rounded-xl" />
 
                   {/* Viewing guide — chỉ có sau khi chủ nhà/cộng tác viên đã gửi (xem
                       appointmentApi.ts's guideContent). Sanitize trước khi render — cùng lý do
