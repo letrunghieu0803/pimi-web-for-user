@@ -4,6 +4,12 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-26 — Đặt theo ngày cho hôm nay vẫn được dù đã quá giờ nhận phòng
+
+**Thay đổi:** bỏ dòng gợi ý "Hôm nay đã quá giờ nhận phòng — hãy chọn ngày nhận từ ngày mai" ở hộp đặt phòng (`ShortTermBookingPanel`, kèm `vnMinuteNow` không còn dùng và chuỗi i18n `booking.todayPassedHint`). Lịch chọn ngày (`DateRangeCalendar`) vốn chỉ chặn ngày đã qua nên khách chọn được hôm nay; backend giờ cũng cho đặt hôm nay sau giờ nhận phòng, chỉ chặn ngày đã qua và đặt trùng.
+
+**Đã kiểm tra:** `tsc` không lỗi. **Chưa kiểm tra:** đặt thật trên trình duyệt vào hôm nay sau giờ nhận phòng. Cần BE bản mới (xem log bff).
+
 ## 2026-11-26 — Ẩn cho thuê ngắn hạn theo giờ
 
 **Thay đổi:** cờ `HOURLY_RENTAL_ENABLED` (`config/features.ts`, đọc `VITE_HOURLY_RENTAL_ENABLED === 'true'`, mặc định TẮT). Khi tắt: `getShortTermPrices` (`utils/roomPrice.ts`) coi phòng không có giá giờ (kể cả kiểu cũ 1 giá + đơn vị `PER_HOUR`) nên thẻ phòng không còn giá phụ theo giờ và phòng chỉ có giá giờ coi như chưa có giá ngắn hạn (không đặt được); `getShortTermOptions` (`utils/shortTermBooking.ts`) không bao giờ có lựa chọn đặt theo giờ nên hộp đặt phòng chỉ còn "Theo ngày"; `RoomDetail` không dùng giá giờ làm giá hiển thị. Nhãn "Thuê Theo Ngày/Giờ", "Thuê Ngắn Hạn (Ngày/Giờ)", "(VNĐ / Giờ Hoặc Ngày)" đổi thành chỉ "ngày".

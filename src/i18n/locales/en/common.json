@@ -381,7 +381,6 @@
     "quoteDiscountApplied": "{{percent}}% off applied",
     "modeDaily": "By the day",
     "modeHourly": "By the hour",
-    "todayPassedHint": "Today's check-in time has passed — pick a check-in date from tomorrow.",
     "dailyTimesHint": "Check-in from {{checkIn}} on the first day, check-out before {{checkOut}} the morning after the last day (set by the room).",
     "hourlyDateLabel": "Date",
     "startTimeLabel": "Start time",

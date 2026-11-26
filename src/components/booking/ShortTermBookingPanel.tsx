@@ -17,7 +17,6 @@ import {
   toDateKey,
   validateHourlySelection,
   vnInstant,
-  vnMinuteNow,
   vnToday,
 } from '@/utils/shortTermBooking';
 import { DateRangeCalendar } from './DateRangeCalendar';
@@ -179,8 +178,8 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
   const today = vnToday();
   const todayKey = toDateKey(today);
   const hourDateMin = todayKey;
-  // Trên lịch chọn ngày: nếu hôm nay đã quá giờ nhận phòng thì không cho chọn hôm nay làm ngày nhận (backend cũng chặn).
-  const checkInPassedToday = vnMinuteNow() >= opts.checkInMinute;
+  // Đặt cho hôm nay vẫn được dù đã quá giờ nhận phòng (backend chỉ chặn ngày đã qua và đặt trùng), nên lịch chọn ngày
+  // không cần xử lý riêng cho "hôm nay".
 
   const dayBtnClass =
     'w-full flex items-center justify-between gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-indigo-300 transition-colors text-left';
@@ -232,7 +231,6 @@ export const ShortTermBookingPanel: React.FC<Props> = ({ room, onChange }) => {
               checkIn: minuteToTime(opts.checkInMinute),
               checkOut: minuteToTime(opts.checkOutMinute),
             })}
-            {checkInPassedToday && ` ${t('booking.todayPassedHint')}`}
           </p>
         </>
       ) : (

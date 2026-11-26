@@ -381,7 +381,6 @@
     "quoteDiscountApplied": "Đã giảm {{percent}}%",
     "modeDaily": "Thuê theo ngày",
     "modeHourly": "Thuê theo giờ",
-    "todayPassedHint": "Hôm nay đã quá giờ nhận phòng — hãy chọn ngày nhận từ ngày mai.",
     "dailyTimesHint": "Nhận phòng từ {{checkIn}} ngày đầu, trả phòng trước {{checkOut}} sáng hôm sau ngày cuối (theo cài đặt của phòng).",
     "hourlyDateLabel": "Ngày thuê",
     "startTimeLabel": "Giờ bắt đầu",
