@@ -476,6 +476,10 @@
     "submitButton": "Submit survey",
     "submitting": "Submitting..."
   },
+  "platform": {
+    "listingClosedTitle": "Pimi is getting ready to open to tenants.",
+    "listingClosedDesc": "Owners are still adding and completing their room listings. Rooms will appear once Pimi officially opens — please check back soon."
+  },
   "roomList": {
     "viewList": "List",
     "viewMap": "Map",

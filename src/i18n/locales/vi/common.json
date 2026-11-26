@@ -476,6 +476,10 @@
     "submitButton": "Gửi khảo sát",
     "submitting": "Đang gửi..."
   },
+  "platform": {
+    "listingClosedTitle": "Pimi đang chuẩn bị mở cho người thuê.",
+    "listingClosedDesc": "Các chủ nhà đang đăng và hoàn thiện thông tin phòng. Danh sách phòng sẽ xuất hiện khi Pimi chính thức mở — mời bạn quay lại sau."
+  },
   "roomList": {
     "viewList": "Danh sách",
     "viewMap": "Bản đồ",

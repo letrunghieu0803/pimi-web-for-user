@@ -146,5 +146,13 @@
   "000233": "Khoảng thời gian xem lịch tối đa 62 ngày",
   "000234": "Lịch hẹn này không thể huỷ (đã huỷ/đã hoàn tất trước đó)",
   "000235": "Bạn không có quyền huỷ lịch hẹn này",
-  "000236": "Chỉ có thể đặt lịch xem nhà cách hiện tại ít nhất 30 phút và trong vòng 7 ngày tới"
+  "000236": "Chỉ có thể đặt lịch xem nhà cách hiện tại ít nhất 30 phút và trong vòng 7 ngày tới",
+  "000299": "Hệ thống chưa mở nhận đặt phòng. Vui lòng quay lại sau khi Pimi chính thức mở cho người thuê",
+  "000300": "Hiện chỉ nhận chủ nhà đăng ký bằng mã mời. Vui lòng nhập mã mời do Pimi cung cấp",
+  "000301": "Mã mời không hợp lệ, đã hết lượt dùng, đã hết hạn hoặc đã bị khoá",
+  "000302": "Bạn cần đồng ý Điều khoản sử dụng và Chính sách bảo mật để tạo tài khoản",
+  "000303": "Không tìm thấy giấy tờ của toà nhà",
+  "000304": "Ảnh giấy tờ không hợp lệ (phải là ảnh giấy tờ toà nhà do chính bạn tải lên)",
+  "000305": "Giấy tờ đã được duyệt, không thể xoá. Hãy tải bản mới nếu cần thay",
+  "000306": "Vui lòng nhập lý do khi từ chối giấy tờ"
 }

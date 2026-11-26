@@ -146,5 +146,13 @@
   "000233": "The date range is capped at 62 days",
   "000234": "This appointment can't be cancelled (already cancelled/completed)",
   "000235": "You don't have permission to cancel this appointment",
-  "000236": "Viewing appointments can only be booked at least 30 minutes from now and within the next 7 days"
+  "000236": "Viewing appointments can only be booked at least 30 minutes from now and within the next 7 days",
+  "000299": "Booking is not open yet. Please come back once Pimi officially opens to tenants",
+  "000300": "Owner sign-up is currently by invite only. Please enter the invite code provided by Pimi",
+  "000301": "The invite code is invalid, fully used, expired or disabled",
+  "000302": "You must agree to the Terms of Use and Privacy Policy to create an account",
+  "000303": "House document not found",
+  "000304": "Invalid document image (it must be a house-document image you uploaded yourself)",
+  "000305": "This document has been approved and cannot be deleted. Upload a new one if you need to replace it",
+  "000306": "Please enter a reason when rejecting a document"
 }

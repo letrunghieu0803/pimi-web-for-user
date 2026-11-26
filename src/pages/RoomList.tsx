@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { usePublicPlatformSettings } from '@/hooks/usePublicPlatformSettings';
 import { Room, FilterState } from '@/types';
 import { roomApi } from '@/services/roomApi';
 import { RoomCard } from '@/components/common/RoomCard';
@@ -295,6 +296,7 @@ export const RoomList: React.FC = () => {
   // { rooms: [], hadError: true } để không làm vỡ các nơi gọi khác (Home.tsx, RoomDetail.tsx)
   // vốn không có .catch() riêng. Ở đây, nơi cần phân biệt rõ "lỗi tải" với "không có kết quả",
   // ta tự throw lại dựa vào hadError để react-query bắt được qua isError/error/refetch.
+  const { publicListingEnabled } = usePublicPlatformSettings();
   const {
     data: feedResult,
     isLoading: loading,
@@ -455,6 +457,16 @@ export const RoomList: React.FC = () => {
           description={t('roomList.errorDesc')}
           actionLabel={t('roomList.retryButton')}
           onAction={() => refetch()}
+          className="max-w-lg mx-auto"
+        />
+      ) : rooms.length === 0 && !publicListingEnabled ? (
+        // Admin đang đóng tin công khai (giai đoạn chủ nhà nhập liệu): thông báo đúng thay vì "không có phòng phù hợp"
+        // — đặt lại bộ lọc cũng không giúp gì ở trạng thái này.
+        <EmptyState
+          icon={Building2}
+          tone="indigo"
+          title={t('platform.listingClosedTitle')}
+          description={t('platform.listingClosedDesc')}
           className="max-w-lg mx-auto"
         />
       ) : rooms.length === 0 ? (

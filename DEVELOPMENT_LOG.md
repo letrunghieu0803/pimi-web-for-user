@@ -4,6 +4,12 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-26 — Gửi đồng ý điều khoản khi đăng ký, thông báo khi hệ thống chưa mở
+
+**Thay đổi:** đăng ký gửi `agreedToTerms: true` (form đã bắt tích đồng ý). Hook `usePublicPlatformSettings` đọc cờ công khai (mặc định "mở" khi chưa tải được, không hiện đóng nhầm): khi admin đóng tin công khai, trang chủ có banner và trang danh sách phòng hiện "Pimi đang chuẩn bị mở cho người thuê" thay vì "không có phòng phù hợp". Thêm thông báo lỗi `000299`–`000306` vi/en (đặt phòng chưa mở hiện qua luồng lỗi báo giá sẵn có).
+
+**Đã kiểm tra (trình duyệt + BE local):** tạm tắt `publicListingEnabled` → banner trang chủ và thông báo ở `/rooms` hiện đúng, mở lại về mặc định. `tsc` không lỗi. **Chưa kiểm tra:** đăng ký thật, và đặt phòng khi cờ đặt phòng đóng. Cần BE bản mới.
+
 ## 2026-11-26 — Đặt theo ngày cho hôm nay vẫn được dù đã quá giờ nhận phòng
 
 **Thay đổi:** bỏ dòng gợi ý "Hôm nay đã quá giờ nhận phòng — hãy chọn ngày nhận từ ngày mai" ở hộp đặt phòng (`ShortTermBookingPanel`, kèm `vnMinuteNow` không còn dùng và chuỗi i18n `booking.todayPassedHint`). Lịch chọn ngày (`DateRangeCalendar`) vốn chỉ chặn ngày đã qua nên khách chọn được hôm nay; backend giờ cũng cho đặt hôm nay sau giờ nhận phòng, chỉ chặn ngày đã qua và đặt trùng.

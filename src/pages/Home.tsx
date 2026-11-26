@@ -10,6 +10,7 @@ import { BannerSlider } from '@/components/home/BannerSlider';
 import { NewsArticlesSlider } from '@/components/home/NewsArticlesSlider';
 import { Search, ShieldCheck, Zap, PhoneCall, Sparkles, Building2, ChevronRight, HeartHandshake, MapPin, History, Calendar } from 'lucide-react';
 import { useSearchFacets } from '@/hooks/useSearchFacets';
+import { usePublicPlatformSettings } from '@/hooks/usePublicPlatformSettings';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
 import { Seo } from '@/components/common/Seo';
 import { CONTACT, CONTACT_TEL_HREF } from '@/constants/contact';
@@ -74,6 +75,7 @@ const RentalTermSection: React.FC<{ type: 'SHORT_TERM' | 'LONG_TERM' }> = ({ typ
 };
 
 export const Home: React.FC = () => {
+  const { publicListingEnabled } = usePublicPlatformSettings();
   const { t } = useTranslation();
   const [featuredRooms, setFeaturedRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,6 +100,17 @@ export const Home: React.FC = () => {
 
   return (
     <div className="space-y-16 pb-16">
+      {/* Admin đang đóng tin công khai: báo rõ để khách hiểu vì sao chưa thấy phòng, thay vì tưởng web lỗi. */}
+      {!publicListingEnabled && (
+        <div className="bg-indigo-50 border-b border-indigo-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-start gap-3 text-sm text-indigo-900">
+            <Sparkles className="w-4 h-4 mt-0.5 shrink-0 text-indigo-600" />
+            <p>
+              <strong>{t('platform.listingClosedTitle')}</strong> {t('platform.listingClosedDesc')}
+            </p>
+          </div>
+        </div>
+      )}
       <Seo path="/" />
       <JsonLd
         data={{

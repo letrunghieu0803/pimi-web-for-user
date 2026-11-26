@@ -206,6 +206,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         firstName,
         lastName,
         userRole: 'RENT_USER',
+        // Form chỉ gọi register() khi đã tích đồng ý Điều khoản + Chính sách — server ghi nhận (thời điểm, phiên bản, IP).
+        agreedToTerms: true,
       });
 
       // `POST /auth/register` chỉ trả 1 chuỗi thông báo, KHÔNG cấp token/cookie nào (tài khoản
