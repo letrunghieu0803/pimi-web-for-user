@@ -4,6 +4,16 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-28 — Nhãn loại phòng đúng danh mục chủ nhà chọn, đổi theo ngôn ngữ
+
+**Vì sao:** Loại phòng là kiểu bố trí chủ nhà chọn khi tạo phòng (Studio, 1N, 1N1K…), lưu bằng mã enum lịch sử (`APARTMENT`, `MINI_CONDOMINIUM`…). Bộ lọc lại dịch theo tên mã thành "Căn hộ", "Chung cư mini"… nên lệch với dữ liệu chủ nhà nhập.
+
+**Thay đổi:** `roomType.*` (vi/en) dùng chung bộ nhãn với web chủ nhà/app/admin: vi "Phòng Studio, Phòng 1N, Phòng 1N1K… Phòng ở ghép, Nguyên căn"; en "Studio, 1N · 1 bedroom, 1N1K · 1BR + living room…". Bộ lọc vẫn chỉ hiện loại đang có phòng (facet từ BE).
+
+**Đã kiểm tra:** ô "Loại phòng" hiện "Phòng 1N (11)" (vi) và "1N · 1 bedroom (11)" (en), đổi ngay khi chuyển ngôn ngữ.
+
+**Lưu ý:** nghĩa K/B trong nhãn tiếng Anh (K = phòng khách, B = bếp) chờ xác nhận.
+
 ## 2026-11-28 — "Đăng X trước" theo lần cập nhật thông tin phòng
 
 **Thay đổi:** Thẻ phòng dài hạn tính nhãn "Đăng X trước" từ `infoUpdatedAt` (BE mới trả: lần gần nhất chủ nhà/admin sửa thông tin, ảnh, nội thất, dịch vụ, trạng thái phòng); thiếu (dữ liệu cũ/cache) thì dùng `createdAt`. Thêm field vào kiểu `Room` và `mapBackendRoomToRoom`.
