@@ -55,11 +55,12 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm, stay }) =
   const priceDisplay = getRoomPriceDisplay(room, priceTerm);
 
   // "Đăng X trước" chỉ hiện ở thẻ phòng thuê DÀI hạn (đang tìm dài hạn, hoặc thẻ không có loại hình thì xem đơn vị giá đang
-  // hiện là tháng/năm). Quá 7 ngày thì getPostedAgo vẫn trả mốc 7 ngày.
+  // hiện là tháng/năm). Quá 7 ngày thì getPostedAgo vẫn trả mốc 7 ngày. Mốc tính = lần cập nhật thông tin phòng gần nhất
+  // (infoUpdatedAt), dữ liệu cũ/cache chưa có thì dùng thời điểm tạo.
   const isLongTermCard = priceTerm
     ? priceTerm === 'LONG_TERM'
     : priceDisplay.unitKey === 'roomCard.unitMonth' || priceDisplay.unitKey === 'roomCard.unitYear';
-  const postedAgo = isLongTermCard ? getPostedAgo(room.createdAt) : null;
+  const postedAgo = isLongTermCard ? getPostedAgo(room.infoUpdatedAt || room.createdAt) : null;
 
   // Đang tìm theo loại hình nào thì chuyển loại đó sang trang chi tiết (?term=) để giá + đơn vị + luồng đặt khớp với danh sách.
   const detailBase = room.roomGroupId ? `/room-groups/${room.roomGroupId}` : `/rooms/${room.id}`;

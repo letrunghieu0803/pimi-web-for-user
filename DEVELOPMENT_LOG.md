@@ -4,6 +4,12 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-28 — "Đăng X trước" theo lần cập nhật thông tin phòng
+
+**Thay đổi:** Thẻ phòng dài hạn tính nhãn "Đăng X trước" từ `infoUpdatedAt` (BE mới trả: lần gần nhất chủ nhà/admin sửa thông tin, ảnh, nội thất, dịch vụ, trạng thái phòng); thiếu (dữ liệu cũ/cache) thì dùng `createdAt`. Thêm field vào kiểu `Room` và `mapBackendRoomToRoom`.
+
+**Đã kiểm tra:** BE local: phòng tạo từ 18/09, đặt mốc 2 giờ trước → thẻ trên trang chủ hiện "Posted 2h ago"; phòng khác vẫn "7d ago".
+
 ## 2026-11-26 — Gửi đồng ý điều khoản khi đăng ký, thông báo khi hệ thống chưa mở
 
 **Thay đổi:** đăng ký gửi `agreedToTerms: true` (form đã bắt tích đồng ý). Hook `usePublicPlatformSettings` đọc cờ công khai (mặc định "mở" khi chưa tải được, không hiện đóng nhầm): khi admin đóng tin công khai, trang chủ có banner và trang danh sách phòng hiện "Pimi đang chuẩn bị mở cho người thuê" thay vì "không có phòng phù hợp". Thêm thông báo lỗi `000299`–`000306` vi/en (đặt phòng chưa mở hiện qua luồng lỗi báo giá sẵn có).

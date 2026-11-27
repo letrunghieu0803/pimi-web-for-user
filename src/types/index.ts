@@ -34,6 +34,8 @@ export interface Room {
   isFeatured?: boolean;
   createdAt: string;
   updatedAt?: string;
+  /** Lần chủ nhà/admin sửa thông tin phòng gần nhất — mốc của nhãn "Đăng X trước" (thiếu thì dùng createdAt). */
+  infoUpdatedAt?: string;
   services?: RoomService[];
   roomGroupId?: string | null;
   availableCount?: number;

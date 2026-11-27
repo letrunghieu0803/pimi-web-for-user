@@ -59,6 +59,7 @@ export const mapBackendRoomToRoom = (item: any): Room => {
     isFeatured: true,
     createdAt: item.createdAt || new Date().toISOString(),
     updatedAt: item.updatedAt,
+    infoUpdatedAt: item.infoUpdatedAt,
     services,
     roomGroupId: item.roomGroupId || null,
     availableCount: item.availableCount,
