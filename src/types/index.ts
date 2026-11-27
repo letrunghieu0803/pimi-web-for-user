@@ -1,6 +1,14 @@
 export type RoomStatus = 'EMPTY' | 'OCCUPIED' | 'MAINTENANCE';
 
-export type RoomType = 'APARTMENT' | 'MINI_APARTMENT' | 'BOARDING_HOUSE' | 'WHOLE_HOUSE';
+export type RoomType =
+  | 'STUDIO'
+  | 'LOFT'
+  | 'ONE_BEDROOM'
+  | 'TWO_BEDROOM'
+  | 'THREE_PLUS_BEDROOM'
+  | 'STANDARD_ROOM'
+  | 'BUNK_BED'
+  | 'SHARED_ROOM';
 
 export type RentalTermType = 'SHORT_TERM' | 'LONG_TERM' | 'BOTH';
 export type ShortTermPriceUnit = 'PER_DAY' | 'PER_HOUR';
@@ -72,8 +80,8 @@ export interface RoomService {
 export interface FilterState {
   district: string; // tên quận/huyện lấy từ search-facets; '' = tất cả quận/huyện
   priceRange: string; // 'ALL' | '0-3m' | '3m-5m' | '5m-8m' | '8m+'
-  roomType: string; // 'ALL' | RoomType
-  hasMezzanine: boolean | null;
+  // 'ALL' | RoomType. Gồm cả "Có gác xép" (LOFT) — backend khớp phòng kiểu LOFT lẫn phòng có tick gác xép.
+  roomType: string;
   isRecommended?: boolean | null;
   rentalTermType: 'SHORT_TERM' | 'LONG_TERM';
   amenities: string[];

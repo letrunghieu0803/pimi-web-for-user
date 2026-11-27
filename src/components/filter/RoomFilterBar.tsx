@@ -8,7 +8,7 @@ import { useToast } from '@/context/ToastContext';
 import { formatRoomTypeLabel } from '@/utils/roomType';
 import { DateRangeCalendar } from '@/components/booking/DateRangeCalendar';
 import { fromDateKey, toDateKey } from '@/utils/shortTermBooking';
-import { Search, CalendarDays, MapPin, DollarSign, Home, SlidersHorizontal, RotateCcw, Layers, Check, Sparkles, Zap, Calendar, X } from 'lucide-react';
+import { Search, CalendarDays, MapPin, DollarSign, SlidersHorizontal, RotateCcw, Layers, Check, Sparkles, Zap, Calendar, X } from 'lucide-react';
 
 interface RoomFilterBarProps {
   /** Bộ lọc ĐANG ÁP DỤNG thật sự (đã submit, đang dùng để gọi API) — dùng để khởi tạo/đồng bộ
@@ -97,10 +97,6 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
     setDraft((prev) => ({ ...prev, roomType }));
   };
 
-  const handleMezzanineToggle = () => {
-    setDraft((prev) => ({ ...prev, hasMezzanine: prev.hasMezzanine === true ? null : true }));
-  };
-
   const handleRecommendedToggle = () => {
     setDraft((prev) => ({ ...prev, isRecommended: prev.isRecommended === true ? null : true }));
   };
@@ -126,7 +122,6 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
   const activeFilterCount =
     (appliedFilters.district ? 1 : 0) +
     (appliedFilters.roomType !== 'ALL' ? 1 : 0) +
-    (appliedFilters.hasMezzanine === true ? 1 : 0) +
     (appliedFilters.isRecommended === true ? 1 : 0) +
     (appliedFilters.priceRange !== 'ALL' ? 1 : 0) +
     appliedFilters.amenities.length +
@@ -148,7 +143,7 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
   const advancedFilters = (
     <>
       {/* Main Filters Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
         {/* District Select */}
         <div>
@@ -179,11 +174,11 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
           {facetsError && <p className="text-[11px] text-rose-500 mt-1">{t('roomFilterBar.facetsError')}</p>}
         </div>
 
-        {/* Room Type */}
+        {/* Kiểu thiết kế / bố cục phòng — gộp cả "Có gác xép" (trước là nút bật/tắt riêng) */}
         <div>
           <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <Home className="w-3.5 h-3.5 text-indigo-600" />
-            <span>{t('roomFilterBar.roomTypeLabel')}</span>
+            <Layers className="w-3.5 h-3.5 text-indigo-600" />
+            <span>{t('roomFilterBar.designTypeLabel')}</span>
           </label>
           <select
             value={draft.roomType}
@@ -200,31 +195,6 @@ export const RoomFilterBar: React.FC<RoomFilterBarProps> = ({ appliedFilters, on
               </option>
             ))}
           </select>
-        </div>
-
-        {/* Mezzanine Quick Toggle */}
-        <div>
-          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-indigo-600" />
-            <span>{t('roomFilterBar.designTypeLabel')}</span>
-          </label>
-          <button
-            type="button"
-            onClick={handleMezzanineToggle}
-            // Backend báo không có phòng gác xép nào đang công khai thì không cho bật (ra 0 kết quả).
-            disabled={!!facets && facets.mezzanineCount === 0 && draft.hasMezzanine !== true}
-            className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all border flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed ${
-              draft.hasMezzanine === true
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20'
-                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            <span>
-              {t('roomFilterBar.mezzanineToggle')}
-              {facets && facets.mezzanineCount > 0 ? ` (${facets.mezzanineCount})` : ''}
-            </span>
-            {draft.hasMezzanine === true && <Check className="w-4 h-4" />}
-          </button>
         </div>
 
         {/* Recommended Toggle */}

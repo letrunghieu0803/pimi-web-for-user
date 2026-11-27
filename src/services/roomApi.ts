@@ -41,7 +41,7 @@ export const mapBackendRoomToRoom = (item: any): Room => {
     roomFloor: item.roomFloor || 1,
     maxPeople: house.maxPeoplePerRoom || 2,
     status: item.status || 'EMPTY',
-    roomType: item.type || 'APARTMENT',
+    roomType: item.type || 'ONE_BEDROOM',
     address: house.address || 'Hà Nội',
     district: house.district || 'Cầu Giấy',
     city: house.city || 'Hà Nội',
@@ -112,7 +112,6 @@ interface PublicFeedParams {
   minPrice?: number;
   maxPrice?: number;
   roomType?: string;
-  hasMezzanine?: boolean | null;
   isRecommended?: boolean | null;
   rentalTermType?: 'SHORT_TERM' | 'LONG_TERM';
   amenities?: string[];
@@ -159,10 +158,6 @@ const fetchPublicFeed = (params: PublicFeedParams): Promise<PublicFeedResult> =>
         minPrice: params.minPrice,
         maxPrice: params.maxPrice,
         roomType: params.roomType && params.roomType !== 'ALL' ? params.roomType : undefined,
-        hasMezzanine:
-          params.hasMezzanine !== null && params.hasMezzanine !== undefined
-            ? params.hasMezzanine
-            : undefined,
         isRecommended:
           params.isRecommended !== null && params.isRecommended !== undefined
             ? params.isRecommended
@@ -266,7 +261,7 @@ const fetchRoomGroupDetail = (groupId: string): Promise<Room | null> => {
 
 export const roomApi = {
   // Fetch a page of rooms from backend public feed (no authentication required).
-  // All filters (price/type/mezzanine/amenities/search/district) and sorting are
+  // All filters (price/type/amenities/search/district) and sorting are
   // applied server-side, and the result comes back already paginated.
   getRoomsPaginated: async (params?: {
     district?: string;
@@ -274,7 +269,6 @@ export const roomApi = {
     roomType?: string;
     keyword?: string;
     amenities?: string[];
-    hasMezzanine?: boolean | null;
     isRecommended?: boolean | null;
     rentalTermType?: 'SHORT_TERM' | 'LONG_TERM';
     userLat?: number | null;
@@ -293,7 +287,6 @@ export const roomApi = {
       minPrice,
       maxPrice,
       roomType: params?.roomType,
-      hasMezzanine: params?.hasMezzanine,
       isRecommended: params?.isRecommended,
       rentalTermType: params?.rentalTermType,
       amenities: params?.amenities,
@@ -331,7 +324,6 @@ export const roomApi = {
     roomType?: string;
     keyword?: string;
     amenities?: string[];
-    hasMezzanine?: boolean | null;
     userLat?: number | null;
     userLng?: number | null;
     radiusInKm?: number | null;

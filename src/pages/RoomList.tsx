@@ -19,6 +19,7 @@ import { JsonLd } from '@/components/common/JsonLd';
 import { absoluteUrl } from '@/config/seo';
 import { useToast } from '@/context/ToastContext';
 import { formatVnd } from '@/utils/money';
+import { isKnownRoomType } from '@/utils/roomType';
 
 const PAGE_SIZE = 10;
 
@@ -45,8 +46,12 @@ const dateKeyFromParam = (raw: string | null): string | null => (raw && /^\d{4}-
 const filtersFromSearchParams = (sp: URLSearchParams): FilterState => ({
   district: sp.get('district') === LEGACY_ALL_DISTRICTS ? DEFAULT_DISTRICT : sp.get('district') || DEFAULT_DISTRICT,
   priceRange: sp.get('priceRange') || 'ALL',
-  roomType: sp.get('roomType') || 'ALL',
-  hasMezzanine: sp.get('hasMezzanine') === 'true' ? true : null,
+  // Mã kiểu phòng cũ (link/bookmark trước khi đổi danh mục) coi như "tất cả"; link cũ ?hasMezzanine=true → "Có gác xép".
+  roomType: isKnownRoomType(sp.get('roomType'))
+    ? sp.get('roomType')!
+    : sp.get('hasMezzanine') === 'true'
+      ? 'LOFT'
+      : 'ALL',
   isRecommended: sp.get('isRecommended') === 'true' ? true : null,
   rentalTermType: (sp.get('rentalTermType') as FilterState['rentalTermType']) || 'SHORT_TERM',
   amenities: sp.get('amenities') ? sp.get('amenities')!.split(',').filter(Boolean) : [],
@@ -81,7 +86,6 @@ const buildSearchParams = (
   if (filters.district) params.district = filters.district;
   if (filters.priceRange !== 'ALL') params.priceRange = filters.priceRange;
   if (filters.roomType !== 'ALL') params.roomType = filters.roomType;
-  if (filters.hasMezzanine === true) params.hasMezzanine = 'true';
   if (filters.isRecommended === true) params.isRecommended = 'true';
   if (filters.rentalTermType !== 'SHORT_TERM') params.rentalTermType = filters.rentalTermType;
   if (filters.amenities.length > 0) params.amenities = filters.amenities.join(',');
@@ -328,7 +332,6 @@ export const RoomList: React.FC = () => {
       district: DEFAULT_DISTRICT,
       priceRange: 'ALL',
       roomType: 'ALL',
-      hasMezzanine: null,
       rentalTermType: 'SHORT_TERM',
       amenities: [],
       keyword: '',

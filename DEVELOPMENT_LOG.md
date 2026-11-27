@@ -4,6 +4,15 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-28 — Bộ lọc "Kiểu thiết kế" theo danh mục 8 kiểu phòng
+
+**Thay đổi:**
+- Nhãn `roomType.*` (vi/en) theo danh mục chuẩn: Studio · Có gác xép (Duplex / Loft) · 1 ngủ 1 khách (1N1K) · 2 ngủ 1 khách (2N1K) · 3 ngủ trở lên (3N+) · Phòng đơn (Giường đơn / Đôi) · Giường tầng / Kén ngủ · Phòng ở ghép (en: Studio (Open Space), Loft / Duplex, 1 Bedroom (1BR)...).
+- Gộp 2 ô "Loại phòng" + nút "Có gác xép kiên cố" thành 1 ô "Kiểu thiết kế" (en "Room Layout"); chọn "Có gác xép" ra cả phòng kiểu Loft lẫn phòng có tick gác xép (backend lo). Bỏ `hasMezzanine` khỏi state/URL/tham số feed; link cũ `?hasMezzanine=true` tự chuyển sang `roomType=LOFT`, `?roomType=` mã cũ coi như "Tất cả".
+- Kiểu `RoomType` (TS) và mặc định khi map phòng đổi theo enum mới.
+
+**Đã kiểm tra:** BE local, dài hạn: ô lọc hiện "Có gác xép (Duplex / Loft) (1)", "1 ngủ 1 khách (1N1K) (7)"; link `?hasMezzanine=true` → "Có gác xép", 1 phòng; `?roomType=APARTMENT` → tất cả 7 phòng; đổi tiếng Anh nhãn đổi theo. `tsc -p tsconfig.app.json` sạch.
+
 ## 2026-11-28 — Nhãn loại phòng đúng danh mục chủ nhà chọn, đổi theo ngôn ngữ
 
 **Vì sao:** Loại phòng là kiểu bố trí chủ nhà chọn khi tạo phòng (Studio, 1N, 1N1K…), lưu bằng mã enum lịch sử (`APARTMENT`, `MINI_CONDOMINIUM`…). Bộ lọc lại dịch theo tên mã thành "Căn hộ", "Chung cư mini"… nên lệch với dữ liệu chủ nhà nhập.
