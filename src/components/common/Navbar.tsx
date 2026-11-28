@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useDismissOnOutside } from '@/hooks/useDismissOnOutside';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -36,6 +37,9 @@ const NotificationBell: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [recentNotifications, setRecentNotifications] = useState<NotificationItem[]>([]);
   const popoverRef = useRef<HTMLDivElement>(null);
+  // Bấm ra ngoài bảng thông báo (hoặc nhấn Esc) thì đóng — trước đây chỉ đóng khi bấm lại vào chuông.
+  const closePopover = useCallback(() => setOpen(false), []);
+  useDismissOnOutside(popoverRef, open, closePopover);
 
   const fetchUnread = async () => {
     try {
@@ -175,6 +179,10 @@ export const Navbar: React.FC = () => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  // Menu tài khoản: bấm ra ngoài (hoặc Esc) thì đóng, giống bảng thông báo.
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+  const closeUserDropdown = useCallback(() => setUserDropdownOpen(false), []);
+  useDismissOnOutside(userDropdownRef, userDropdownOpen, closeUserDropdown);
 
   const navLinks = [
     { path: '/rooms', label: t('navbar.findRooms'), icon: Search },
@@ -250,7 +258,7 @@ export const Navbar: React.FC = () => {
                 {/* Notification Bell Button & Popover */}
                 <NotificationBell />
 
-                <div className="relative">
+                <div className="relative" ref={userDropdownRef}>
                   <button
                     onClick={() => {
                       setUserDropdownOpen(!userDropdownOpen);

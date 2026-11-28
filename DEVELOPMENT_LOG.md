@@ -4,6 +4,16 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-28 — Bảng thông báo và menu tài khoản đóng khi bấm ra ngoài
+
+**Vì sao:** Bảng thông báo (chuông) và menu tài khoản trên thanh trên cùng chỉ đóng khi bấm lại vào nút mở.
+
+**Thay đổi:** Hook mới `useDismissOnOutside(ref, open, onClose)` (`src/hooks/useDismissOnOutside.ts`): bấm/chạm ra ngoài vùng `ref` hoặc nhấn Esc thì đóng. Dùng cho bảng thông báo (`NotificationBell`, vùng = nút chuông + bảng) và menu tài khoản trong `Navbar`. Bấm bên trong bảng vẫn giữ mở; bấm lại nút vẫn bật/tắt như cũ.
+
+**Đã kiểm tra:** người thuê thử (`tmp-lc-`, đã xoá) trên web local: mở chuông → bấm ra ngoài đóng; Esc đóng; bấm trong bảng vẫn mở; bấm lại chuông đóng; menu tài khoản bấm ra ngoài đóng. Thử cả bằng cú bấm chuột thật. `tsc -p tsconfig.app.json` sạch.
+
+**Ghi chú (có từ trước, chưa sửa):** ở 1024px khi đã đăng nhập, các mục menu trên thanh trên cùng bị xuống 2 dòng.
+
 ## 2026-11-28 — Logo "Pimi.vn" và slogan mới
 
 **Thay đổi:** Logo ở thanh trên cùng và chân trang đổi "PimiRent" → "Pimi.vn" (giữ màu nhấn cho ".vn"). Slogan `navbar.tagline`: "Trọn vẹn tổ ấm, an tâm cùng Pimi" / "A complete home, peace of mind with Pimi" (thay "Kênh Tìm Phòng Uy Tín" / "Trusted Rental Channel"). Slogan dài hơn nên bỏ in hoa + giãn chữ, dùng chữ thường 12px đậm vừa, một dòng.
