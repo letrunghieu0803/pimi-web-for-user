@@ -181,17 +181,13 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm, stay }) =
             <span>{room.address}</span>
           </p>
 
-          {/* Foreign Tenants Note */}
-          <p
-            className={`flex items-center gap-1.5 text-xs font-medium mt-1.5 ${
-              room.acceptForeignTenants ? 'text-emerald-600' : 'text-slate-400'
-            }`}
-          >
-            <Globe2 className="w-3.5 h-3.5 shrink-0" />
-            <span>
-              {room.acceptForeignTenants ? t('roomCard.acceptsForeignTenants') : t('roomCard.noForeignTenants')}
-            </span>
-          </p>
+          {/* Nhận khách nước ngoài — chỉ hiện khi CÓ nhận; không nhận thì ẩn (không ghi "Không nhận khách nước ngoài"). */}
+          {room.acceptForeignTenants && (
+            <p className="flex items-center gap-1.5 text-xs font-medium mt-1.5 text-emerald-600">
+              <Globe2 className="w-3.5 h-3.5 shrink-0" />
+              <span>{t('roomCard.acceptsForeignTenants')}</span>
+            </p>
+          )}
 
           {/* Key Specs Grid */}
           <div className="grid grid-cols-2 gap-2 my-3 p-2.5 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-semibold text-slate-700">

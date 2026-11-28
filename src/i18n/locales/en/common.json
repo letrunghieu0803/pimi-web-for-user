@@ -151,7 +151,6 @@
     "unfavorite": "Remove from favorites",
     "favoriteError": "Couldn't update favorites, please try again",
     "acceptsForeignTenants": "Accepts foreign tenants",
-    "noForeignTenants": "Vietnamese tenants only",
     "postedJustNow": "Just posted",
     "postedMinutes": "Posted {{count}}m ago",
     "postedHours": "Posted {{count}}h ago",

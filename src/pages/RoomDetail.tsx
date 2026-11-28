@@ -495,16 +495,13 @@ export const RoomDetail: React.FC = () => {
               <MapPin className="w-4 h-4 text-indigo-600 shrink-0" />
               <span>{room.address}, {room.district}, {room.city}</span>
             </p>
-            <p
-              className={`flex items-center gap-1.5 text-sm font-semibold ${
-                room.acceptForeignTenants ? 'text-emerald-600' : 'text-slate-400'
-              }`}
-            >
-              <Globe2 className="w-4 h-4 shrink-0" />
-              <span>
-                {room.acceptForeignTenants ? t('roomCard.acceptsForeignTenants') : t('roomCard.noForeignTenants')}
-              </span>
-            </p>
+            {/* Chỉ hiện khi phòng CÓ nhận khách nước ngoài; không nhận thì ẩn. */}
+            {room.acceptForeignTenants && (
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600">
+                <Globe2 className="w-4 h-4 shrink-0" />
+                <span>{t('roomCard.acceptsForeignTenants')}</span>
+              </p>
+            )}
           </div>
 
           {/* Key Specifications Grid */}

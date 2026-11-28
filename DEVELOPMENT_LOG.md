@@ -4,6 +4,12 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-28 — Chỉ hiện "Nhận khách nước ngoài" khi phòng có nhận
+
+**Thay đổi:** Thẻ phòng (`RoomCard`: trang chủ, Tìm phòng, Yêu thích, Đã xem, Phòng tương tự) và trang chi tiết phòng chỉ hiện dòng "Nhận khách nước ngoài" khi `acceptForeignTenants` là true; không nhận thì ẩn hẳn (trước đây hiện "Không nhận khách nước ngoài" màu xám). Xoá key i18n không còn dùng `roomCard.noForeignTenants` (vi/en). App không hiển thị thông tin này nên không đổi.
+
+**Đã kiểm tra:** web local: trang chủ 27 thẻ chỉ phòng có nhận mới hiện dòng này; chi tiết phòng 605 (nhận) hiện, "Test NH 10" (không nhận) không hiện. `tsc -p tsconfig.app.json` sạch.
+
 ## 2026-11-28 — Danh sách phòng 5 thẻ mỗi hàng
 
 **Thay đổi:**
