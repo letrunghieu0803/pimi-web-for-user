@@ -7,6 +7,7 @@ import { favoriteApi } from '@/services/favoriteApi';
 import { RoomCard } from '@/components/common/RoomCard';
 import { EmptyState } from '@/components/common/EmptyState';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
+import { ROOM_GRID_CLASS } from '@/components/common/roomGrid';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { Seo } from '@/components/common/Seo';
@@ -59,7 +60,7 @@ export const FavoriteRooms: React.FC = () => {
       </div>
 
       {loading ? (
-        <CardGridSkeleton count={6} />
+        <CardGridSkeleton count={10} gridClassName={ROOM_GRID_CLASS} />
       ) : visibleRooms.length === 0 ? (
         <EmptyState
           icon={Heart}
@@ -70,7 +71,7 @@ export const FavoriteRooms: React.FC = () => {
           actionTo="/rooms"
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={ROOM_GRID_CLASS}>
           {visibleRooms.map((room) => (
             <RoomCard key={room.id} room={room} />
           ))}

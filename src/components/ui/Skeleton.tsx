@@ -15,13 +15,19 @@ export const SkeletonCircle: React.FC<SkeletonProps> = ({ className = '' }) => (
 interface CardGridSkeletonProps {
   count?: number;
   className?: string;
+  /** Lớp lưới — danh sách phòng truyền ROOM_GRID_CLASS (5 cột), mặc định 3 cột (tin tức...). */
+  gridClassName?: string;
 }
 
 // Room card grid matching RoomCard.tsx's markup (RoomList / Home featured rooms):
 // aspect-[4/3] image with overlay badges + price tag, house/district row, title,
 // address line, specs grid, amenity chips, footer with two actions.
-export const CardGridSkeleton: React.FC<CardGridSkeletonProps> = ({ count = 6, className = '' }) => (
-  <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}>
+export const CardGridSkeleton: React.FC<CardGridSkeletonProps> = ({
+  count = 6,
+  className = '',
+  gridClassName = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6',
+}) => (
+  <div className={`${gridClassName} ${className}`}>
     {Array.from({ length: count }).map((_, i) => (
       <div
         key={i}

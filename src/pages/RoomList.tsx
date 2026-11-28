@@ -11,6 +11,7 @@ import { Pagination } from '@/components/common/Pagination';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Building2, ArrowUpDown, Info, Map, LayoutGrid, WifiOff } from 'lucide-react';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
+import { ROOM_GRID_CLASS } from '@/components/common/roomGrid';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { vietmapService } from '@/services/vietmapService';
@@ -449,7 +450,7 @@ export const RoomList: React.FC = () => {
 
       {/* Main Content Area: Grid or Map */}
       {loading ? (
-        <CardGridSkeleton count={PAGE_SIZE} />
+        <CardGridSkeleton count={PAGE_SIZE} gridClassName={ROOM_GRID_CLASS} />
       ) : isError ? (
         // Lỗi tải (mất mạng/lỗi server) — cố tình khác EmptyState "không có kết quả" bên dưới:
         // icon wifi-off, tone đỏ (rose) và nút Thử lại gọi refetch() thay vì đặt lại bộ lọc.
@@ -489,7 +490,7 @@ export const RoomList: React.FC = () => {
           userLng={filters.userLng}
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={ROOM_GRID_CLASS}>
           {rooms.map((room) => (
             <RoomCard
               key={room.id}

@@ -87,7 +87,8 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm, stay }) =
         />
 
         {/* Top Badges */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
+        {/* Thẻ hẹp không đủ chỗ cho cả 2 nhóm nhãn trên 1 hàng thì nhóm bên phải xuống hàng (căn phải), không đè nhau. */}
+        <div className="absolute top-3 left-3 right-3 flex flex-wrap items-start justify-between gap-1.5 pointer-events-none">
           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
             {room.isRecommended && (
               <span className="badge-tag bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black backdrop-blur-md shadow-md">
@@ -97,7 +98,7 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm, stay }) =
             )}
           </div>
 
-          <div className="flex flex-col items-end gap-1.5 shrink-0 whitespace-nowrap">
+          <div className="ml-auto flex flex-col items-end gap-1.5 shrink-0 whitespace-nowrap">
             {postedAgo && (
               <span className="badge-tag bg-slate-900/75 text-white backdrop-blur-md shadow-sm">
                 <Clock className="w-3.5 h-3.5" />
@@ -126,11 +127,12 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm, stay }) =
 
         {/* Price Tag Overlay — ẩn khi phòng không có giá của loại hình đang tìm (không lấy giá loại kia thay thế). */}
         {priceDisplay.amount !== undefined && (
-        <div className="absolute bottom-3 left-3 bg-slate-900/85 backdrop-blur-md text-white px-3.5 py-1.5 rounded-2xl shadow-lg flex items-baseline gap-1">
-          <span className="text-lg font-black text-emerald-400 font-heading">{formatPrice(priceDisplay.amount)}</span>
-          <span className="text-[11px] text-slate-300">{formatPriceUnit(priceDisplay, t)}</span>
+        // Thẻ có thể hẹp (lưới 5 cột): chừa chỗ nút tim bên phải, giá phụ (giá giờ) xuống dòng thay vì tràn.
+        <div className="absolute bottom-3 left-3 max-w-[calc(100%-3.75rem)] bg-slate-900/85 backdrop-blur-md text-white px-2.5 py-1.5 rounded-2xl shadow-lg flex flex-wrap items-baseline gap-x-1">
+          <span className="text-base font-black text-emerald-400 font-heading whitespace-nowrap">{formatPrice(priceDisplay.amount)}</span>
+          <span className="text-[11px] text-slate-300 whitespace-nowrap">{formatPriceUnit(priceDisplay, t)}</span>
           {priceDisplay.secondary && (
-            <span className="text-[11px] text-slate-300 ml-1.5 pl-1.5 border-l border-slate-500/60">
+            <span className="text-[11px] text-slate-300 whitespace-nowrap">
               {formatPrice(priceDisplay.secondary.amount)} / {t(priceDisplay.secondary.unitKey)}
             </span>
           )}
@@ -142,7 +144,7 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm, stay }) =
         <button
           onClick={handleToggleFavorite}
           aria-label={favorited ? t('roomCard.unfavorite') : t('roomCard.favorite')}
-          className={`absolute bottom-2 right-2 z-10 w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg transition-colors ${
+          className={`absolute bottom-2.5 right-2.5 z-10 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg transition-colors ${
             favorited ? 'bg-rose-500 text-white' : 'bg-white/90 text-slate-600 hover:text-rose-500'
           }`}
         >
@@ -151,12 +153,12 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({ room, priceTerm, stay }) =
       </div>
 
       {/* Content */}
-      <div className="p-5 flex-1 flex flex-col space-y-4">
+      <div className="p-4 flex-1 flex flex-col space-y-4">
         <div>
           {/* House Name & District */}
-          <div className="flex items-center justify-between text-xs text-slate-500 font-semibold mb-1.5">
-            <span className="truncate max-w-[180px] text-indigo-600 font-bold">{room.houseName}</span>
-            <span className="bg-slate-100 px-2.5 py-0.5 rounded-full text-slate-700 font-medium">
+          <div className="flex items-center justify-between gap-2 text-xs text-slate-500 font-semibold mb-1.5">
+            <span className="truncate min-w-0 text-indigo-600 font-bold">{room.houseName}</span>
+            <span className="bg-slate-100 px-2.5 py-0.5 rounded-full text-slate-700 font-medium truncate max-w-[50%] shrink-0">
               {room.district}
             </span>
           </div>

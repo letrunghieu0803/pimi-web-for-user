@@ -28,6 +28,7 @@ import { formatVnd } from '@/utils/money';
 import { formatMoney } from '@/utils/money';
 import { formatPriceUnit, getRoomPriceDisplay, hasRoomPriceForTerm, resolveRoomPriceTerm, RoomPriceTerm } from '@/utils/roomPrice';
 import { HOURLY_RENTAL_ENABLED } from '@/config/features';
+import { ROOM_GRID_CLASS } from '@/components/common/roomGrid';
 
 export const RoomDetail: React.FC = () => {
   const { t } = useTranslation();
@@ -123,7 +124,7 @@ export const RoomDetail: React.FC = () => {
         // own id != the group's id), so exclude by group id when applicable —
         // otherwise the current group could show up in its own recommendations.
         setSimilarRooms(
-          all.filter((r) => (r.roomGroupId ? r.roomGroupId !== targetId : r.id !== targetId)).slice(0, 3)
+          all.filter((r) => (r.roomGroupId ? r.roomGroupId !== targetId : r.id !== targetId)).slice(0, 5)
         );
       });
     }
@@ -702,7 +703,7 @@ export const RoomDetail: React.FC = () => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={ROOM_GRID_CLASS}>
             {similarRooms.map((r) => (
               <RoomCard key={r.id} room={r} priceTerm={termParam ?? 'SHORT_TERM'} />
             ))}

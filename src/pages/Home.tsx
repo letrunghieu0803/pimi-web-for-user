@@ -12,6 +12,7 @@ import { Search, ShieldCheck, Zap, PhoneCall, Sparkles, Building2, ChevronRight,
 import { useSearchFacets } from '@/hooks/useSearchFacets';
 import { usePublicPlatformSettings } from '@/hooks/usePublicPlatformSettings';
 import { CardGridSkeleton } from '@/components/ui/Skeleton';
+import { HOME_SECTION_ROOM_COUNT, ROOM_GRID_CLASS } from '@/components/common/roomGrid';
 import { Seo } from '@/components/common/Seo';
 import { CONTACT, CONTACT_TEL_HREF } from '@/constants/contact';
 import { JsonLd } from '@/components/common/JsonLd';
@@ -30,7 +31,7 @@ const RentalTermSection: React.FC<{ type: 'SHORT_TERM' | 'LONG_TERM' }> = ({ typ
   useEffect(() => {
     setLoading(true);
     roomApi
-      .getRoomsPaginated({ rentalTermType: type, pageNumber: 1, pageSize: 6, sortBy: 'newest' })
+      .getRoomsPaginated({ rentalTermType: type, pageNumber: 1, pageSize: HOME_SECTION_ROOM_COUNT, sortBy: 'newest' })
       .then((res) => setRooms(res.rooms))
       .finally(() => setLoading(false));
   }, [type]);
@@ -62,9 +63,9 @@ const RentalTermSection: React.FC<{ type: 'SHORT_TERM' | 'LONG_TERM' }> = ({ typ
       </div>
 
       {loading ? (
-        <CardGridSkeleton count={6} />
+        <CardGridSkeleton count={HOME_SECTION_ROOM_COUNT} gridClassName={ROOM_GRID_CLASS} />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={ROOM_GRID_CLASS}>
           {rooms.map((room) => (
             <RoomCard key={room.id} room={room} priceTerm={type} />
           ))}
@@ -93,7 +94,7 @@ export const Home: React.FC = () => {
     roomApi
       .getRooms()
       .then((rooms) => {
-        setFeaturedRooms(rooms.slice(0, 6));
+        setFeaturedRooms(rooms.slice(0, HOME_SECTION_ROOM_COUNT));
       })
       .finally(() => setLoading(false));
   }, []);
@@ -257,8 +258,8 @@ export const Home: React.FC = () => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recentlyViewed.slice(0, 6).map(({ room }) => (
+          <div className={ROOM_GRID_CLASS}>
+            {recentlyViewed.slice(0, HOME_SECTION_ROOM_COUNT).map(({ room }) => (
               <RoomCard key={room.id} room={room} priceTerm="SHORT_TERM" />
             ))}
           </div>
@@ -289,9 +290,9 @@ export const Home: React.FC = () => {
           </div>
 
           {loading ? (
-            <CardGridSkeleton count={6} />
+            <CardGridSkeleton count={HOME_SECTION_ROOM_COUNT} gridClassName={ROOM_GRID_CLASS} />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className={ROOM_GRID_CLASS}>
               {featuredRooms.map((room) => (
                 <RoomCard key={room.id} room={room} priceTerm="SHORT_TERM" />
               ))}

@@ -4,6 +4,15 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-28 — Danh sách phòng 5 thẻ mỗi hàng
+
+**Thay đổi:**
+- `ROOM_GRID_CLASS` (`src/components/common/roomGrid.ts`): lưới thẻ phòng dùng chung 1 → 2 → 3 → 4 → 5 cột (5 cột từ 1280px), áp cho trang chủ (3 mục), Tìm phòng, Yêu thích, Đã xem, Phòng tương tự; `CardGridSkeleton` nhận `gridClassName` (tin tức giữ 3 cột).
+- Số phòng theo bội 5: mỗi mục trang chủ 10 phòng (trước 6), phòng tương tự 5 (trước 3); trang Tìm phòng giữ 10/trang.
+- `RoomCard` gọn cho cột hẹp (~227px): giá 16px, nút tim 40px, nhãn giá chừa chỗ nút tim và cho giá phụ xuống dòng; nhóm nhãn trên ảnh ("Đề cử" / "Đăng X trước") xuống hàng khi không đủ chỗ thay vì đè nhau; tên toà/quận cắt "…"; đệm nội dung 16px.
+
+**Đã kiểm tra:** trang chủ và Tìm phòng ở 375/768/1024/1440px: số thẻ mỗi hàng 1/3/4/5, không tràn ngang, không nhãn nào đè nhau, nhãn giá không xuống dòng. `tsc -p tsconfig.app.json` sạch.
+
 ## 2026-11-28 — Thanh trên cùng: menu không còn xuống 2 dòng ở 1024–1279px
 
 **Vì sao:** Ở 1024–1279px (nhất là khi đã đăng nhập) logo + 4 mục menu có icon + khối tài khoản không đủ chỗ, chữ menu bị xuống 2 dòng.

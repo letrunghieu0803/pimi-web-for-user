@@ -5,6 +5,7 @@ import { RoomCard } from '@/components/common/RoomCard';
 import { EmptyState } from '@/components/common/EmptyState';
 import { recentlyViewedApi, RecentlyViewedEntry } from '@/utils/recentlyViewed';
 import { Seo } from '@/components/common/Seo';
+import { ROOM_GRID_CLASS } from '@/components/common/roomGrid';
 
 // Trang "Đã xem gần đây" — 100% đọc từ localStorage (utils/recentlyViewed.ts), không gọi API
 // nào. Khác trang Phòng yêu thích: không cần đăng nhập, và có nút xoá lịch sử.
@@ -51,7 +52,7 @@ export const RecentlyViewed: React.FC = () => {
           actionTo="/rooms"
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={ROOM_GRID_CLASS}>
           {entries.map(({ room }) => (
             <RoomCard key={room.id} room={room} />
           ))}
