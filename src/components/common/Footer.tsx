@@ -18,7 +18,7 @@ export const Footer: React.FC = () => {
                 <Building2 className="w-5 h-5" />
               </div>
               <span className="text-2xl font-black text-white font-heading">
-                Pimi<span className="text-indigo-400">Rent</span>
+                Pimi<span className="text-indigo-400">.vn</span>
               </span>
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm">

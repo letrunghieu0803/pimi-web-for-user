@@ -4,6 +4,12 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-28 — Logo "Pimi.vn" và slogan mới
+
+**Thay đổi:** Logo ở thanh trên cùng và chân trang đổi "PimiRent" → "Pimi.vn" (giữ màu nhấn cho ".vn"). Slogan `navbar.tagline`: "Trọn vẹn tổ ấm, an tâm cùng Pimi" / "A complete home, peace of mind with Pimi" (thay "Kênh Tìm Phòng Uy Tín" / "Trusted Rental Channel"). Slogan dài hơn nên bỏ in hoa + giãn chữ, dùng chữ thường 12px đậm vừa, một dòng.
+
+**Đã kiểm tra:** trình duyệt ở 1440px và 375px, cả vi/en: không tràn ngang, logo không chạm nút menu trên điện thoại. `tsc -p tsconfig.app.json` sạch.
+
 ## 2026-11-28 — Bộ lọc "Kiểu thiết kế" theo danh mục 8 kiểu phòng
 
 **Thay đổi:**

@@ -206,10 +206,12 @@ export const Navbar: React.FC = () => {
               <Building2 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <span className="text-2xl font-black tracking-tight text-slate-900 font-heading">
-                Pimi<span className="gradient-text">Rent</span>
+              <span className="block text-2xl font-black tracking-tight text-slate-900 font-heading leading-tight">
+                Pimi<span className="gradient-text">.vn</span>
               </span>
-              <span className="block text-[10px] uppercase font-bold tracking-widest text-indigo-600 font-sans -mt-1">
+              {/* Slogan là câu thường (không in hoa, không giãn chữ) — câu dài hơn tagline cũ nên in hoa + tracking-widest
+                  sẽ quá rộng và khó đọc. */}
+              <span className="block text-xs font-semibold text-indigo-600 font-sans leading-tight whitespace-nowrap">
                 {t('navbar.tagline')}
               </span>
             </div>
