@@ -4,6 +4,14 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-28 — Đồng bộ `main` vào `feat/booking-news-privacy` (sửa báo xung đột trên GitHub)
+
+**Vì sao:** GitHub báo "Can't automatically merge" khi so `main` với `feat/booking-news-privacy`, dù không có dòng code nào xung đột: lịch sử bị bắt chéo (merge base: 6edcc01 8185b4a ) do `main` nhận nhánh qua nhiều PR trong khi nhánh lại merge `product`.
+
+**Thay đổi:** Merge `origin/main` vào `feat/booking-news-privacy`. `main` chỉ có thêm các commit merge PR rỗng nên nội dung code của nhánh **không đổi** (đã so: cây file sau merge trùng nhánh trước merge). Sau commit này `main` là tổ tiên của nhánh → PR nhánh → `main` merge được bình thường.
+
+**Đã kiểm tra:** thử merge trong worktree tạm: không xung đột, không đổi file nào.
+
 ## 2026-11-28 — Chỉ hiện "Nhận khách nước ngoài" khi phòng có nhận
 
 **Thay đổi:** Thẻ phòng (`RoomCard`: trang chủ, Tìm phòng, Yêu thích, Đã xem, Phòng tương tự) và trang chi tiết phòng chỉ hiện dòng "Nhận khách nước ngoài" khi `acceptForeignTenants` là true; không nhận thì ẩn hẳn (trước đây hiện "Không nhận khách nước ngoài" màu xám). Xoá key i18n không còn dùng `roomCard.noForeignTenants` (vi/en). App không hiển thị thông tin này nên không đổi.
