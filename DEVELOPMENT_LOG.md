@@ -4,6 +4,14 @@ Nhật ký các đợt phát triển tính năng (mới nhất ở trên cùng).
 
 ---
 
+## 2026-11-28 — Thanh trên cùng: menu không còn xuống 2 dòng ở 1024–1279px
+
+**Vì sao:** Ở 1024–1279px (nhất là khi đã đăng nhập) logo + 4 mục menu có icon + khối tài khoản không đủ chỗ, chữ menu bị xuống 2 dòng.
+
+**Thay đổi (`Navbar.tsx`):** chữ menu và nút Đăng nhập/Đăng ký không ngắt dòng; ở 1024–1279px ẩn icon menu, thu đệm/khoảng cách, nút tài khoản chỉ hiện ảnh đại diện (tên + vai trò có trong menu khi mở); logo và khối bên phải không bị co. Từ 1280px giữ như cũ.
+
+**Đã kiểm tra:** đo ở 1024/1100/1280/1440px, chưa đăng nhập và đã đăng nhập (người thuê thử tên dài, đã xoá), cả vi/en: không mục nào xuống dòng, không tràn ngang, logo không chạm menu. `tsc -p tsconfig.app.json` sạch.
+
 ## 2026-11-28 — Bảng thông báo và menu tài khoản đóng khi bấm ra ngoài
 
 **Vì sao:** Bảng thông báo (chuông) và menu tài khoản trên thanh trên cùng chỉ đóng khi bấm lại vào nút mở.

@@ -209,7 +209,7 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-20">
           
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/" className="flex items-center gap-3 group shrink-0">
             <div className="w-11 h-11 rounded-2xl gradient-bg flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
               <Building2 className="w-6 h-6 text-white" />
             </div>
@@ -228,8 +228,10 @@ export const Navbar: React.FC = () => {
           {/* Desktop Nav Links — chờ tới `lg` (1024px) mới hiện, không phải `md` (768px): logo +
               4 mục menu + khối đăng nhập/đăng ký cộng lại cần ~1024px mới đủ chỗ trên 1 hàng.
               Bật ở `md` từng khiến khoảng 768-1024px bị kẹt giữa 2 layout (nav menu hiện nhưng
-              nút menu mobile đã ẩn cùng lúc) — nút "Đăng ký" bị đẩy tràn ra ngoài màn hình. */}
-          <nav className="hidden lg:flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60">
+              nút menu mobile đã ẩn cùng lúc) — nút "Đăng ký" bị đẩy tràn ra ngoài màn hình.
+              Khoảng 1024-1279px vẫn chật (chữ menu từng bị xuống 2 dòng): chữ không ngắt dòng, ẩn icon, thu đệm;
+              từ `xl` hiện đầy đủ như cũ. */}
+          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/60">
             {navLinks.map((link) => {
               const active = isActive(link.path);
               const Icon = link.icon;
@@ -237,13 +239,13 @@ export const Navbar: React.FC = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                  className={`flex items-center gap-2 px-3 xl:px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
                     active
                       ? 'bg-white text-indigo-600 shadow-sm'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${active ? 'text-indigo-600' : 'text-slate-400'}`} />
+                  <Icon className={`hidden xl:block w-4 h-4 ${active ? 'text-indigo-600' : 'text-slate-400'}`} />
                   {link.label}
                 </Link>
               );
@@ -251,7 +253,7 @@ export const Navbar: React.FC = () => {
           </nav>
 
           {/* Right Actions: Auth Buttons or User Profile Dropdown */}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 xl:gap-3 shrink-0">
             <LanguageSwitcher />
             {isAuthenticated && user ? (
               <div className="flex items-center gap-2">
@@ -270,7 +272,8 @@ export const Navbar: React.FC = () => {
                       alt={user.fullName}
                       className="w-8 h-8 rounded-full object-cover border border-indigo-200"
                     />
-                    <div className="text-left leading-tight">
+                    {/* 1024-1279px chỉ hiện ảnh đại diện (tên + vai trò có trong menu khi mở) để đủ chỗ cho menu chính. */}
+                    <div className="text-left leading-tight lg:hidden xl:block">
                       <span className="block text-xs font-bold text-slate-900 max-w-[110px] truncate">
                         {user.fullName}
                       </span>
@@ -355,7 +358,7 @@ export const Navbar: React.FC = () => {
               <>
                 <Link
                   to="/login"
-                  className="px-4 py-2.5 rounded-2xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs transition-colors flex items-center gap-1.5"
+                  className="px-3 xl:px-4 py-2.5 rounded-2xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs whitespace-nowrap transition-colors flex items-center gap-1.5"
                 >
                   <LogIn className="w-4 h-4 text-indigo-600" />
                   <span>{t('navbar.login')}</span>
@@ -363,7 +366,7 @@ export const Navbar: React.FC = () => {
 
                 <Link
                   to="/register"
-                  className="gradient-bg text-white px-5 py-2.5 rounded-2xl text-xs font-bold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-105 transition-all flex items-center gap-1.5"
+                  className="gradient-bg text-white px-4 xl:px-5 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-105 transition-all flex items-center gap-1.5"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>{t('navbar.register')}</span>
